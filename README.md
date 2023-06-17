@@ -1,45 +1,59 @@
 # Project Status
 THIS PROJECT IS NEW AND NOT YET READY TO BE USED.
 
-# About Eugene
-Eugene is a data structure peristence library for .NET projects.
-It gives you access to traditional in-memory data structures such
-as arrays, linked lists, array lists, hash tables, binary trees,
-trie trees, etc., in a format that is continuously persisted to
-disk as you modify the data structure.
+# About Spinach
+Spinach is a text/code search indexing library for .NET projects.
+It is inspired by the open source code search tool Zoekt, and is
+optimized for performing high-speed regular expression based searching
+across large code repositories.
 
-Of course there are many options for persisting data to disk. The
-world has SQL databases, NoSQL databases, text files such as CSV,
-XML, JSON, and YAML, and all manner of other ways of persisting data to
-disk. Why do we need yet another way of persisting data?
+Being delivered as a library rather than an end-user product means
+that you have the flexibility to embed code searching capabilities
+into your own projects. If you're looking for an actual code search
+engine that you can install and run, check out our other project,
+Popeye.
 
-While each of the solutions above have their place, there are times
-where we need a hand-crafted data structure consisting of multiple
-interconnected collections to achieve high performance retrieval of
-the data.
+You might think of Spinach as being a little bit like Lucene.NET,
+except it is a much smaller, lighter-weight solution that is specialized
+for performing regular expression searches. It aims to provide ultra
+high speed code searching on par with Zoekt, in a package that is
+easily consumable by .NET developers.
 
-One such use case, and the use case that was at the forefront of our
-minds when we started Eugene, was to build a high performance trigram
-text indexing library that can be used to quickly search for regular
-expressions across a very large corpus of code repositories. To do that,
-we need a way to build up a customized, specialized index that can store
-trigram text indexes for fast retrieval.
+Why might you need a regular expression indexing / code search library 
+in your project? We can think of lots of interesting projects that might
+be interested in these capabilities.
 
-That's just one sample use case, however. Eugene is a general purpose 
-library that can find broad applicability in many domains of work. Any
-time you need fine grained control over a specialized data structure that
-doesn't fit neatly into other persisting solutions, Eugene may be a good
-solution for your project.
+* Internal Developer Portals / Platforms - With the rise of platform engineering,
+  everyone is realizing that high quality developer portals can help
+  improve developer happiness and productivity. Tools like these are
+  highly diverse in functionality, which leads to a "build vs. buy"
+  decision. For those organizations that don't have time to build their
+  own portal, we think OpenSquiggly can be a great solution for them. But
+  for other companies that want to build their own portal for whatever reasons,
+  they might like to incorporate code searching into their portals.
+* Text Editors / IDEs - Anyone building text editors or IDEs, either 
+  client-side or cloud-based, may be interested. Tools like these usually
+  have regex search built it. By indexing the source files, regex searches
+  can be run much faster.
+* Software Cataloging - Software catalogs are a subset of developer portals.
+  Any time you are ingesting resources from around the organization with the
+  hopes of cataloging them, it makes sense to index the data it for fast searching. 
+* Other Developer Productivity Tools - There are undoubtedly countless other
+  developer-oriented productivity tools that we haven't even thought of that
+  could benefit greatly from integrated code searching. 
+* Non-Developer Usages - Although we're primarily thinking of Spinach for
+  building code search tools for developers, there's no reason why other
+  types of users might not also find fast regex searching useful.  
 
 # Sister Projects
-Eugene is one part of a series of projects designed to deliver high
+Spinach is one part of a series of projects designed to deliver high
 speed code searching capabilities.
 
-* Eugene  - This project, is a Nuget package that provides general purpose 
+* Eugene  - Eugene is a Nuget package that provides general purpose 
             persistent data structures
-* Spinach - Spinach is a Nuget packages that builds on top of Eugene and 
-            provides an API and indexing file format for performing regular 
-            expression text searching
+* Spinach - Spinach, this package, is a Nuget packages that builds on top 
+            of Eugene and  provides an API and indexing file format for 
+            performing regular expression text searching
 * Popeye  - Popeye is an installable code searching engine that can be
             installed in various ways, including Docker, Kubernetes, etc.
             Essentially, Popeye aims to be a C# version of Zoekt that uses
@@ -50,7 +64,7 @@ speed code searching capabilities.
 Popeye uses the Spinach package, which in turn uses Eugene.
 
 # Motivation
-To understand the motivation for Eugene, one should start by understanding
+To understand the motivation for Spinach, one should start by understanding
 what Zoekt is.
 
 Zoekt is an open source code searching engine written in Go. Being written in Go,
@@ -100,10 +114,9 @@ of disk to search for string literals using their trigrams. Zoekt doesn't docume
 their file format in very much detail - their design document describes it in
 broad brush strokes, but the details are sketchy.
 
-What we needed was a way to do the same thing in C#, except we thought it would be
-nice if in the process we abstracted out the reusable, general purpose data structures
-that we needed into a separate library. Doing so would make the Spinach and Popeye
-code much cleaner and easier to improve it over time. Thus, Eugene was born.
+What we needed was a way to do the same thing in C#, and it the process we thought
+it would be nice if we abstracted away the reusable components into libraries that
+can be embedded into projects using Nuget. Thus Eugene and Spianch were born.
 
 # More About How Zoekt Works
 Zoekt looks for literals using trigrams. Trigrams are sequences of three letters.
@@ -163,7 +176,7 @@ run you $350/month.
 
 So to run Zoekt, you have to make some calculations and some tradeoffs. Do you want to
 overpay by spinning up a VM with more memory than you'll probably need, or do you want
-to save money and run the risk of running out of memory. Running out of memory means
+to save money and run the risk of running out of memory? Running out of memory means
 that someone is probably waking up a 3am to go fix the problem, and no one wants to do
 that. We all want to sleep easy at night.
 
