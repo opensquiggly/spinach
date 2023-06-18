@@ -4,7 +4,7 @@
     <Authors>OpenSquiggly</Authors>
     <Company>OpenSquiggly</Company>
     <Product>OpenSquiggly.Spinach</Product>
-    <Description>Spinach is a data structure persistence library for .NET, providing access to traditional in-memory data structures such as arrays, linked lists, array lists, hash tables, binary trees, trie trees, etc., in a format that is continuously persisted to disk.</Description>
+    <Description>Spinach is a text/code search indexing library for .NET projects. It is inspired by the open source code search tool Zoekt, and is optimized for performing high-speed regular expression based searching across large code repositories.</Description>
     <RepositoryType>git</RepositoryType>
     <RepositoryUrl>https://github.com/opensquiggly/spinach.git</RepositoryUrl>
     <PackageProjectUrl>https://github.com/opensquiggly/spinach</PackageProjectUrl>
