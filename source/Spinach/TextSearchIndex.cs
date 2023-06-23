@@ -66,8 +66,7 @@ public class TextSearchIndex
     // Look up a repository using its internally assigned numeric id
   }
 
-  public long AddFile(long internalRepoId, string filename)
-  {
+  public long AddFile(long internalRepoId, string filename) =>
     // 1) Generate a new sequentially increasing integer id for the repository
     //    -> Need a place to store the last repository id
     // 2) Add repository record to internal id dictionary
@@ -77,8 +76,7 @@ public class TextSearchIndex
 
     // Add the filename to the filename trigram index
 
-    return 0;
-  }
+    0;
 
   public void IndexFile(long internalRepoId, long internalFileId, string content)
   {

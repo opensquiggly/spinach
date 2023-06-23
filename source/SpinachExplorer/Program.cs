@@ -1,4 +1,4 @@
-﻿using Eugene;
+using Eugene;
 using Eugene.Blocks;
 using Eugene.Collections;
 
@@ -41,7 +41,7 @@ internal static class Program
       Console.WriteLine();
       Console.Write("Enter selection: ");
 
-      string response = Console.ReadLine();   
+      string response = Console.ReadLine();
 
       try
       {
@@ -74,7 +74,7 @@ internal static class Program
       catch (Exception ex)
       {
         Console.WriteLine(ex.Message);
-      }        
+      }
     }
   }
 
@@ -82,20 +82,17 @@ internal static class Program
   // Private Static Properties
   // /////////////////////////////////////////////////////////////////////////////////////////////
 
-  private static DiskBlockManager DiskBlockManager { get; } 
+  private static DiskBlockManager DiskBlockManager { get; }
 
   private static string FileName { get; set; }
 
-  private static bool IsOpen { get; set; } = false;   
+  private static bool IsOpen { get; set; } = false;
 
   // /////////////////////////////////////////////////////////////////////////////////////////////
   // Private Static Methods
   // /////////////////////////////////////////////////////////////////////////////////////////////
 
-  private static void ClearScreen()
-  {
-    Console.Write("\u001b[2J\u001b[H");
-  }  
+  private static void ClearScreen() => Console.Write("\u001b[2J\u001b[H");
 
   private static void Pause()
   {
@@ -106,13 +103,13 @@ internal static class Program
 
   private static void ViewFilesAndFolders()
   {
-    foreach (var filePath in Directory.GetFiles("/home/codespace/OpenSquiggly", "*.*", SearchOption.AllDirectories))
+    foreach (string filePath in Directory.GetFiles("/home/codespace/OpenSquiggly", "*.*", SearchOption.AllDirectories))
     {
-        Console.WriteLine(filePath);
-    } 
+      Console.WriteLine(filePath);
+    }
 
-    Pause();   
-  } 
+    Pause();
+  }
 
   private static void CreateNewIndexFile()
   {
@@ -147,7 +144,7 @@ internal static class Program
 
     IsOpen = true;
     FileName = filename;
-  }  
+  }
 
   private static void PrintCurrentIndexFileStatus()
   {
@@ -189,7 +186,7 @@ internal static class Program
     FileName = filename;
 
     Console.WriteLine($"File name {filename} is now open for exploration.");
-  }  
+  }
 
 
   private static void CloseCurrentIndexFile()
