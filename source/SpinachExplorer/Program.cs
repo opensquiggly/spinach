@@ -37,6 +37,7 @@ internal static class Program
       Console.WriteLine("2. Open an existing index file");
       Console.WriteLine("3. Close current index file");
       Console.WriteLine("4. View files in a local folder");
+      Console.WriteLine("5. Index local files");
       Console.WriteLine("X. Exit program");
       Console.WriteLine();
       Console.Write("Enter selection: ");
@@ -64,6 +65,7 @@ internal static class Program
             break;
 
           case "5":
+            IndexLocalFiles();
             break;
 
           case "x":
@@ -74,6 +76,7 @@ internal static class Program
       catch (Exception ex)
       {
         Console.WriteLine(ex.Message);
+        Pause();
       }
     }
   }
@@ -87,6 +90,8 @@ internal static class Program
   private static string FileName { get; set; }
 
   private static bool IsOpen { get; set; } = false;
+
+  private static DiskBTree<long, long> InternalFileIdTree { get; set; }
 
   // /////////////////////////////////////////////////////////////////////////////////////////////
   // Private Static Methods
@@ -135,15 +140,25 @@ internal static class Program
     DiskBlockManager.Close();
     DiskBlockManager.CreateOrOpen(filename);
 
-    // HeaderBlock headerBlock = DiskBlockManager.GetHeaderBlock();
-    // headerBlock.Address1 = DataStructureInfoList.Address;
+    DiskBTreeFactory<long, long> fileIdTreeFactory = 
+      DiskBlockManager.BTreeManager.CreateFactory<long, long>(
+        DiskBlockManager.LongBlockType, 
+        DiskBlockManager.LongBlockType
+      );
 
-    // DiskBlockManager.WriteHeaderBlock(ref headerBlock);
+    InternalFileIdTree = fileIdTreeFactory.AppendNew();
 
-    // Console.WriteLine($"Data Structure List Stored at Address: {headerBlock.Address1}");
+    HeaderBlock headerBlock = DiskBlockManager.GetHeaderBlock();
+    headerBlock.Address1 = InternalFileIdTree.Address;
+
+    DiskBlockManager.WriteHeaderBlock(ref headerBlock);
+
+    Console.WriteLine($"InternalFileIdTree Stored at Address: {headerBlock.Address1}");
 
     IsOpen = true;
     FileName = filename;
+
+    Pause();
   }
 
   private static void PrintCurrentIndexFileStatus()
@@ -174,18 +189,23 @@ internal static class Program
     DiskBlockManager.Close();
     DiskBlockManager.CreateOrOpen(filename);
 
-    // HeaderBlock headerBlock = DiskBlockManager.GetHeaderBlock();
+    HeaderBlock headerBlock = DiskBlockManager.GetHeaderBlock();
 
-    // DiskLinkedListFactory<DataStructureInfoBlock> factory = DiskBlockManager.LinkedListManager.CreateFactory<DataStructureInfoBlock>(DataStructureBlockTypeIndex);
-    // DataStructureInfoList = factory.LoadExisting(headerBlock.Address1);
+    DiskBTreeFactory<long, long> fileIdTreeFactory = 
+      DiskBlockManager.BTreeManager.CreateFactory<long, long>(
+        DiskBlockManager.LongBlockType, 
+        DiskBlockManager.LongBlockType
+      );
 
-    // Console.WriteLine($"Data Structure List Loaded from Address: {headerBlock.Address1}");
-    // Console.WriteLine($"There are {DataStructureInfoList.Count} data structures");
+    InternalFileIdTree = fileIdTreeFactory.LoadExisting(headerBlock.Address1);
+
+    Console.WriteLine($"InternalFileIdTree Loaded from Address: {headerBlock.Address1}");
 
     IsOpen = true;
     FileName = filename;
 
-    Console.WriteLine($"File name {filename} is now open for exploration.");
+    Console.WriteLine($"Index file {filename} is now open for exploration.");
+    Pause();
   }
 
 
@@ -206,5 +226,21 @@ internal static class Program
 
     IsOpen = false;
   }
+
+  private static void IndexLocalFiles()
+  {
+    long currentFileId = 1;
+
+    Console.WriteLine("Indexing files ...");
+
+    foreach (string filePath in Directory.GetFiles("/home/codespace/OpenSquiggly", "*.*", SearchOption.AllDirectories))
+    {
+      Console.WriteLine($"{currentFileId} : {filePath}");
+      DiskImmutableString nameString = DiskBlockManager.ImmutableStringFactory.Append(filePath);
+      InternalFileIdTree.Insert(currentFileId, nameString.Address);
+    }
+
+    Pause();
+  }  
 }
 
