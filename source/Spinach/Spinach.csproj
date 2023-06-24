@@ -5,6 +5,7 @@
     <RootNamespace>Spinach</RootNamespace>
     <PackageOutputPath>./bin/Packages</PackageOutputPath>    
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
 
   <ItemGroup>

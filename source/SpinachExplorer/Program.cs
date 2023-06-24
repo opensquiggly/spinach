@@ -1,6 +1,8 @@
 using Eugene;
 using Eugene.Blocks;
 using Eugene.Collections;
+using Spinach.Trigrams;
+using SpinachExplorer;
 
 internal static class Program
 {
@@ -38,6 +40,8 @@ internal static class Program
       Console.WriteLine("3. Close current index file");
       Console.WriteLine("4. View files in a local folder");
       Console.WriteLine("5. Index local files");
+      Console.WriteLine("6. Lookup file id");
+      Console.WriteLine("7. Test trigram extractor");
       Console.WriteLine("X. Exit program");
       Console.WriteLine();
       Console.Write("Enter selection: ");
@@ -67,6 +71,14 @@ internal static class Program
           case "5":
             IndexLocalFiles();
             break;
+          
+          case "6":
+            LookupFileId();
+            break;
+          
+          case "7":
+            TestTrigramExtractor();
+            break;
 
           case "x":
             finished = true;
@@ -92,6 +104,8 @@ internal static class Program
   private static bool IsOpen { get; set; } = false;
 
   private static DiskBTree<long, long> InternalFileIdTree { get; set; }
+  
+  private static DiskBTree<TrigramKey, short> TrigramTree { get; set; }
 
   // /////////////////////////////////////////////////////////////////////////////////////////////
   // Private Static Methods
@@ -108,7 +122,7 @@ internal static class Program
 
   private static void ViewFilesAndFolders()
   {
-    foreach (string filePath in Directory.GetFiles("/home/codespace/OpenSquiggly", "*.*", SearchOption.AllDirectories))
+    foreach (string filePath in Directory.GetFiles("/home/kdietz/dev/OpenSquiggly", "*.*", SearchOption.AllDirectories))
     {
       Console.WriteLine(filePath);
     }
@@ -183,6 +197,7 @@ internal static class Program
     {
       Console.WriteLine($"File name '{filename}' does not exist.");
       Console.WriteLine("Use option 1 from the Main Menu to create a new file");
+      Pause();
       return;
     }
 
@@ -197,7 +212,7 @@ internal static class Program
         DiskBlockManager.LongBlockType
       );
 
-    InternalFileIdTree = fileIdTreeFactory.LoadExisting(headerBlock.Address1);
+    InternalFileIdTree = new DiskBTree<long, long>(fileIdTreeFactory, headerBlock.Address1);
 
     Console.WriteLine($"InternalFileIdTree Loaded from Address: {headerBlock.Address1}");
 
@@ -233,14 +248,55 @@ internal static class Program
 
     Console.WriteLine("Indexing files ...");
 
-    foreach (string filePath in Directory.GetFiles("/home/codespace/OpenSquiggly", "*.*", SearchOption.AllDirectories))
+    foreach (string filePath in Directory.GetFiles("/home/kdietz/dev/OpenSquiggly", "*.*", SearchOption.AllDirectories))
     {
       Console.WriteLine($"{currentFileId} : {filePath}");
       DiskImmutableString nameString = DiskBlockManager.ImmutableStringFactory.Append(filePath);
       InternalFileIdTree.Insert(currentFileId, nameString.Address);
+      currentFileId++;
     }
 
     Pause();
-  }  
+  }
+
+  private static void LookupFileId()
+  {
+    Console.WriteLine();
+    Console.Write("Enter internal file id: ");
+    string response = Console.ReadLine();
+    if (int.TryParse(response, out int responseVal))
+    {
+      long nameAddress = InternalFileIdTree.Find(responseVal);
+      Console.WriteLine($"Name Address = {nameAddress}");
+      DiskImmutableString nameString = DiskBlockManager.ImmutableStringFactory.LoadExisting(nameAddress);
+      Console.WriteLine($"Name = {nameString.GetValue()}");
+    }
+    else
+    {
+      Console.WriteLine("Invalid Response. Enter an integer value next time.");
+    }
+
+    Pause();
+  }
+
+  private static void TestTrigramExtractor()
+  {
+    Console.WriteLine();
+    Console.Write("Enter a string: ");
+    string response = Console.ReadLine();
+
+    var trigramExtractor = new TrigramExtractor(response);
+
+    foreach (TrigramInfo trigramInfo in trigramExtractor)
+    {
+      char ch1 = (char)(trigramInfo.Key / 128L / 128L);
+      char ch2 = (char)(trigramInfo.Key % (128L * 128L) / 128L);
+      char ch3 = (char)(trigramInfo.Key % 128L);
+      
+      Console.WriteLine($"Key = {trigramInfo.Key}  Trigram = '{ch1}{ch2}{ch3}'  Position = {trigramInfo.Position}");
+    }
+
+    Pause();
+  }
 }
 

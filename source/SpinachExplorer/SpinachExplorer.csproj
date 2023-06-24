@@ -11,4 +11,8 @@
       <PackageReference Include="Eugene" />
     </ItemGroup>
 
+    <ItemGroup>
+      <ProjectReference Include="..\Spinach\Spinach.csproj" />
+    </ItemGroup>
+
 </Project>
