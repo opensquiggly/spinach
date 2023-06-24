@@ -71,11 +71,11 @@ internal static class Program
           case "5":
             IndexLocalFiles();
             break;
-          
+
           case "6":
             LookupFileId();
             break;
-          
+
           case "7":
             TestTrigramExtractor();
             break;
@@ -104,7 +104,7 @@ internal static class Program
   private static bool IsOpen { get; set; } = false;
 
   private static DiskBTree<long, long> InternalFileIdTree { get; set; }
-  
+
   private static DiskBTree<TrigramKey, short> TrigramTree { get; set; }
 
   // /////////////////////////////////////////////////////////////////////////////////////////////
@@ -154,9 +154,9 @@ internal static class Program
     DiskBlockManager.Close();
     DiskBlockManager.CreateOrOpen(filename);
 
-    DiskBTreeFactory<long, long> fileIdTreeFactory = 
+    DiskBTreeFactory<long, long> fileIdTreeFactory =
       DiskBlockManager.BTreeManager.CreateFactory<long, long>(
-        DiskBlockManager.LongBlockType, 
+        DiskBlockManager.LongBlockType,
         DiskBlockManager.LongBlockType
       );
 
@@ -206,9 +206,9 @@ internal static class Program
 
     HeaderBlock headerBlock = DiskBlockManager.GetHeaderBlock();
 
-    DiskBTreeFactory<long, long> fileIdTreeFactory = 
+    DiskBTreeFactory<long, long> fileIdTreeFactory =
       DiskBlockManager.BTreeManager.CreateFactory<long, long>(
-        DiskBlockManager.LongBlockType, 
+        DiskBlockManager.LongBlockType,
         DiskBlockManager.LongBlockType
       );
 
@@ -292,7 +292,7 @@ internal static class Program
       char ch1 = (char)(trigramInfo.Key / 128L / 128L);
       char ch2 = (char)(trigramInfo.Key % (128L * 128L) / 128L);
       char ch3 = (char)(trigramInfo.Key % 128L);
-      
+
       Console.WriteLine($"Key = {trigramInfo.Key}  Trigram = '{ch1}{ch2}{ch3}'  Position = {trigramInfo.Position}");
     }
 

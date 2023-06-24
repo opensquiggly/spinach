@@ -41,5 +41,5 @@ public struct TrigramKey : IComparable<TrigramKey>, IComparable
     return 0;
   }
 
-  public int CompareTo(object obj) => CompareTo((TrigramKey) obj);
+  public int CompareTo(object obj) => CompareTo((TrigramKey)obj);
 }
