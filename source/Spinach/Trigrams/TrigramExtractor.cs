@@ -8,7 +8,7 @@ public class TrigramExtractor : IEnumerable<TrigramInfo>
   {
     Input = input;
   }
-  
+
   public string Input { get; }
 
   public IEnumerator<TrigramInfo> GetEnumerator()
@@ -17,14 +17,14 @@ public class TrigramExtractor : IEnumerable<TrigramInfo>
     TrigramInfo trigramInfo = default;
     char[] buffer = new char[3];
     int trigramStartIndex = 0;
-    
+
     // var fileContent = File.ReadAllText(FileName);
 
     if (Input.Length >= 3)
     {
       buffer[0] = Input[0];
       buffer[1] = Input[1];
-      
+
       for (int i = 2; i < Input.Length; i++)
       {
         buffer[(trigramStartIndex + 2) % 3] = Input[i];
@@ -36,7 +36,7 @@ public class TrigramExtractor : IEnumerable<TrigramInfo>
 
         trigramInfo.Position = i - 2;
         trigramStartIndex = (trigramStartIndex + 1) % 3;
-        
+
         yield return trigramInfo;
       }
     }
