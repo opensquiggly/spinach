@@ -1,6 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
+    <TargetFramework>net7.0</TargetFramework>
     <IsPackable>true</IsPackable>
     <RootNamespace>Spinach</RootNamespace>
     <PackageOutputPath>./bin/Packages</PackageOutputPath>    
@@ -15,6 +16,12 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Eugene" />
+    <Reference Include="Eugene">
+      <HintPath>..\..\..\eugene\source\Eugene\bin\Debug\net7.0\Eugene.dll</HintPath>
+    </Reference>
   </ItemGroup>
+
+<!--  <ItemGroup>-->
+<!--    <PackageReference Include="Eugene" />-->
+<!--  </ItemGroup>-->
 </Project>
