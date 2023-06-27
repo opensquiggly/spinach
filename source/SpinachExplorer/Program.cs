@@ -17,7 +17,7 @@ internal static class Program
   {
     DiskBlockManager = new DiskBlockManager();
     TrigramKeyType = DiskBlockManager.RegisterBlockType<TrigramKey>();
-    
+
     // The FileIdTree is used to look up file names based on their internal id
     // Given a key of internal file id, it returns an address to a DiskImmutableString
     FileIdTreeFactory =
@@ -33,7 +33,7 @@ internal static class Program
         DiskBlockManager.IntBlockType,
         DiskBlockManager.LongBlockType
       );
-    
+
     // The TrigramFileTree is used to look up a file for a given trigram. Each individual trigram
     // corresponds to a BTree of file ids that contain that trigram. Given a key of an internal
     // file id, it returns an address to a DiskLinkedList<long> which is a list that contains the
@@ -116,7 +116,7 @@ internal static class Program
           case "7":
             TestTrigramExtractor();
             break;
-          
+
           case "8":
             IndexFiles();
             break;
@@ -149,17 +149,17 @@ internal static class Program
   private static DiskBTree<int, long> TrigramTree { get; set; }
 
   private static short TrigramKeyType { get; set; }
-  
+
   private static DiskBTreeFactory<long, long> FileIdTreeFactory { get; set; }
-  
+
   private static DiskBTreeFactory<int, long> TrigramTreeFactory { get; set; }
-  
+
   private static DiskBTreeFactory<long, long> TrigramFileTreeFactory { get; set; }
-  
+
   private static DiskLinkedListFactory<long> LinkedListOfLongFactory { get; set; }
-  
+
   private static LruCache<int, DiskBTree<long, long>> TrigramFileIdTreeCache { get; set; }
-  
+
   private static LruCache<Tuple<int, long>, DiskLinkedList<long>> PostingsListCache { get; set; }
 
   // /////////////////////////////////////////////////////////////////////////////////////////////
@@ -310,13 +310,13 @@ internal static class Program
   private static void LookupFileId()
   {
     Console.WriteLine();
-    
+
     Console.Write("Enter first internal file id: ");
     string firstResponse = Console.ReadLine();
-    
+
     Console.Write("Enter last internal file id: ");
     string lastResponse = Console.ReadLine();
-    
+
     if (int.TryParse(firstResponse, out int firstFileId) && int.TryParse(lastResponse, out int lastFileId))
     {
       for (int fileId = firstFileId; fileId <= lastFileId; fileId++)
@@ -336,12 +336,12 @@ internal static class Program
 
   private static bool FileIsBinary(string filename)
   {
-    var buffer = new byte[8192];
+    byte[] buffer = new byte[8192];
 
-    using (var fileStream = File.OpenRead(filename))
+    using (FileStream fileStream = File.OpenRead(filename))
     {
-      var bytesRead = fileStream.Read(buffer, 0, buffer.Length);
-        
+      int bytesRead = fileStream.Read(buffer, 0, buffer.Length);
+
       for (int i = 0; i < bytesRead; i++)
       {
         if (buffer[i] < 0x09)
@@ -350,8 +350,8 @@ internal static class Program
         }
       }
     }
-    
-    return false;     
+
+    return false;
   }
 
   private static void TestTrigramExtractor()
@@ -359,12 +359,12 @@ internal static class Program
     // Console.WriteLine();
     // Console.Write("Enter a string: ");
     // string response = Console.ReadLine();
-    
+
     Console.WriteLine();
-    
+
     Console.Write("Enter first internal file id: ");
     string firstResponse = Console.ReadLine();
-    
+
     Console.Write("Enter last internal file id: ");
     string lastResponse = Console.ReadLine();
 
@@ -381,18 +381,18 @@ internal static class Program
           Console.Write(".");
           continue;
         }
-        
+
         if (name.Contains("/obj/"))
         {
           Console.Write(".");
           continue;
         }
-        
+
         if (name.Contains("/bin/"))
         {
           Console.Write(".");
           continue;
-        }        
+        }
 
         if (name.Contains("node_modules"))
         {
@@ -413,10 +413,10 @@ internal static class Program
         }
 
         string content = File.ReadAllText(name);
-        
+
         var trigramExtractor = new TrigramExtractor(content);
         int count = 0;
-        
+
         foreach (TrigramInfo trigramInfo in trigramExtractor)
         {
           char ch1 = (char)(trigramInfo.Key / 128L / 128L);
@@ -426,8 +426,8 @@ internal static class Program
           Console.Write(".");
 
           // Console.WriteLine($"Key = {trigramInfo.Key}  Position = {trigramInfo.Position}");
-        } 
-        
+        }
+
         Console.WriteLine($"{fileId} : {count} : {nameString.GetValue()}");
         // Console.WriteLine($"{fileId} : {count}");
       }
@@ -439,21 +439,21 @@ internal static class Program
   private static DiskBTree<long, long> LoadOrAddTrigramFileIdTree(int trigramKey, long fileId, out bool created)
   {
     created = false;
-    
+
     if (TrigramFileIdTreeCache.TryGetValue(trigramKey, out DiskBTree<long, long> btree))
     {
       return btree;
     }
-    
+
     if (TrigramTree.TryFind(trigramKey, out long trigramFileIdTreeAddress))
     {
-      DiskBTree<long, long> trigramFileIdTree = 
+      DiskBTree<long, long> trigramFileIdTree =
         TrigramFileTreeFactory.LoadExisting(trigramFileIdTreeAddress);
 
       TrigramFileIdTreeCache.Add(trigramKey, trigramFileIdTree);
       return trigramFileIdTree;
     }
-    
+
     DiskBTree<long, long> newTrigramFileIdTree = TrigramFileTreeFactory.AppendNew(100);
     DiskLinkedList<long> linkedList = LinkedListOfLongFactory.AppendNew();
     newTrigramFileIdTree.Insert(fileId, linkedList.Address);
@@ -497,14 +497,14 @@ internal static class Program
 
     return newPostingsList2;
   }
-  
+
   private static void IndexFiles()
   {
     Console.WriteLine();
-    
+
     Console.Write("Enter first internal file id: ");
     string firstResponse = Console.ReadLine();
-    
+
     Console.Write("Enter last internal file id: ");
     string lastResponse = Console.ReadLine();
 
@@ -520,16 +520,16 @@ internal static class Program
         {
           continue;
         }
-        
+
         if (name.Contains("/obj/"))
         {
           continue;
         }
-        
+
         if (name.Contains("/bin/"))
         {
           continue;
-        }        
+        }
 
         if (name.Contains("node_modules"))
         {
@@ -549,7 +549,7 @@ internal static class Program
         Console.Write($"Indexing {fileId} : {name} ...");
 
         string content = File.ReadAllText(name);
-        
+
         var trigramExtractor = new TrigramExtractor(content);
         int count = 0;
 
@@ -587,13 +587,13 @@ internal static class Program
           // }
 
           count++;
-        } 
-        
+        }
+
         Console.WriteLine();
       }
     }
 
     Pause();
-  }  
+  }
 }
 
