@@ -79,6 +79,7 @@ internal static class Program
       Console.WriteLine("6. Lookup file id");
       Console.WriteLine("7. Test trigram extractor");
       Console.WriteLine("8. Index files");
+      Console.WriteLine("9. Print Files for Trigram");
       Console.WriteLine("X. Exit program");
       Console.WriteLine();
       Console.Write("Enter selection: ");
@@ -119,6 +120,10 @@ internal static class Program
 
           case "8":
             IndexFiles();
+            break;
+
+          case "9":
+            PrintFilesForTrigram();
             break;
 
           case "x":
@@ -209,8 +214,8 @@ internal static class Program
     DiskBlockManager.Close();
     DiskBlockManager.CreateOrOpen(filename);
 
-    InternalFileIdTree = FileIdTreeFactory.AppendNew(100);
-    TrigramTree = TrigramTreeFactory.AppendNew(100);
+    InternalFileIdTree = FileIdTreeFactory.AppendNew(25);
+    TrigramTree = TrigramTreeFactory.AppendNew(25);
 
     HeaderBlock headerBlock = DiskBlockManager.GetHeaderBlock();
     headerBlock.Address1 = InternalFileIdTree.Address;
@@ -454,7 +459,7 @@ internal static class Program
       return trigramFileIdTree;
     }
 
-    DiskBTree<long, long> newTrigramFileIdTree = TrigramFileTreeFactory.AppendNew(100);
+    DiskBTree<long, long> newTrigramFileIdTree = TrigramFileTreeFactory.AppendNew(25);
     DiskLinkedList<long> linkedList = LinkedListOfLongFactory.AppendNew();
     newTrigramFileIdTree.Insert(fileId, linkedList.Address);
     TrigramTree.Insert(trigramKey, newTrigramFileIdTree.Address);
@@ -555,42 +560,81 @@ internal static class Program
 
         foreach (TrigramInfo trigramInfo in trigramExtractor)
         {
-          char ch1 = (char)(trigramInfo.Key / 128L / 128L);
-          char ch2 = (char)(trigramInfo.Key % (128L * 128L) / 128L);
-          char ch3 = (char)(trigramInfo.Key % 128L);
+          // char ch1 = (char)(trigramInfo.Key / 128L / 128L);
+          // char ch2 = (char)(trigramInfo.Key % (128L * 128L) / 128L);
+          // char ch3 = (char)(trigramInfo.Key % 128L);
 
+          // Console.WriteLine($"Position: {trigramInfo.Position} ... '{ch1}{ch2}{ch3}'");
           DiskLinkedList<long> postingsList = LoadOrAddPostingsList(trigramInfo.Key, fileId);
           postingsList.AddLast(trigramInfo.Position);
-
-          // if (!TrigramTree.TryFind(trigramInfo.Key, out long trigramFileIdTreeAddress))
-          // {
-          //   DiskBTree<long, long> trigramFileIdTree = TrigramFileTreeFactory.AppendNew(100);
-          //   var linkedList = LinkedListOfLongFactory.AppendNew();
-          //   trigramFileIdTree.Insert(fileId, linkedList.Address);
-          //   TrigramTree.Insert(trigramInfo.Key, trigramFileIdTree.Address);
-          //   linkedList.AddLast(trigramInfo.Position);
-          // }
-          // else
-          // {
-          //   var trigramFileIdTree = TrigramFileTreeFactory.LoadExisting(trigramFileIdTreeAddress);
-          //   if (trigramFileIdTree.TryFind(fileId, out long linkedListAddress))
-          //   {
-          //     var linkedList = LinkedListOfLongFactory.LoadExisting(linkedListAddress);
-          //     linkedList.AddLast(trigramInfo.Position);
-          //   }
-          //   else
-          //   {
-          //     var linkedList = LinkedListOfLongFactory.AppendNew();
-          //     trigramFileIdTree.Insert(fileId, linkedList.Address);
-          //     linkedList.AddLast(trigramInfo.Position);
-          //   }
-          // }
 
           count++;
         }
 
-        Console.WriteLine();
+        Console.WriteLine($" {count} trigrams");
       }
+    }
+
+    Pause();
+  }
+
+  private static void PrintFilesForTrigram()
+  {
+    Console.WriteLine();
+
+    Console.Write("Enter trigram: ");
+    string trigram = Console.ReadLine();
+
+    int key = char.ToLower(trigram[0]) * 128 * 128 + char.ToLower(trigram[1]) * 128 + char.ToLower(trigram[2]);
+
+    if (!TrigramFileIdTreeCache.TryGetValue(key, out DiskBTree<long, long> trigramFileIdTree))
+    {
+      if (TrigramTree.TryFind(key, out long trigramFileIdTreeAddress))
+      {
+        trigramFileIdTree =
+          TrigramFileTreeFactory.LoadExisting(trigramFileIdTreeAddress);
+
+        TrigramFileIdTreeCache.Add(key, trigramFileIdTree);
+      }
+      else
+      {
+        trigramFileIdTree = null;
+      }
+    }
+
+    if (trigramFileIdTree == null)
+    {
+      Console.WriteLine($"No files found that contain the trigram: '{trigram}'");
+      return;
+    }
+
+    DiskBTreeNode<long, long>.Position position = trigramFileIdTree.GetFirst();
+    while (!position.IsPastTail)
+    {
+      if (!InternalFileIdTree.TryFind(position.Key, out long nameAddress))
+      {
+        Console.WriteLine($"File id not found: {position.Key}");
+        continue;
+      }
+
+      DiskImmutableString nameString = DiskBlockManager.ImmutableStringFactory.LoadExisting(nameAddress);
+      Console.WriteLine($"File Id: {position.Value} ... {nameString.GetValue()}");
+      // Console.WriteLine($"File Id: {position.Key}");
+      var postKey = new Tuple<int, long>(key, position.Key);
+
+      if (!PostingsListCache.TryGetValue(postKey, out DiskLinkedList<long> postingsList))
+      {
+        postingsList = LinkedListOfLongFactory.LoadExisting(position.Value);
+      }
+
+      DiskLinkedList<long>.Position postListPos = postingsList.GetFirst();
+      while (!postListPos.IsPastTail)
+      {
+        Console.WriteLine($"  At Postion: {postListPos.Value}");
+        postListPos.Next();
+      }
+
+      position.Next();
     }
 
     Pause();
