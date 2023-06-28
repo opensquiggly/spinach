@@ -22,12 +22,12 @@ public class TrigramExtractor : IEnumerable<TrigramInfo>
 
     if (Input.Length >= 3)
     {
-      buffer[0] = Input[0];
-      buffer[1] = Input[1];
+      buffer[0] = char.ToLower(Input[0]);
+      buffer[1] = char.ToLower(Input[1]);
 
       for (int i = 2; i < Input.Length; i++)
       {
-        buffer[(trigramStartIndex + 2) % 3] = Input[i];
+        buffer[(trigramStartIndex + 2) % 3] = char.ToLower(Input[i]);
         trigramInfo.Key =
           buffer[trigramStartIndex] * 128 * 128 +
           buffer[(trigramStartIndex + 1) % 3] * 128 +

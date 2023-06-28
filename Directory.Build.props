@@ -9,7 +9,7 @@
     <RepositoryUrl>https://github.com/opensquiggly/spinach.git</RepositoryUrl>
     <PackageProjectUrl>https://github.com/opensquiggly/spinach</PackageProjectUrl>
     <PackageTags>OpenSquiggly; Spinach; Popeye; Zoekt; RegularExpression; RegularExpressions; RegEx; Persistent; Persistence; TextIndexing; TextSearch; Trigram; Trigrams; TrigramIndexing; CodeSearch;</PackageTags>
-    <PackageVersion>1.0.0-alpha.3</PackageVersion>
+    <PackageVersion>1.0.0-alpha.4</PackageVersion>
     <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
     <PackageIcon>Logo.png</PackageIcon>
     <PackageReadmeFile>README.md</PackageReadmeFile>

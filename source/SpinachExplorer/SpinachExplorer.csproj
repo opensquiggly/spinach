@@ -1,6 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
+        <TargetFramework>net7.0</TargetFramework>
         <OutputType>Exe</OutputType>
         <TargetFramework>net7.0</TargetFramework>
         <ImplicitUsings>enable</ImplicitUsings>
@@ -8,11 +9,21 @@
     </PropertyGroup>
 
     <ItemGroup>
+      <ProjectReference Include="..\Spinach\Spinach.csproj" />
+    </ItemGroup>
+
+<!--    <ItemGroup>-->
+<!--      <Reference Include="Eugene">-->
+<!--        <HintPath>..\..\..\eugene\source\Eugene\bin\Debug\net7.0\Eugene.dll</HintPath>-->
+<!--      </Reference>-->
+<!--    </ItemGroup>-->
+
+    <ItemGroup>
       <PackageReference Include="Eugene" />
     </ItemGroup>
 
-    <ItemGroup>
-      <ProjectReference Include="..\Spinach\Spinach.csproj" />
-    </ItemGroup>
+<!--    <ItemGroup>-->
+<!--      <PackageReference Include="Eugene" />-->
+<!--    </ItemGroup>-->
 
 </Project>
