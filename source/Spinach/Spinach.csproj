@@ -15,10 +15,14 @@
     <None Include="..\..\LICENSE" Pack="true" PackagePath="\" />
   </ItemGroup>
 
+<!--  <ItemGroup>-->
+<!--    <Reference Include="Eugene">-->
+<!--      <HintPath>..\..\..\eugene\source\Eugene\bin\Debug\net7.0\Eugene.dll</HintPath>-->
+<!--    </Reference>-->
+<!--  </ItemGroup>-->
+
   <ItemGroup>
-    <Reference Include="Eugene">
-      <HintPath>..\..\..\eugene\source\Eugene\bin\Debug\net7.0\Eugene.dll</HintPath>
-    </Reference>
+    <PackageReference Include="Eugene" />
   </ItemGroup>
 
 <!--  <ItemGroup>-->
