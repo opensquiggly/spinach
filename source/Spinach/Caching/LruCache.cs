@@ -1,4 +1,4 @@
-namespace SpinachExplorer.Caching;
+namespace Spinach.Caching;
 
 public class LruCache<TKey, TValue>
 {
