@@ -8,7 +8,7 @@ internal static partial class Program
 
     Console.Write("Enter trigram 1: ");
     string trigram1 = Console.ReadLine();
-    
+
     Console.Write("Enter trigram 2: ");
     string trigram2 = Console.ReadLine();
 
@@ -18,14 +18,14 @@ internal static partial class Program
     DiskBTree<long, long> tree1 = TextSearchIndex.LoadTrigramFileIdTree(key1);
     DiskBTree<long, long> tree2 = TextSearchIndex.LoadTrigramFileIdTree(key2);
 
-    var intersection = tree1.FastIntersect<long>(tree2);
-    
+    IEnumerable<long> intersection = tree1.FastIntersect<long>(tree2);
+
     try
     {
       foreach (long fileId in intersection)
       {
         long nameAddress = TextSearchIndex.InternalFileIdTree.Find(fileId);
-        var nameString = TextSearchIndex.DiskBlockManager.ImmutableStringFactory.LoadExisting(nameAddress);
+        DiskImmutableString nameString = TextSearchIndex.DiskBlockManager.ImmutableStringFactory.LoadExisting(nameAddress);
         Console.WriteLine($"Match on FileId = {fileId} : {nameString.GetValue()}");
       }
     }

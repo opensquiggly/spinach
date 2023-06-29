@@ -11,7 +11,7 @@ public class TrigramFileEnumerator : IEnumerable<TrigramFileInfo>
     LruCache<int, DiskBTree<long, long>> trigramFileIdTreeCache,
     DiskBTree<int, long> trigramTree,
     DiskBTreeFactory<long, long> trigramFileTreeFactory,
-    DiskBTree<long, long> internalFileIdTree, 
+    DiskBTree<long, long> internalFileIdTree,
     LruCache<Tuple<int, long>, DiskLinkedList<long>> postingsListCache,
     DiskLinkedListFactory<long> linkedListOfLongFactory,
     int trigramKey
@@ -25,21 +25,21 @@ public class TrigramFileEnumerator : IEnumerable<TrigramFileInfo>
     LinkedListOfLongFactory = linkedListOfLongFactory;
     TrigramKey = trigramKey;
   }
-  
+
   private int TrigramKey { get; set; }
-  
+
   private DiskBTree<int, long> TrigramTree { get; set; }
 
   private LruCache<int, DiskBTree<long, long>> TrigramFileIdTreeCache { get; }
-  
+
   private DiskBTreeFactory<long, long> TrigramFileTreeFactory { get; set; }
-  
+
   private DiskBTree<long, long> InternalFileIdTree { get; set; }
-  
+
   private LruCache<Tuple<int, long>, DiskLinkedList<long>> PostingsListCache { get; set; }
 
   private DiskLinkedListFactory<long> LinkedListOfLongFactory { get; set; }
-  
+
   public IEnumerator<TrigramFileInfo> GetEnumerator()
   {
     if (!TrigramFileIdTreeCache.TryGetValue(TrigramKey, out DiskBTree<long, long> trigramFileIdTree))
@@ -86,8 +86,8 @@ public class TrigramFileEnumerator : IEnumerable<TrigramFileInfo>
 
       cursor.MoveNext();
     }
-    
-    exitEnumeration: ;
+
+  exitEnumeration:;
   }
 
   IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();

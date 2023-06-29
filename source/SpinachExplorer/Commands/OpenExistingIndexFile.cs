@@ -15,7 +15,7 @@ internal static partial class Program
       Pause();
       return;
     }
-    
+
     TextSearchIndex.OpenExistingIndexFile(filename);
 
     Console.WriteLine($"Index file {filename} is now open for exploration.");

@@ -25,7 +25,7 @@ public class TextSearchIndex
     RepoInternalIdTable = new RepoInternalIdTable(DiskBlockManager);
     FileExternalIdTable = new FileExternalIdTable(DiskBlockManager);
     FileInternalIdTable = new FileInternalIdTable(DiskBlockManager);
-    
+
     DiskBlockManager = new DiskBlockManager();
     TrigramKeyType = DiskBlockManager.RegisterBlockType<TrigramKey>();
 
@@ -77,7 +77,7 @@ public class TextSearchIndex
   private FileInternalIdTable FileInternalIdTable { get; }
 
   private FileExternalIdTable FileExternalIdTable { get; }
-  
+
   public string FileName { get; set; }
 
   public bool IsOpen { get; set; } = false;
@@ -105,7 +105,7 @@ public class TextSearchIndex
   // /////////////////////////////////////////////////////////////////////////////////////////////
 
   private long GetNextInternalRepoId() => 0;
-  
+
   public DiskBTree<long, long> LoadTrigramFileIdTree(int trigramKey)
   {
     if (TrigramFileIdTreeCache.TryGetValue(trigramKey, out DiskBTree<long, long> btree))
@@ -148,12 +148,12 @@ public class TextSearchIndex
   private DiskLinkedList<long> LoadPostingsList(int trigramKey, long fileId)
   {
     var key = new Tuple<int, long>(trigramKey, fileId);
-    
+
     if (PostingsListCache.TryGetValue(key, out DiskLinkedList<long> postingsList))
     {
       return postingsList;
     }
-    
+
     DiskBTree<long, long> trigramFileIdTree = LoadTrigramFileIdTree(trigramKey);
     if (trigramFileIdTree == null)
     {
@@ -220,7 +220,7 @@ public class TextSearchIndex
       TrigramTree,
       TrigramFileTreeFactory,
       InternalFileIdTree,
-      PostingsListCache, 
+      PostingsListCache,
       LinkedListOfLongFactory,
       key
     );
@@ -304,7 +304,7 @@ public class TextSearchIndex
     Console.WriteLine($"TrigramTree Loaded from Address: {headerBlock.Address2}");
 
     IsOpen = true;
-    FileName = filename;    
+    FileName = filename;
   }
 
   public void IndexFiles(long firstFileId, long lastFileId)
@@ -389,6 +389,6 @@ public class TextSearchIndex
       long nameAddress = InternalFileIdTree.Find(fileId);
       DiskImmutableString nameString = DiskBlockManager.ImmutableStringFactory.LoadExisting(nameAddress);
       Console.WriteLine($"{fileId}: {nameString.GetValue()}");
-    }    
+    }
   }
 }

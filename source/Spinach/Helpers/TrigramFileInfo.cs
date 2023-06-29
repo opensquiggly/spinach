@@ -4,7 +4,7 @@ public struct TrigramFileInfo
 {
   public long FileId { get; set; }
   public long Position { get; set; }
-    
+
   public int CompareTo(TrigramFileInfo other)
   {
     if (this.FileId < other.FileId) return -1;
@@ -15,8 +15,5 @@ public struct TrigramFileInfo
     return 0;
   }
 
-  public bool Equals(TrigramFileInfo other)
-  {
-    return this.FileId == other.FileId;
-  }
+  public bool Equals(TrigramFileInfo other) => this.FileId == other.FileId;
 }

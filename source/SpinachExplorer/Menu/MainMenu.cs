@@ -13,7 +13,7 @@ internal static partial class Program
       ClearScreen();
       Console.WriteLine("\nWelcome to Spinach Explorer");
       Console.WriteLine();
-      
+
       if (TextSearchIndex.IsOpen)
       {
         Console.WriteLine($"The index file '{TextSearchIndex.FileName}' is currently open");
@@ -22,7 +22,7 @@ internal static partial class Program
       {
         Console.WriteLine("There is no current index file open");
       }
-      
+
       Console.WriteLine();
       Console.WriteLine("Main Menu");
       Console.WriteLine("---------");
