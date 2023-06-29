@@ -1,4 +1,4 @@
-namespace SpinachExplorer;
+namespace Spinach;
 
 public struct TrigramKey : IComparable<TrigramKey>, IComparable
 {
