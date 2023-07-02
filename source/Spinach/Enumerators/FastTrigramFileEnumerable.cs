@@ -13,7 +13,7 @@ public class FastTrigramFileEnumerable : IFastEnumerable<IFastEnumerator<Trigram
     DiskBTree<long, long> internalFileIdTree,
     LruCache<Tuple<int, long>, DiskLinkedList<long>> postingsListCache,
     DiskLinkedListFactory<long> linkedListOfLongFactory,
-    int trigramKey    
+    int trigramKey
   )
   {
     TrigramFileIdTreeCache = trigramFileIdTreeCache;
@@ -22,15 +22,15 @@ public class FastTrigramFileEnumerable : IFastEnumerable<IFastEnumerator<Trigram
     InternalFileIdTree = internalFileIdTree;
     PostingsListCache = postingsListCache;
     LinkedListOfLongFactory = linkedListOfLongFactory;
-    TrigramKey = trigramKey;    
+    TrigramKey = trigramKey;
   }
-  
+
   // /////////////////////////////////////////////////////////////////////////////////////////////
   // Private Properties
   // /////////////////////////////////////////////////////////////////////////////////////////////
 
   private DiskBTree<long, long> InternalFileIdTree { get; set; }
-  
+
   private DiskLinkedListFactory<long> LinkedListOfLongFactory { get; set; }
 
   private LruCache<Tuple<int, long>, DiskLinkedList<long>> PostingsListCache { get; set; }
@@ -42,7 +42,7 @@ public class FastTrigramFileEnumerable : IFastEnumerable<IFastEnumerator<Trigram
   private int TrigramKey { get; set; }
 
   private DiskBTree<int, long> TrigramTree { get; set; }
-  
+
   // /////////////////////////////////////////////////////////////////////////////////////////////
   // Public Properties
   // /////////////////////////////////////////////////////////////////////////////////////////////
@@ -60,7 +60,7 @@ public class FastTrigramFileEnumerable : IFastEnumerable<IFastEnumerator<Trigram
       InternalFileIdTree,
       PostingsListCache,
       LinkedListOfLongFactory,
-      TrigramKey      
+      TrigramKey
     );
   }
 }
