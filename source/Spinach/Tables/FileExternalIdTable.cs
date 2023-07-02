@@ -1,14 +1,12 @@
-using Eugene;
+namespace Spinach.Tables;
 
-namespace Spinach;
-
-public class FileInternalIdTable
+public class FileExternalIdTable
 {
   // /////////////////////////////////////////////////////////////////////////////////////////////
   // Constructors
   // /////////////////////////////////////////////////////////////////////////////////////////////
 
-  public FileInternalIdTable(DiskBlockManager diskBlockManager)
+  public FileExternalIdTable(DiskBlockManager diskBlockManager)
   {
     DiskBlockManager = diskBlockManager;
   }

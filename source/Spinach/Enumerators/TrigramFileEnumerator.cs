@@ -1,9 +1,4 @@
-namespace SpinachExplorer.Enumerators;
-
-using Eugene.Collections;
-using Spinach.Caching;
-using Spinach.Helpers;
-using System.Collections;
+namespace Spinach.Enumerators;
 
 public class TrigramFileEnumerator : IEnumerable<TrigramFileInfo>
 {
@@ -87,7 +82,8 @@ public class TrigramFileEnumerator : IEnumerable<TrigramFileInfo>
       cursor.MoveNext();
     }
 
-  exitEnumeration:;
+    exitEnumeration:
+      ;
   }
 
   IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
