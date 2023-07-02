@@ -119,7 +119,7 @@ public class FastTrigramFileEnumerator : IFastEnumerator<TrigramFileInfo, int>
       while (!PostingsListPosition.IsPastTail)
       {
         PostingsListPosition.Next();
-        if (PostingsListPosition.Value >= target.Position)
+        if (!PostingsListPosition.IsPastTail && PostingsListPosition.Value >= target.Position)
         {
           CurrentKey = new TrigramFileInfo() { FileId = BTreeCursor.CurrentKey, Position = PostingsListPosition.Value };
           return true;
@@ -127,7 +127,17 @@ public class FastTrigramFileEnumerator : IFastEnumerator<TrigramFileInfo, int>
       }
     }
 
-    if (BTreeCursor.MoveUntilGreaterThanOrEqual(target.FileId))
+    bool hasValue;
+    if (BTreeCursor.CurrentKey == target.FileId)
+    {
+      hasValue = BTreeCursor.MoveNext();
+    }
+    else
+    {
+      hasValue = BTreeCursor.MoveUntilGreaterThanOrEqual(target.FileId);
+    }
+
+    if (hasValue)
     {
       do
       {
@@ -139,16 +149,10 @@ public class FastTrigramFileEnumerator : IFastEnumerator<TrigramFileInfo, int>
         }
 
         PostingsListPosition = postingsList.GetFirst();
-        while (!PostingsListPosition.IsPastTail)
+        if (!PostingsListPosition.IsPastTail)
         {
-          if (PostingsListPosition.Value >= target.Position)
-          {
-            CurrentKey =
-              new TrigramFileInfo() { FileId = BTreeCursor.CurrentKey, Position = PostingsListPosition.Value };
-            return true;
-          }
-
-          PostingsListPosition.Next();
+          CurrentKey = new TrigramFileInfo() { FileId = BTreeCursor.CurrentKey, Position = PostingsListPosition.Value };
+          return true;
         }
       } while (BTreeCursor.MoveNext());
     }

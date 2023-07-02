@@ -2,6 +2,16 @@ namespace Spinach.Helpers;
 
 public struct TrigramFileInfo : IComparable<TrigramFileInfo>
 {
+  public TrigramFileInfo()
+  {
+  }
+
+  public TrigramFileInfo(long fileId, long position)
+  {
+    FileId = fileId;
+    Position = position;
+  }
+
   public long FileId { get; set; }
   public long Position { get; set; }
 

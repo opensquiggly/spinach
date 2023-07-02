@@ -7,6 +7,7 @@ public class FastLiteralEnumerable : IFastEnumerable<IFastEnumerator<TrigramFile
   // /////////////////////////////////////////////////////////////////////////////////////////////
 
   public FastLiteralEnumerable(
+    TextSearchIndex textSearchIndex,
     LruCache<int, DiskBTree<long, long>> trigramFileIdTreeCache,
     DiskBTree<int, long> trigramTree,
     DiskBTreeFactory<long, long> trigramFileTreeFactory,
@@ -16,6 +17,7 @@ public class FastLiteralEnumerable : IFastEnumerable<IFastEnumerator<TrigramFile
     string literal
   )
   {
+    TextSearchIndex = textSearchIndex;
     TrigramFileIdTreeCache = trigramFileIdTreeCache;
     TrigramTree = trigramTree;
     TrigramFileTreeFactory = trigramFileTreeFactory;
@@ -37,6 +39,8 @@ public class FastLiteralEnumerable : IFastEnumerable<IFastEnumerator<TrigramFile
 
   private LruCache<Tuple<int, long>, DiskLinkedList<long>> PostingsListCache { get; set; }
 
+  private TextSearchIndex TextSearchIndex { get; }
+
   private LruCache<int, DiskBTree<long, long>> TrigramFileIdTreeCache { get; }
 
   private DiskBTreeFactory<long, long> TrigramFileTreeFactory { get; set; }
@@ -54,6 +58,7 @@ public class FastLiteralEnumerable : IFastEnumerable<IFastEnumerator<TrigramFile
   public IFastEnumerator<TrigramFileInfo, int> GetFastEnumerator()
   {
     return new FastLiteralEnumerator(
+      TextSearchIndex,
       TrigramFileIdTreeCache,
       TrigramTree,
       TrigramFileTreeFactory,

@@ -228,6 +228,20 @@ public class TextSearchIndex
     );
   }
 
+  public FastLiteralEnumerable GetFastLiteralEnumerable(string literal)
+  {
+    return new FastLiteralEnumerable(
+      this,
+      TrigramFileIdTreeCache,
+      TrigramTree,
+      TrigramFileTreeFactory,
+      InternalFileIdTree,
+      PostingsListCache,
+      LinkedListOfLongFactory,
+      literal
+    );
+  }
+
   public long AddRepository(string externalRepoId, string repoName)
   {
     long internalId = RepoInternalIdTable.FindRepo(externalRepoId);
