@@ -214,7 +214,7 @@ public class TextSearchIndex
       key
     );
   }
-  
+
   public FastTrigramFileEnumerable GetFastTrigramFileEnumerable(int key)
   {
     return new FastTrigramFileEnumerable(
@@ -226,7 +226,7 @@ public class TextSearchIndex
       LinkedListOfLongFactory,
       key
     );
-  }  
+  }
 
   public long AddRepository(string externalRepoId, string repoName)
   {

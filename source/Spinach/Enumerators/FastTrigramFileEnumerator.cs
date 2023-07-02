@@ -13,7 +13,7 @@ public class FastTrigramFileEnumerator : IFastEnumerator<TrigramFileInfo, int>
     DiskBTree<long, long> internalFileIdTree,
     LruCache<Tuple<int, long>, DiskLinkedList<long>> postingsListCache,
     DiskLinkedListFactory<long> linkedListOfLongFactory,
-    int trigramKey  
+    int trigramKey
   )
   {
     TrigramFileIdTreeCache = trigramFileIdTreeCache;
@@ -25,30 +25,30 @@ public class FastTrigramFileEnumerator : IFastEnumerator<TrigramFileInfo, int>
     TrigramKey = trigramKey;
     Reset();
   }
-  
+
   // /////////////////////////////////////////////////////////////////////////////////////////////
   // Private Properties
   // /////////////////////////////////////////////////////////////////////////////////////////////
 
   private DiskBTreeCursor<long, long> BTreeCursor { get; set; }
-  
+
   private DiskBTree<long, long> InternalFileIdTree { get; set; }
-  
+
   private DiskLinkedListFactory<long> LinkedListOfLongFactory { get; set; }
-  
+
   private LruCache<Tuple<int, long>, DiskLinkedList<long>> PostingsListCache { get; set; }
-  
+
   private DiskLinkedList<long>.Position PostingsListPosition { get; set; }
 
   private DiskBTree<long, long> TrigramFileIdTree { get; set; }
-  
+
   private LruCache<int, DiskBTree<long, long>> TrigramFileIdTreeCache { get; }
-  
+
   private DiskBTreeFactory<long, long> TrigramFileTreeFactory { get; set; }
 
   private int TrigramKey { get; set; }
 
-  private DiskBTree<int, long> TrigramTree { get; set; }  
+  private DiskBTree<int, long> TrigramTree { get; set; }
 
   // /////////////////////////////////////////////////////////////////////////////////////////////
   // Public Properties
@@ -57,11 +57,11 @@ public class FastTrigramFileEnumerator : IFastEnumerator<TrigramFileInfo, int>
   object IEnumerator.Current => Current;
 
   public TrigramFileInfo Current => CurrentKey;
-  
+
   public int CurrentData { get; }
 
   public TrigramFileInfo CurrentKey { get; private set; }
-  
+
   // /////////////////////////////////////////////////////////////////////////////////////////////
   // Public Methods
   // /////////////////////////////////////////////////////////////////////////////////////////////
@@ -76,7 +76,7 @@ public class FastTrigramFileEnumerator : IFastEnumerator<TrigramFileInfo, int>
     {
       return false;
     }
-    
+
     if (PostingsListPosition != null)
     {
       PostingsListPosition.Next();
@@ -96,7 +96,7 @@ public class FastTrigramFileEnumerator : IFastEnumerator<TrigramFileInfo, int>
         postingsList = LinkedListOfLongFactory.LoadExisting(BTreeCursor.CurrentData);
       }
 
-      PostingsListPosition = postingsList.GetFirst();  
+      PostingsListPosition = postingsList.GetFirst();
       if (!PostingsListPosition.IsPastTail)
       {
         CurrentKey = new TrigramFileInfo() { FileId = BTreeCursor.CurrentKey, Position = PostingsListPosition.Value };
@@ -122,7 +122,7 @@ public class FastTrigramFileEnumerator : IFastEnumerator<TrigramFileInfo, int>
         if (PostingsListPosition.Value >= target.Position)
         {
           CurrentKey = new TrigramFileInfo() { FileId = BTreeCursor.CurrentKey, Position = PostingsListPosition.Value };
-          return true;          
+          return true;
         }
       }
     }
@@ -168,11 +168,11 @@ public class FastTrigramFileEnumerator : IFastEnumerator<TrigramFileInfo, int>
         TrigramFileIdTreeCache.Add(TrigramKey, trigramFileIdTree);
       }
     }
-    
+
     TrigramFileIdTree = trigramFileIdTree;
 
     BTreeCursor = trigramFileIdTree.GetFirst();
-    
+
     // The Reset() method should position itself before the first item
     BTreeCursor.MovePrevious();
     PostingsListPosition = null;

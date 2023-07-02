@@ -82,8 +82,8 @@ public class TrigramFileEnumerator : IEnumerable<TrigramFileInfo>
       cursor.MoveNext();
     }
 
-    exitEnumeration:
-      ;
+  exitEnumeration:
+    ;
   }
 
   IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
