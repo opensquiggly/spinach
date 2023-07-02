@@ -35,7 +35,9 @@ internal static partial class Program
       Console.WriteLine(" 7. Test trigram extractor");
       Console.WriteLine(" 8. Index files");
       Console.WriteLine(" 9. Print Files for Trigram");
-      Console.WriteLine("10. Print Files for Intersection of Two Trigrams");
+      Console.WriteLine("10. Print Files for Literal");
+      Console.WriteLine("11. Print Files for Intersection of Two Trigrams");
+      Console.WriteLine("12. Print Files for Intersection of Two Literals");
       Console.WriteLine("X. Exit program");
       Console.WriteLine();
       Console.Write("Enter selection: ");
@@ -83,7 +85,15 @@ internal static partial class Program
             break;
 
           case "10":
+            PrintLiteralsForTrigram();
+            break;
+
+          case "11":
             PrintFilesForTrigramIntersection();
+            break;
+
+          case "12":
+            PrintFilesForLiteralIntersection();
             break;
 
           case "x":
