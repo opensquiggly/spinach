@@ -1,15 +1,4 @@
-using Eugene;
-using Eugene.Blocks;
-using Spinach.Blocks;
-
 namespace Spinach;
-
-using Caching;
-using Eugene.Collections;
-using Helpers;
-using SpinachExplorer.Enumerators;
-using System.ComponentModel.Design.Serialization;
-using Trigrams;
 
 public class TextSearchIndex
 {
@@ -213,7 +202,7 @@ public class TextSearchIndex
 
   public void Close() => IsOpen = false;
 
-  public TrigramFileEnumerator GetTrigramFileEnumerator(int key)
+  public TrigramFileEnumerator GetTrigramFileEnumerable(int key)
   {
     return new TrigramFileEnumerator(
       TrigramFileIdTreeCache,
@@ -225,6 +214,19 @@ public class TextSearchIndex
       key
     );
   }
+  
+  public FastTrigramFileEnumerable GetFastTrigramFileEnumerable(int key)
+  {
+    return new FastTrigramFileEnumerable(
+      TrigramFileIdTreeCache,
+      TrigramTree,
+      TrigramFileTreeFactory,
+      InternalFileIdTree,
+      PostingsListCache,
+      LinkedListOfLongFactory,
+      key
+    );
+  }  
 
   public long AddRepository(string externalRepoId, string repoName)
   {

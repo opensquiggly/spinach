@@ -1,7 +1,5 @@
 namespace Spinach.Trigrams;
 
-using System.Collections;
-
 public class TrigramExtractor : IEnumerable<TrigramInfo>
 {
   public TrigramExtractor(string input)

@@ -15,18 +15,18 @@ internal static partial class Program
     int key1 = char.ToLower(trigram1[0]) * 128 * 128 + char.ToLower(trigram1[1]) * 128 + char.ToLower(trigram1[2]);
     int key2 = char.ToLower(trigram2[0]) * 128 * 128 + char.ToLower(trigram2[1]) * 128 + char.ToLower(trigram2[2]);
 
-    DiskBTree<long, long> tree1 = TextSearchIndex.LoadTrigramFileIdTree(key1);
-    DiskBTree<long, long> tree2 = TextSearchIndex.LoadTrigramFileIdTree(key2);
+    FastTrigramFileEnumerable enumerable1 = TextSearchIndex.GetFastTrigramFileEnumerable(key1);
+    FastTrigramFileEnumerable enumerable2 = TextSearchIndex.GetFastTrigramFileEnumerable(key2);
 
-    IEnumerable<long> intersection = tree1.FastIntersect<long>(tree2);
+    FastIntersectEnumerable<TrigramFileInfo, int> intersection = enumerable1.FastIntersect(enumerable2);
 
     try
     {
-      foreach (long fileId in intersection)
+      foreach (TrigramFileInfo tfi in intersection)
       {
-        long nameAddress = TextSearchIndex.InternalFileIdTree.Find(fileId);
+        long nameAddress = TextSearchIndex.InternalFileIdTree.Find(tfi.FileId);
         DiskImmutableString nameString = TextSearchIndex.DiskBlockManager.ImmutableStringFactory.LoadExisting(nameAddress);
-        Console.WriteLine($"Match on FileId = {fileId} : {nameString.GetValue()}");
+        Console.WriteLine($"Match on FileId = {tfi.FileId} at Position {tfi.Position} : {nameString.GetValue()}");
       }
     }
     catch (Exception e)
