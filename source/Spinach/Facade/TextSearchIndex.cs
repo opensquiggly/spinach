@@ -370,11 +370,6 @@ public class TextSearchIndex
 
       foreach (TrigramInfo trigramInfo in trigramExtractor)
       {
-        // char ch1 = (char)(trigramInfo.Key / 128L / 128L);
-        // char ch2 = (char)(trigramInfo.Key % (128L * 128L) / 128L);
-        // char ch3 = (char)(trigramInfo.Key % 128L);
-
-        // Console.WriteLine($"Position: {trigramInfo.Position} ... '{ch1}{ch2}{ch3}'");
         DiskLinkedList<long> postingsList = LoadOrAddPostingsList(trigramInfo.Key, fileId);
         postingsList.AddLast(trigramInfo.Position);
 
