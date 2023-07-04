@@ -96,7 +96,7 @@ internal static partial class Program
           case "12":
             PrintFilesForLiteralIntersection();
             break;
-          
+
           case "13":
             AnalyzeRegex();
             break;

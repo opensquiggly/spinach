@@ -14,7 +14,7 @@ public static class LiteralQueryBuilder
       return null;
     }
 
-    StringBuilder sb = new StringBuilder();
+    var sb = new StringBuilder();
 
     // Check if all subexpressions are single-character literals with no subexpressions
     foreach (NormalizedRegex sub in node.Subs)
@@ -31,7 +31,7 @@ public static class LiteralQueryBuilder
     // If we made it through the loop, the node represents a string literal
     return sb.ToString();
   }
-  
+
   // /////////////////////////////////////////////////////////////////////////////////////////////
   // Public Static Methods
   // /////////////////////////////////////////////////////////////////////////////////////////////
@@ -46,7 +46,7 @@ public static class LiteralQueryBuilder
       {
         return new LiteralQueryNode() { NodeType = LiteralQueryNodeTypes.Literal, Literal = literal };
       }
-      
+
       // Any literal less than 3 characters means we have to query all documents because
       // the smalling n-grams we index are trigrams
       return new LiteralQueryNode() { NodeType = LiteralQueryNodeTypes.AllDocuments };
@@ -57,9 +57,9 @@ public static class LiteralQueryBuilder
     switch (regex.Op)
     {
       case NormalizedOpTypes.Alternate:
-        foreach (var sub in regex.Subs)
+        foreach (NormalizedRegex sub in regex.Subs)
         {
-          var queryNode = BuildQuery(sub);
+          LiteralQueryNode queryNode = BuildQuery(sub);
           if (queryNode.NodeType == LiteralQueryNodeTypes.AllDocuments)
           {
             // If any subexpressions yield an "AllDocuments" result, then we just immediately
@@ -80,11 +80,11 @@ public static class LiteralQueryBuilder
           return subQueryNodes[0];
         }
         return new LiteralQueryNode() { NodeType = LiteralQueryNodeTypes.Union, Subs = subQueryNodes };
-      
+
       case NormalizedOpTypes.Concatenate:
-        foreach (var sub in regex.Subs)
+        foreach (NormalizedRegex sub in regex.Subs)
         {
-          var queryNode = BuildQuery(sub);
+          LiteralQueryNode queryNode = BuildQuery(sub);
           if (queryNode.NodeType == LiteralQueryNodeTypes.AllDocuments)
           {
             // If any subexpressions yield an "AllDocuments" result, then we just skip it
@@ -95,7 +95,7 @@ public static class LiteralQueryBuilder
 
           subQueryNodes.Add(queryNode);
         }
-        
+
         if (subQueryNodes.Count == 0)
         {
           return new LiteralQueryNode() { NodeType = LiteralQueryNodeTypes.AllDocuments };
@@ -105,7 +105,7 @@ public static class LiteralQueryBuilder
           return subQueryNodes[0];
         }
         return new LiteralQueryNode() { NodeType = LiteralQueryNodeTypes.Intersect, Subs = subQueryNodes };
-      
+
       default:
         return new LiteralQueryNode() { NodeType = LiteralQueryNodeTypes.AllDocuments };
     }
@@ -123,11 +123,11 @@ public static class LiteralQueryBuilder
     {
       Console.WriteLine($"{indent}NodeType: {queryNode.NodeType}");
     }
-   
+
     if (queryNode.Subs != null)
     {
       int index = 0;
-      foreach (var sub in queryNode.Subs)
+      foreach (LiteralQueryNode sub in queryNode.Subs)
       {
         Print(sub, depth + 1);
         index++;

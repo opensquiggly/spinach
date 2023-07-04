@@ -14,7 +14,7 @@ public static class RegexPrinter
       return null;
     }
 
-    StringBuilder sb = new StringBuilder();
+    var sb = new StringBuilder();
 
     // Check if all subexpressions are single-character literals with no subexpressions
     foreach (NormalizedRegex sub in node.Subs)
@@ -31,7 +31,7 @@ public static class RegexPrinter
     // If we made it through the loop, the node represents a string literal
     return sb.ToString();
   }
-  
+
   // /////////////////////////////////////////////////////////////////////////////////////////////
   // Public Static Methods
   // /////////////////////////////////////////////////////////////////////////////////////////////
@@ -39,7 +39,7 @@ public static class RegexPrinter
   public static void Print(NormalizedRegex regex, int depth = 0)
   {
     string indent = new string(' ', depth * 9);
-   
+
     string literal1 = GetStringLiteral(regex);
     if (literal1 != null)
     {
@@ -52,7 +52,7 @@ public static class RegexPrinter
       Console.WriteLine($"{indent}| Op: {regex.Op}, LitBegin = {regex.LitBegin}, LitEnd = {regex.LitEnd}");
     }
     else
-    {      
+    {
       Console.WriteLine($"{indent}| Op: {regex.Op}");
     }
 
@@ -60,7 +60,7 @@ public static class RegexPrinter
     if (regex.Subs != null)
     {
       int index = 0;
-      foreach (var sub in regex.Subs)
+      foreach (NormalizedRegex sub in regex.Subs)
       {
         string literal = GetStringLiteral(sub);
         if (literal != null)

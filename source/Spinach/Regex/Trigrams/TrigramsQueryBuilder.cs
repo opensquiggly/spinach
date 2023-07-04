@@ -423,9 +423,9 @@ public class TrigramsQueryBuilder
       PopulateTrigramsHelper(eps, accept, epoch);
     }
   }
-  
+
   private void PopulateLiterals(NFA nfa) => PopulateLiteralsHelper(nfa.Start, nfa.Accept, "", ++epoch);
-  
+
   private void PopulateLiteralsHelper(NFANode node, NFANode accept, string currentLiteral, int epoch)
   {
     // if (Seen(node, epoch))

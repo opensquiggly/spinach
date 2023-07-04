@@ -426,9 +426,9 @@ public class LiteralsQueryBuilder
       PopulateTrigramsHelper(eps, accept, epoch);
     }
   }
-  
+
   private void PopulateLiterals(NFA nfa) => PopulateLiteralsHelper(nfa.Start, nfa.Accept, ++epoch);
-  
+
   private void PopulateLiteralsHelper(NFANode node, NFANode accept, int epoch)
   {
     if (Seen(node, epoch))
@@ -453,7 +453,7 @@ public class LiteralsQueryBuilder
   /// <param name="accept">nfa node</param>
   /// <returns></returns>
   private IEnumerable<string> Trigrams(NFANode root, NFANode accept) => NgramSearch(root, accept, 3).Distinct();
-  
+
   private IEnumerable<string> Literals(NFANode root, NFANode accept) => LiteralsSearch(root, accept).Distinct();
 
   private List<string> NgramSearch(NFANode node, NFANode accept, int limit)
@@ -510,7 +510,7 @@ public class LiteralsQueryBuilder
 
     return results;
   }
-  
+
   private List<string> LiteralsSearch(NFANode node, NFANode accept)
   {
     // if (limit == 0)
@@ -561,18 +561,18 @@ public class LiteralsQueryBuilder
       //   CrossProduct(i, suffixes);
       //   results.AddRange(suffixes);
       // }
-      
+
       if (begin == end)
       {
         var suffixes = new List<string>();
         suffixes.AddRange(subResults);
         CrossProduct(begin, suffixes);
         results.AddRange(suffixes);
-      }      
+      }
     }
 
     return results;
-  }  
+  }
 
   /// <summary>
   /// Prefix each string in y with the string at codepoint x.
@@ -900,7 +900,7 @@ public class LiteralsQueryBuilder
 
     return nfa;
   }
-  
+
   // public class NFA
   // {
   //   public NFANode Start;
@@ -940,20 +940,20 @@ public class LiteralsQueryBuilder
     string indent = new string(' ', depth * 2);
 
     Console.WriteLine($"{indent}***********************");
-    
+
     if (node == accept)
     {
       Console.WriteLine($"{indent}NFA Node: Accept");
       return;
     }
-    
+
     // if (depth > 10)
     // {
     //   Console.WriteLine("Depth too deep");
     //   return;
     // }
 
-    
+
     Console.WriteLine($"{indent}NFA Node: {name}");
 
     Console.WriteLine($"{indent}LitBegin: {node.LitBegin}");
@@ -1001,7 +1001,7 @@ public class LiteralsQueryBuilder
         else
         {
           PrintNFANode($"{name}.EpsilonClosures[{x}]", node.EpsilonClosures[x], accept, depth + 1);
-        }        
+        }
       }
     }
     else
@@ -1023,7 +1023,7 @@ public class LiteralsQueryBuilder
         else
         {
           PrintNFANode($"{name}.ResidualEdges[{x}]", node.ResidualEdges[x], accept, depth + 1);
-        }          
+        }
       }
     }
     else

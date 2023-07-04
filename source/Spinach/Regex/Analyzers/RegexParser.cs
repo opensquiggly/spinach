@@ -162,11 +162,11 @@ public class RegexParser
 
     throw new Exception($"Unknown regexp operation: {re.op}");
   }
-  
+
   // /////////////////////////////////////////////////////////////////////////////////////////////
   // Public Static Methods
   // /////////////////////////////////////////////////////////////////////////////////////////////
-  
+
   public static NormalizedRegex Parse(string expr)
   {
     Regexp re = Parser.Parse(expr, RE2.PERL | RE2.PERL_X);
