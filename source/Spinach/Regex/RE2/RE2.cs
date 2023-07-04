@@ -187,7 +187,7 @@ public class RE2 : IRegexRunner
     Regexp re = Parser.Parse(expr, mode);
     int maxCap = re.maxCap(); // (may shrink during simplify)
     re = Simply.Simplify(re);
-    Prog prog = Compiler.compileRegexp(re);
+    Prog prog = Compiler.CompileRegexp(re);
     var re2 = new RE2(expr, prog, maxCap, longest);
     var prefixBuilder = new StringBuilder();
     re2.prefixComplete = prog.prefix(prefixBuilder);

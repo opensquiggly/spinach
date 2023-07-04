@@ -48,19 +48,19 @@ class Compiler
 
   private Compiler()
   {
-    newInst(Inst.InstOp.FAIL); // always the first instruction
+    NewInst(Inst.InstOp.FAIL); // always the first instruction
   }
 
-  public static Prog compileRegexp(Regexp re)
+  public static Prog CompileRegexp(Regexp re)
   {
     var c = new Compiler();
-    Frag f = c.compile(re);
-    c.prog.patch(f.@out, c.newInst(Inst.InstOp.MATCH).i);
+    Frag f = c.Compile(re);
+    c.prog.patch(f.@out, c.NewInst(Inst.InstOp.MATCH).i);
     c.prog.start = f.i;
     return c.prog;
   }
 
-  private Frag newInst(Inst.InstOp op)
+  private Frag NewInst(Inst.InstOp op)
   {
     // TODO(rsc): impose length limit.
     prog.addInst(op);
@@ -68,20 +68,20 @@ class Compiler
   }
 
   // Returns a no-op fragment.  Sometimes unavoidable.
-  private Frag nop()
+  private Frag Nop()
   {
-    Frag f = newInst(Inst.InstOp.NOP);
+    Frag f = NewInst(Inst.InstOp.NOP);
     f.@out = f.i << 1;
     return f;
   }
 
-  private Frag fail() => new Frag();
+  private static Frag fail() => new Frag();
 
   // Given fragment a, returns (a) capturing as \n.
   // Given a fragment a, returns a fragment with capturing parens around a.
-  private Frag cap(int arg)
+  private Frag Cap(int arg)
   {
-    Frag f = newInst(Inst.InstOp.CAPTURE);
+    Frag f = NewInst(Inst.InstOp.CAPTURE);
     f.@out = f.i << 1;
     prog.getInst(f.i).arg = arg;
     if (prog.numCap < arg + 1)
@@ -93,7 +93,7 @@ class Compiler
   }
 
   // Given fragments a and b, returns ab; a|b
-  private Frag cat(Frag f1, Frag f2)
+  private Frag Cat(Frag f1, Frag f2)
   {
     // concat of failure is failure
     if (f1.i == 0 || f2.i == 0)
@@ -107,7 +107,7 @@ class Compiler
   }
 
   // Given fragments for a and b, returns fragment for a|b.
-  private Frag alt(Frag f1, Frag f2)
+  private Frag Alt(Frag f1, Frag f2)
   {
     // alt of failure is other
     if (f1.i == 0)
@@ -120,7 +120,7 @@ class Compiler
       return f1;
     }
 
-    Frag f = newInst(Inst.InstOp.ALT);
+    Frag f = NewInst(Inst.InstOp.ALT);
     Inst i = prog.getInst(f.i);
     i.@out = f1.i;
     i.arg = f2.i;
@@ -129,9 +129,9 @@ class Compiler
   }
 
   // Given a fragment for a, returns a fragment for a? or a?? (if nongreedy)
-  private Frag quest(Frag f1, bool nongreedy)
+  private Frag Quest(Frag f1, bool nongreedy)
   {
-    Frag f = newInst(Inst.InstOp.ALT);
+    Frag f = NewInst(Inst.InstOp.ALT);
     Inst i = prog.getInst(f.i);
     if (nongreedy)
     {
@@ -149,9 +149,9 @@ class Compiler
   }
 
   // Given a fragment a, returns a fragment for a* or a*? (if nongreedy)
-  private Frag star(Frag f1, bool nongreedy)
+  private Frag Star(Frag f1, bool nongreedy)
   {
-    Frag f = newInst(Inst.InstOp.ALT);
+    Frag f = NewInst(Inst.InstOp.ALT);
     Inst i = prog.getInst(f.i);
     if (nongreedy)
     {
@@ -169,23 +169,23 @@ class Compiler
   }
 
   // Given a fragment for a, returns a fragment for a+ or a+? (if nongreedy)
-  private Frag plus(Frag f1, bool nongreedy) => new Frag(f1.i, star(f1, nongreedy).@out);
+  private Frag Plus(Frag f1, bool nongreedy) => new Frag(f1.i, Star(f1, nongreedy).@out);
 
   // op is a bitmask of EMPTY_* flags.
-  private Frag empty(int op)
+  private Frag Empty(int op)
   {
-    Frag f = newInst(Inst.InstOp.EMPTY_WIDTH);
+    Frag f = NewInst(Inst.InstOp.EMPTY_WIDTH);
     prog.getInst(f.i).arg = op;
     f.@out = f.i << 1;
     return f;
   }
 
-  private Frag rune(int r, int flags) => rune(new int[] { r }, flags);
+  private Frag Rune(int r, int flags) => rune(new int[] { r }, flags);
 
   // flags : parser flags
   private Frag rune(int[] runes, int flags)
   {
-    Frag f = newInst(Inst.InstOp.RUNE);
+    Frag f = NewInst(Inst.InstOp.RUNE);
     Inst i = prog.getInst(f.i);
     i.runes = runes;
     flags &= RE2.FOLD_CASE; // only relevant flag is FoldCase
@@ -221,26 +221,26 @@ class Compiler
   private static int[] ANY_RUNE_NOT_NL = { 0, '\n' - 1, '\n' + 1, Unicode.MAX_RUNE };
   private static int[] ANY_RUNE = { 0, Unicode.MAX_RUNE };
 
-  private Frag compile(Regexp re)
+  private Frag Compile(Regexp re)
   {
     switch (re.op)
     {
       case Regexp.Op.NO_MATCH:
         return fail();
       case Regexp.Op.EMPTY_MATCH:
-        return nop();
+        return Nop();
       case Regexp.Op.LITERAL:
         if (re.runes.Length == 0)
         {
-          return nop();
+          return Nop();
         }
         else
         {
           Frag f = null;
           foreach (int r in re.runes)
           {
-            Frag f1 = rune(r, re.flags);
-            f = (f == null) ? f1 : cat(f, f1);
+            Frag f1 = Rune(r, re.flags);
+            f = (f == null) ? f1 : Cat(f, f1);
           }
           return f;
         }
@@ -251,40 +251,40 @@ class Compiler
       case Regexp.Op.ANY_CHAR:
         return rune(ANY_RUNE, 0);
       case Regexp.Op.BEGIN_LINE:
-        return empty(Utils.EMPTY_BEGIN_LINE);
+        return Empty(Utils.EMPTY_BEGIN_LINE);
       case Regexp.Op.END_LINE:
-        return empty(Utils.EMPTY_END_LINE);
+        return Empty(Utils.EMPTY_END_LINE);
       case Regexp.Op.BEGIN_TEXT:
-        return empty(Utils.EMPTY_BEGIN_TEXT);
+        return Empty(Utils.EMPTY_BEGIN_TEXT);
       case Regexp.Op.END_TEXT:
-        return empty(Utils.EMPTY_END_TEXT);
+        return Empty(Utils.EMPTY_END_TEXT);
       case Regexp.Op.WORD_BOUNDARY:
-        return empty(Utils.EMPTY_WORD_BOUNDARY);
+        return Empty(Utils.EMPTY_WORD_BOUNDARY);
       case Regexp.Op.NO_WORD_BOUNDARY:
-        return empty(Utils.EMPTY_NO_WORD_BOUNDARY);
+        return Empty(Utils.EMPTY_NO_WORD_BOUNDARY);
       case Regexp.Op.CAPTURE:
         {
-          Frag bra = cap(re.cap << 1), sub = compile(re.subs[0]), ket = cap(re.cap << 1 | 1);
-          return cat(cat(bra, sub), ket);
+          Frag bra = Cap(re.cap << 1), sub = Compile(re.subs[0]), ket = Cap(re.cap << 1 | 1);
+          return Cat(Cat(bra, sub), ket);
         }
       case Regexp.Op.STAR:
-        return star(compile(re.subs[0]), (re.flags & RE2.NON_GREEDY) != 0);
+        return Star(Compile(re.subs[0]), (re.flags & RE2.NON_GREEDY) != 0);
       case Regexp.Op.PLUS:
-        return plus(compile(re.subs[0]), (re.flags & RE2.NON_GREEDY) != 0);
+        return Plus(Compile(re.subs[0]), (re.flags & RE2.NON_GREEDY) != 0);
       case Regexp.Op.QUEST:
-        return quest(compile(re.subs[0]), (re.flags & RE2.NON_GREEDY) != 0);
+        return Quest(Compile(re.subs[0]), (re.flags & RE2.NON_GREEDY) != 0);
       case Regexp.Op.CONCAT:
         if (re.subs.Length == 0)
         {
-          return nop();
+          return Nop();
         }
         else
         {
           Frag f = null;
           foreach (Regexp sub in re.subs)
           {
-            Frag f1 = compile(sub);
-            f = (f == null) ? f1 : cat(f, f1);
+            Frag f1 = Compile(sub);
+            f = (f == null) ? f1 : Cat(f, f1);
           }
 
           return f;
@@ -293,15 +293,15 @@ class Compiler
         {
           if (re.subs.Length == 0)
           {
-            return nop();
+            return Nop();
           }
           else
           {
             Frag f = null;
             foreach (Regexp sub in re.subs)
             {
-              Frag f1 = compile(sub);
-              f = (f == null) ? f1 : alt(f, f1);
+              Frag f1 = Compile(sub);
+              f = (f == null) ? f1 : Alt(f, f1);
             }
 
             return f;

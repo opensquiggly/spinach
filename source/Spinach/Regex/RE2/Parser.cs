@@ -341,7 +341,7 @@ public class Parser
     switch (re.op)
     {
       case Regexp.Op.CHAR_CLASS:
-        re.runes = new CharClass(re.runes).cleanClass().toArray();
+        re.runes = new CharClass(re.runes).CleanClass().ToArray();
         if (re.runes.Length == 2 && re.runes[0] == 0 && re.runes[1] == Unicode.MAX_RUNE)
         {
           re.runes = null;
@@ -1089,7 +1089,7 @@ public class Parser
               var cc1 = new CharClass();
               if (parseUnicodeClass(t, cc1))
               {
-                re.runes = cc1.toArray();
+                re.runes = cc1.ToArray();
                 push(re);
                 break;
               }
@@ -1099,7 +1099,7 @@ public class Parser
             var cc = new CharClass();
             if (parsePerlClassEscape(t, cc))
             {
-              re.runes = cc.toArray();
+              re.runes = cc.ToArray();
               push(re);
               break;
             }
@@ -1452,11 +1452,11 @@ public class Parser
         // src is simpler, so either literal or char class
         if (src.op == Regexp.Op.LITERAL)
         {
-          dst.runes = new CharClass(dst.runes).appendLiteral(src.runes[0], src.flags).toArray();
+          dst.runes = new CharClass(dst.runes).AppendLiteral(src.runes[0], src.flags).ToArray();
         }
         else
         {
-          dst.runes = new CharClass(dst.runes).appendClass(src.runes).toArray();
+          dst.runes = new CharClass(dst.runes).AppendClass(src.runes).ToArray();
         }
 
         break;
@@ -1470,9 +1470,9 @@ public class Parser
         dst.op = Regexp.Op.CHAR_CLASS;
         dst.runes =
           new CharClass()
-            .appendLiteral(dst.runes[0], dst.flags)
-            .appendLiteral(src.runes[0], src.flags)
-            .toArray();
+            .AppendLiteral(dst.runes[0], dst.flags)
+            .AppendLiteral(src.runes[0], src.flags)
+            .ToArray();
         break;
     }
   }
@@ -1778,7 +1778,7 @@ public class Parser
       return false;
     }
 
-    cc.appendGroup(g, (_flags & RE2.FOLD_CASE) != 0);
+    cc.AppendGroup(g, (_flags & RE2.FOLD_CASE) != 0);
     return true;
   }
 
@@ -1806,7 +1806,7 @@ public class Parser
       throw new PatternSyntaxException(ERR_INVALID_CHAR_RANGE, name);
     }
 
-    cc.appendGroup(g, (_flags & RE2.FOLD_CASE) != 0);
+    cc.AppendGroup(g, (_flags & RE2.FOLD_CASE) != 0);
     return true;
   }
 
@@ -1921,15 +1921,15 @@ public class Parser
     // Variation of CharClass.appendGroup() for tables.
     if ((_flags & RE2.FOLD_CASE) == 0 || fold == null)
     {
-      cc.appendTableWithSign(tab, sign);
+      cc.AppendTableWithSign(tab, sign);
     }
     else
     {
       // Merge and clean tab and fold in a temporary buffer.
       // This is necessary for the negative case and just tidy
       // for the positive case.
-      int[] tmp = new CharClass().appendTable(tab).appendTable(fold).cleanClass().toArray();
-      cc.appendClassWithSign(tmp, sign);
+      int[] tmp = new CharClass().AppendTable(tab).AppendTable(fold).CleanClass().ToArray();
+      cc.AppendClassWithSign(tmp, sign);
     }
 
     return true;
@@ -1958,7 +1958,7 @@ public class Parser
       // so that negation later will do the right thing.
       if ((_flags & RE2.CLASS_NL) == 0)
       {
-        cc.appendRange('\n', '\n');
+        cc.AppendRange('\n', '\n');
       }
     }
 
@@ -2029,23 +2029,23 @@ public class Parser
 
       if ((_flags & RE2.FOLD_CASE) == 0)
       {
-        cc.appendRange(lo, hi);
+        cc.AppendRange(lo, hi);
       }
       else
       {
-        cc.appendFoldedRange(lo, hi);
+        cc.AppendFoldedRange(lo, hi);
       }
     }
 
     t.skip(1); // ']'
 
-    cc.cleanClass();
+    cc.CleanClass();
     if (sign < 0)
     {
-      cc.negateClass();
+      cc.NegateClass();
     }
 
-    re.runes = cc.toArray();
+    re.runes = cc.ToArray();
     push(re);
   }
 

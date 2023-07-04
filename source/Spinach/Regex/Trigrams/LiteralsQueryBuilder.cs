@@ -5,18 +5,20 @@
 
 namespace Spinach.Regex.Trigrams;
 
-public class TrigramsQueryBuilder
+using System.Runtime.InteropServices.JavaScript;
+
+public class LiteralsQueryBuilder
 {
   private int _maxCharClassSize;
   private readonly int _maxTrigramsSetSize;
   private int _maxNfaNodes;
   private readonly int _infinity;
 
-  public TrigramsQueryBuilder() : this(10, 100, 1000)
+  public LiteralsQueryBuilder() : this(10, 100, 1000)
   {
   }
 
-  public TrigramsQueryBuilder(int maxCharClassSize, int maxTrigramsSetSize, int maxNFANodes)
+  public LiteralsQueryBuilder(int maxCharClassSize, int maxTrigramsSetSize, int maxNFANodes)
   {
     _maxCharClassSize = maxCharClassSize;
     _maxTrigramsSetSize = maxTrigramsSetSize;
@@ -29,7 +31,7 @@ public class TrigramsQueryBuilder
   /// character class [LitBegin-LitEnd]. If Op is kleeneStar, concatenate, or
   /// alternate, Sub is populated with subexpressions.
   /// </summary>
-  private class NormalizedRegex
+  public class NormalizedRegex
   {
     public NormalizedOpTypes Op;
     public List<NormalizedRegex> Subs;
@@ -37,7 +39,7 @@ public class TrigramsQueryBuilder
     public int LitEnd;
   }
 
-  private enum NormalizedOpTypes
+  public enum NormalizedOpTypes
   {
     KleeneStar = 0,
     Concatenate,
@@ -47,7 +49,7 @@ public class TrigramsQueryBuilder
     NoMatch
   }
 
-  private class NFA
+  public class NFA
   {
     public NFANode Start;
     public NFANode Accept;
@@ -62,7 +64,7 @@ public class TrigramsQueryBuilder
   /// Capacity is used by findCut (and populated in that method by calling
   /// populateCapacities). ResidualEdges is used only during min cut isolation.
   /// </summary>
-  private class NFANode
+  public class NFANode
   {
     public NFANode LitOut;
     public int LitBegin;
@@ -70,6 +72,7 @@ public class TrigramsQueryBuilder
     public List<NFANode> Epsilons = new List<NFANode>();
     public List<NFANode> EpsilonClosures = new List<NFANode>();
     public IEnumerable<string> Trigrams;
+    public IEnumerable<string> Literals;
     public int WhenSeen;
     public int Capacity;
     public List<NFANode> ResidualEdges = new List<NFANode>();
@@ -424,31 +427,23 @@ public class TrigramsQueryBuilder
     }
   }
   
-  private void PopulateLiterals(NFA nfa) => PopulateLiteralsHelper(nfa.Start, nfa.Accept, "", ++epoch);
+  private void PopulateLiterals(NFA nfa) => PopulateLiteralsHelper(nfa.Start, nfa.Accept, ++epoch);
   
-  private void PopulateLiteralsHelper(NFANode node, NFANode accept, string currentLiteral, int epoch)
+  private void PopulateLiteralsHelper(NFANode node, NFANode accept, int epoch)
   {
-    // if (Seen(node, epoch))
-    //   return;
-    //
-    // if (node.LitOut != null)
-    // {
-    //   // Add the literal of the current node to the currentLiteral
-    //   currentLiteral += node.Literal;
-    //
-    //   // If we've reached the accept node, add the currentLiteral to the node's literals
-    //   if (node == accept)
-    //   {
-    //     node.Literals.Add(currentLiteral);
-    //   }
-    //     
-    //   PopulateLiteralsHelper(node.LitOut, accept, currentLiteral, epoch);
-    // }
-    //
-    // foreach (NFANode eps in node.Epsilons)
-    // {
-    //   PopulateLiteralsHelper(eps, accept, currentLiteral, epoch);
-    // }
+    if (Seen(node, epoch))
+      return;
+
+    if (node.LitOut != null)
+    {
+      node.Literals = Literals(node, accept);
+      PopulateLiteralsHelper(node.LitOut, accept, epoch);
+    }
+
+    foreach (NFANode eps in node.Epsilons)
+    {
+      PopulateLiteralsHelper(eps, accept, epoch);
+    }
   }
 
   /// <summary>
@@ -458,6 +453,8 @@ public class TrigramsQueryBuilder
   /// <param name="accept">nfa node</param>
   /// <returns></returns>
   private IEnumerable<string> Trigrams(NFANode root, NFANode accept) => NgramSearch(root, accept, 3).Distinct();
+  
+  private IEnumerable<string> Literals(NFANode root, NFANode accept) => LiteralsSearch(root, accept).Distinct();
 
   private List<string> NgramSearch(NFANode node, NFANode accept, int limit)
   {
@@ -513,6 +510,69 @@ public class TrigramsQueryBuilder
 
     return results;
   }
+  
+  private List<string> LiteralsSearch(NFANode node, NFANode accept)
+  {
+    // if (limit == 0)
+    // {
+    //   return new List<string>() { "" };
+    // }
+
+    var results = new List<string>();
+    foreach (NFANode cnode in node.EpsilonClosures)
+    {
+      if (cnode == accept)
+      {
+        // Bail out, we can reach the accept state before we've
+        // consumed enough characters for a full n-gram.   
+        return new List<string>() { "" };
+      }
+
+      if (cnode.LitOut == null)
+      {
+        continue;
+      }
+
+      int begin = cnode.LitBegin;
+      int end = cnode.LitEnd;
+      // if (end - begin + 1 > this._maxTrigramsSetSize)
+      // {
+      //   // Bail out, the ngram set might be too large.
+      //   return new List<string>();
+      // }
+
+      List<string> subResults = LiteralsSearch(cnode.LitOut, accept);
+      // if (subResults.Count == 0)
+      // {
+      //   // A subresult has bailed out. short-circuit here too.
+      //   return new List<string>();
+      // }
+
+      // if (subResults.Count * (end - begin + 1) > this._maxTrigramsSetSize)
+      // {
+      //   // Bail out, the ngram set is going to be too large.
+      //   return new List<string>();
+      // }
+
+      // for (int i = begin; i <= end; i++)
+      // {
+      //   var suffixes = new List<string>();
+      //   suffixes.AddRange(subResults);
+      //   CrossProduct(i, suffixes);
+      //   results.AddRange(suffixes);
+      // }
+      
+      if (begin == end)
+      {
+        var suffixes = new List<string>();
+        suffixes.AddRange(subResults);
+        CrossProduct(begin, suffixes);
+        results.AddRange(suffixes);
+      }      
+    }
+
+    return results;
+  }  
 
   /// <summary>
   /// Prefix each string in y with the string at codepoint x.
@@ -622,7 +682,8 @@ public class TrigramsQueryBuilder
 
     if (node.LitOut != null)
     {
-      int nt = node.Trigrams?.Count() ?? 0;
+      // int nt = node.Trigrams?.Count() ?? 0;
+      int nt = node.Literals?.Count() ?? 0;
       node.Capacity = (nt > 0) ? nt : this._infinity;
       PopulateCapacitiesHelper(node.LitOut, epoch);
     }
@@ -708,11 +769,13 @@ public class TrigramsQueryBuilder
 
       if (frontier && node.LitOut != null)
       {
-        orClause.AddRange(node.Trigrams);
+        // orClause.AddRange(node.Trigrams);
+        orClause.AddRange(node.Literals);
         // This is a hack, we're clearing the trigram set on a
         // node when it's used so that they aren't continually
         // reused when the graph is decomposed and cut again.            
         node.Trigrams = new List<string>();
+        node.Literals = new List<string>();
       }
     }
 
@@ -822,9 +885,150 @@ public class TrigramsQueryBuilder
 
     PopulateEpsilonClosure(nfa);
     PopulateTrigrams(nfa);
+    PopulateLiterals(nfa);
     TrigramQuery q = MakeQueryHelper(nfa);
     // var s = simplify(q);
 
     return q;
+  }
+
+  public NFA CompileToNFA(string regex)
+  {
+    NormalizedRegex nre = ParseRegexString(regex);
+    NFA nfa = BuildNFA(nre);
+    PopulateEpsilonClosure(nfa);
+
+    return nfa;
+  }
+  
+  // public class NFA
+  // {
+  //   public NFANode Start;
+  //   public NFANode Accept;
+  // }
+  //
+  // /// <summary>
+  // /// An nFANode has zero or more epsilon-transitions but only at most one
+  // /// character class transition ([LitBegin-LitEnd] -> LitOut). If the node has no
+  // /// character class transition, LitOut is nil. EpsilonClosure is populated by
+  // /// calling populateEpsilonClosure and Trigrams is populated by calling
+  // /// populateTrigrams. WhenSeen is the last epoch this node was visited and
+  // /// Capacity is used by findCut (and populated in that method by calling
+  // /// populateCapacities). ResidualEdges is used only during min cut isolation.
+  // /// </summary>
+  // public class NFANode
+  // {
+  //   public NFANode LitOut;
+  //   public int LitBegin;
+  //   public int LitEnd;
+  //   public List<NFANode> Epsilons = new List<NFANode>();
+  //   public List<NFANode> EpsilonClosures = new List<NFANode>();
+  //   public IEnumerable<string> Trigrams;
+  //   public int WhenSeen;
+  //   public int Capacity;
+  //   public List<NFANode> ResidualEdges = new List<NFANode>();
+  // }
+
+  public void PrintNFA(NFA nfa)
+  {
+    PrintNFANode("Start", nfa.Start, nfa.Accept);
+    PrintNFANode("Accept", nfa.Accept, nfa.Accept);
+  }
+
+  private void PrintNFANode(string name, NFANode node, NFANode accept, int depth = 0)
+  {
+    string indent = new string(' ', depth * 2);
+
+    Console.WriteLine($"{indent}***********************");
+    
+    if (node == accept)
+    {
+      Console.WriteLine($"{indent}NFA Node: Accept");
+      return;
+    }
+    
+    // if (depth > 10)
+    // {
+    //   Console.WriteLine("Depth too deep");
+    //   return;
+    // }
+
+    
+    Console.WriteLine($"{indent}NFA Node: {name}");
+
+    Console.WriteLine($"{indent}LitBegin: {node.LitBegin}");
+    Console.WriteLine($"{indent}LitEnd: {node.LitEnd}");
+    Console.WriteLine($"{indent}WhenSeen: {node.WhenSeen}");
+    Console.WriteLine($"{indent}Capacity: {node.Capacity}");
+
+    if (node.LitBegin != 0 && node.LitEnd != 0 && node.LitOut != null && node.LitOut != node)
+    {
+      PrintNFANode(name + ".LitOut", node.LitOut, accept, depth + 1);
+    }
+
+    if (node.Epsilons is { Count: > 0 })
+    {
+      Console.WriteLine($"{indent}Epsilons");
+      Console.WriteLine($"{indent}--------");
+      for (int x = 0; x < node.Epsilons.Count; x++)
+      {
+        if (node.Epsilons[x] == node)
+        {
+          Console.WriteLine($"{indent}epsilon to self at x={x}");
+        }
+        else
+        {
+          PrintNFANode($"{name}.Epsilons[{x}]", node.Epsilons[x], accept, depth + 1);
+        }
+      }
+    }
+    else
+    {
+      Console.WriteLine($"{indent}Epsilons is null or empty");
+    }
+
+    if (node.EpsilonClosures is { Count: > 0 })
+    {
+      Console.WriteLine($"{indent}EpsilonClosures");
+      Console.WriteLine($"{indent}---------------");
+      for (int x = 0; x < node.EpsilonClosures.Count; x++)
+      {
+        // PrintNFANode($"{name}.EpsilonClosures[{x}]", node.EpsilonClosures[x], accept, depth + 1);
+        if (node.EpsilonClosures[x] == node)
+        {
+          Console.WriteLine($"{indent}epsilon closure to self at x={x}");
+        }
+        else
+        {
+          PrintNFANode($"{name}.EpsilonClosures[{x}]", node.EpsilonClosures[x], accept, depth + 1);
+        }        
+      }
+    }
+    else
+    {
+      Console.WriteLine($"{indent}EpsilonClosures is null or empty");
+    }
+
+    if (node.ResidualEdges is { Count: > 0 })
+    {
+      Console.WriteLine($"{indent}ResidualEdges");
+      Console.WriteLine($"{indent}-------------");
+      for (int x = 0; x < node.ResidualEdges.Count; x++)
+      {
+        // PrintNFANode($"{name}.ResidualEdges[{x}]", node.ResidualEdges[x], accept, depth + 1);
+        if (node.ResidualEdges[x] == node)
+        {
+          Console.WriteLine($"{indent}residual edge to self at x={x}");
+        }
+        else
+        {
+          PrintNFANode($"{name}.ResidualEdges[{x}]", node.ResidualEdges[x], accept, depth + 1);
+        }          
+      }
+    }
+    else
+    {
+      Console.WriteLine($"{indent}ResidualEdges is null or empty");
+    }
   }
 }
