@@ -10,6 +10,7 @@ global using Spinach.Exceptions;
 global using Spinach.Helpers;
 global using Spinach.Interfaces;
 global using Spinach.Regex;
+global using Spinach.Regex.Types;
 global using Spinach.Tables;
 global using Spinach.Trigrams;
 global using System.Collections;

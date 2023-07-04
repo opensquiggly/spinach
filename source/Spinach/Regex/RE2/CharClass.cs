@@ -15,130 +15,129 @@ namespace Spinach.Regex;
      */
 public class CharClass
 {
-
-  private int[] r; // inclusive ranges, pairs of [lo,hi].  r.length is even.
-  private int len; // prefix of |r| that is defined.  Even.
+  private int[] _r; // inclusive ranges, pairs of [lo,hi].  r.length is even.
+  private int _len; // prefix of |r| that is defined.  Even.
 
   // Constructs a CharClass with initial ranges |r|.
   // The right to mutate |r| is passed to the callee.
   public CharClass(int[] r)
   {
-    this.r = r;
-    this.len = r.Length;
+    this._r = r;
+    this._len = r.Length;
   }
 
   // Constructs an empty CharClass.
   public CharClass()
   {
-    this.r = Utils.EMPTY_INTS;
-    this.len = 0;
+    this._r = Utils.EMPTY_INTS;
+    this._len = 0;
   }
 
   // After a call to ensureCapacity(), |r.length| is at least |newLen|.
-  private void ensureCapacity(int newLen)
+  private void EnsureCapacity(int newLen)
   {
-    if (r.Length < newLen)
+    if (_r.Length < newLen)
     {
       // Expand by at least doubling, except when len == 0.
       // TODO(adonovan): opt: perhaps it would be better to allocate exactly
       // newLen, since the number of expansions is typically very small?
-      if (newLen < len * 2)
+      if (newLen < _len * 2)
       {
-        newLen = len * 2;
+        newLen = _len * 2;
       }
 
       int[] r2 = new int[newLen];
-      System.Array.Copy(r, 0, r2, 0, len);
-      r = r2;
+      System.Array.Copy(_r, 0, r2, 0, _len);
+      _r = r2;
     }
   }
 
   // Returns the character class as an int array.  Subsequent CharClass
   // operations may mutate this array, so typically this is the last operation
   // performed on a given CharClass instance.
-  public int[] toArray()
+  public int[] ToArray()
   {
-    if (this.len == r.Length)
+    if (this._len == _r.Length)
     {
-      return r;
+      return _r;
     }
     else
     {
-      int[] r2 = new int[len];
-      System.Array.Copy(r, 0, r2, 0, len);
+      int[] r2 = new int[_len];
+      System.Array.Copy(_r, 0, r2, 0, _len);
       return r2;
     }
   }
 
   // cleanClass() sorts the ranges (pairs of elements) of this CharClass,
   // merges them, and eliminates duplicates.
-  public CharClass cleanClass()
+  public CharClass CleanClass()
   {
-    if (len < 4)
+    if (_len < 4)
     {
       return this;
     }
 
     // Sort by lo increasing, hi decreasing to break ties.
-    qsortIntPair(r, 0, len - 2);
+    QsortIntPair(_r, 0, _len - 2);
 
     // Merge abutting, overlapping.
     int w = 2; // write index
-    for (int i = 2; i < len; i += 2)
+    for (int i = 2; i < _len; i += 2)
     {
-      int lo = r[i];
-      int hi = r[i + 1];
-      if (lo <= r[w - 1] + 1)
+      int lo = _r[i];
+      int hi = _r[i + 1];
+      if (lo <= _r[w - 1] + 1)
       {
         // merge with previous range
-        if (hi > r[w - 1])
+        if (hi > _r[w - 1])
         {
-          r[w - 1] = hi;
+          _r[w - 1] = hi;
         }
 
         continue;
       }
 
       // new disjoint range
-      r[w] = lo;
-      r[w + 1] = hi;
+      _r[w] = lo;
+      _r[w + 1] = hi;
       w += 2;
     }
 
-    len = w;
+    _len = w;
 
     return this;
   }
 
   // appendLiteral() appends the literal |x| to this CharClass.
-  public CharClass appendLiteral(int x, int flags) => ((flags & RE2.FOLD_CASE) != 0) ? appendFoldedRange(x, x) : appendRange(x, x);
+  public CharClass AppendLiteral(int x, int flags) => ((flags & RE2.FOLD_CASE) != 0) ? AppendFoldedRange(x, x) : AppendRange(x, x);
 
   // appendRange() appends the range [lo-hi] (inclusive) to this CharClass.
-  public CharClass appendRange(int lo, int hi)
+  public CharClass AppendRange(int lo, int hi)
   {
     // Expand last range or next to last range if it overlaps or abuts.
     // Checking two ranges helps when appending case-folded
     // alphabets, so that one range can be expanding A-Z and the
     // other expanding a-z.
-    if (len > 0)
+    if (_len > 0)
     {
       for (int i = 2; i <= 4; i += 2)
       {
         // twice, using i=2, i=4
-        if (len >= i)
+        if (_len >= i)
         {
-          int rlo = r[len - i];
-          int rhi = r[len - i + 1];
+          int rlo = _r[_len - i];
+          int rhi = _r[_len - i + 1];
           if (lo <= rhi + 1 && rlo <= hi + 1)
           {
             if (lo < rlo)
             {
-              r[len - i] = lo;
+              _r[_len - i] = lo;
             }
 
             if (hi > rhi)
             {
-              r[len - i + 1] = hi;
+              _r[_len - i + 1] = hi;
             }
 
             return this;
@@ -148,50 +147,50 @@ public class CharClass
     }
 
     // Can't coalesce; append.   Expand capacity by doubling as needed.
-    ensureCapacity(len + 2);
-    r[len++] = lo;
-    r[len++] = hi;
+    EnsureCapacity(_len + 2);
+    _r[_len++] = lo;
+    _r[_len++] = hi;
     return this;
   }
 
   // appendFoldedRange() appends the range [lo-hi] and its case
   // folding-equivalent runes to this CharClass.
-  public CharClass appendFoldedRange(int lo, int hi)
+  public CharClass AppendFoldedRange(int lo, int hi)
   {
     // Optimizations.
     if (lo <= Unicode.MIN_FOLD && hi >= Unicode.MAX_FOLD)
     {
       // Range is full: folding can't add more.
-      return appendRange(lo, hi);
+      return AppendRange(lo, hi);
     }
 
     if (hi < Unicode.MIN_FOLD || lo > Unicode.MAX_FOLD)
     {
       // Range is outside folding possibilities.
-      return appendRange(lo, hi);
+      return AppendRange(lo, hi);
     }
 
     if (lo < Unicode.MIN_FOLD)
     {
       // [lo, minFold-1] needs no folding.
-      appendRange(lo, Unicode.MIN_FOLD - 1);
+      AppendRange(lo, Unicode.MIN_FOLD - 1);
       lo = Unicode.MIN_FOLD;
     }
 
     if (hi > Unicode.MAX_FOLD)
     {
       // [maxFold+1, hi] needs no folding.
-      appendRange(Unicode.MAX_FOLD + 1, hi);
+      AppendRange(Unicode.MAX_FOLD + 1, hi);
       hi = Unicode.MAX_FOLD;
     }
 
     // Brute force.  Depend on appendRange to coalesce ranges on the fly.
     for (int c = lo; c <= hi; c++)
     {
-      appendRange(c, c);
+      AppendRange(c, c);
       for (int f = Unicode.simpleFold(c); f != c; f = Unicode.simpleFold(f))
       {
-        appendRange(f, f);
+        AppendRange(f, f);
       }
     }
 
@@ -200,11 +199,11 @@ public class CharClass
 
   // appendClass() appends the class |x| to this CharClass.
   // It assumes |x| is clean.  Does not mutate |x|.
-  public CharClass appendClass(int[] x)
+  public CharClass AppendClass(int[] x)
   {
     for (int i = 0; i < x.Length; i += 2)
     {
-      appendRange(x[i], x[i + 1]);
+      AppendRange(x[i], x[i + 1]);
     }
 
     return this;
@@ -212,11 +211,11 @@ public class CharClass
 
   // appendFoldedClass() appends the case folding of the class |x| to this
   // CharClass.  Does not mutate |x|.
-  public CharClass appendFoldedClass(int[] x)
+  public CharClass AppendFoldedClass(int[] x)
   {
     for (int i = 0; i < x.Length; i += 2)
     {
-      appendFoldedRange(x[i], x[i + 1]);
+      AppendFoldedRange(x[i], x[i + 1]);
     }
 
     return this;
@@ -224,7 +223,7 @@ public class CharClass
 
   // appendNegatedClass() append the negation of the class |x| to this
   // CharClass.  It assumes |x| is clean.  Does not mutate |x|.
-  public CharClass appendNegatedClass(int[] x)
+  public CharClass AppendNegatedClass(int[] x)
   {
     int nextLo = 0;
     for (int i = 0; i < x.Length; i += 2)
@@ -233,7 +232,7 @@ public class CharClass
       int hi = x[i + 1];
       if (nextLo <= lo - 1)
       {
-        appendRange(nextLo, lo - 1);
+        AppendRange(nextLo, lo - 1);
       }
 
       nextLo = hi + 1;
@@ -241,7 +240,7 @@ public class CharClass
 
     if (nextLo <= Unicode.MAX_RUNE)
     {
-      appendRange(nextLo, Unicode.MAX_RUNE);
+      AppendRange(nextLo, Unicode.MAX_RUNE);
     }
 
     return this;
@@ -249,20 +248,20 @@ public class CharClass
 
   // appendTable() appends the Unicode range table |table| to this CharClass.
   // Does not mutate |table|.
-  public CharClass appendTable(int[][] table)
+  public CharClass AppendTable(int[][] table)
   {
     foreach (int[] triple in table)
     {
       int lo = triple[0], hi = triple[1], stride = triple[2];
       if (stride == 1)
       {
-        appendRange(lo, hi);
+        AppendRange(lo, hi);
         continue;
       }
 
       for (int c = lo; c <= hi; c += stride)
       {
-        appendRange(c, c);
+        AppendRange(c, c);
       }
     }
     return this;
@@ -270,7 +269,7 @@ public class CharClass
 
   // appendNegatedTable() returns the result of appending the negation of range
   // table |table| to this CharClass.  Does not mutate |table|.
-  public CharClass appendNegatedTable(int[][] table)
+  public CharClass AppendNegatedTable(int[][] table)
   {
     int nextLo = 0; // lo end of next class to add
     foreach (int[] triple in table)
@@ -280,7 +279,7 @@ public class CharClass
       {
         if (nextLo <= lo - 1)
         {
-          appendRange(nextLo, lo - 1);
+          AppendRange(nextLo, lo - 1);
         }
 
         nextLo = hi + 1;
@@ -291,7 +290,7 @@ public class CharClass
       {
         if (nextLo <= c - 1)
         {
-          appendRange(nextLo, c - 1);
+          AppendRange(nextLo, c - 1);
         }
 
         nextLo = c + 1;
@@ -299,7 +298,7 @@ public class CharClass
     }
     if (nextLo <= Unicode.MAX_RUNE)
     {
-      appendRange(nextLo, Unicode.MAX_RUNE);
+      AppendRange(nextLo, Unicode.MAX_RUNE);
     }
 
     return this;
@@ -307,35 +306,35 @@ public class CharClass
 
   // appendTableWithSign() calls append{,Negated}Table depending on sign.
   // Does not mutate |table|.
-  public CharClass appendTableWithSign(int[][] table, int sign) => sign < 0 ? appendNegatedTable(table) : appendTable(table);
+  public CharClass AppendTableWithSign(int[][] table, int sign) => sign < 0 ? AppendNegatedTable(table) : AppendTable(table);
 
   // negateClass() negates this CharClass, which must already be clean.
-  public CharClass negateClass()
+  public CharClass NegateClass()
   {
     int nextLo = 0; // lo end of next class to add
     int w = 0; // write index
-    for (int i = 0; i < len; i += 2)
+    for (int i = 0; i < _len; i += 2)
     {
-      int lo = r[i], hi = r[i + 1];
+      int lo = _r[i], hi = _r[i + 1];
       if (nextLo <= lo - 1)
       {
-        r[w] = nextLo;
-        r[w + 1] = lo - 1;
+        _r[w] = nextLo;
+        _r[w + 1] = lo - 1;
         w += 2;
       }
 
       nextLo = hi + 1;
     }
 
-    len = w;
+    _len = w;
 
     if (nextLo <= Unicode.MAX_RUNE)
     {
       // It's possible for the negation to have one more
       // range - this one - than the original class, so use append.
-      ensureCapacity(len + 2);
-      r[len++] = nextLo;
-      r[len++] = Unicode.MAX_RUNE;
+      EnsureCapacity(_len + 2);
+      _r[_len++] = nextLo;
+      _r[_len++] = Unicode.MAX_RUNE;
     }
 
     return this;
@@ -343,25 +342,25 @@ public class CharClass
 
   // appendClassWithSign() calls appendClass() if sign is +1 or
   // appendNegatedClass if sign is -1.  Does not mutate |x|.
-  public CharClass appendClassWithSign(int[] x, int sign) => sign < 0 ? appendNegatedClass(x) : appendClass(x);
+  public CharClass AppendClassWithSign(int[] x, int sign) => sign < 0 ? AppendNegatedClass(x) : AppendClass(x);
 
   // appendGroup() appends CharGroup |g| to this CharClass, folding iff
   // |foldCase|.  Does not mutate |g|.
-  public CharClass appendGroup(CharGroup g, bool foldCase)
+  public CharClass AppendGroup(CharGroup g, bool foldCase)
   {
     int[] cls = g.cls;
     if (foldCase)
     {
-      cls = new CharClass().appendFoldedClass(cls).cleanClass().toArray();
+      cls = new CharClass().AppendFoldedClass(cls).CleanClass().ToArray();
     }
 
-    return appendClassWithSign(cls, g.sign);
+    return AppendClassWithSign(cls, g.sign);
   }
 
   // cmp() returns the ordering of the pair (a[i], a[i+1]) relative to
   // (pivotFrom, pivotTo), where the first component of the pair (lo) is
   // ordered naturally and the second component (hi) is in reverse order.
-  private static int cmp(int[] array, int i, int pivotFrom, int pivotTo)
+  private static int Cmp(int[] array, int i, int pivotFrom, int pivotTo)
   {
     int cmp = array[i] - pivotFrom;
     return cmp != 0 ? cmp : pivotTo - array[i + 1];
@@ -369,7 +368,7 @@ public class CharClass
 
   // qsortIntPair() quicksorts pairs of ints in |array| according to lt().
   // Precondition: |left|, |right|, |this.len| must all be even; |this.len > 1|.
-  private static void qsortIntPair(int[] array, int left, int right)
+  private static void QsortIntPair(int[] array, int left, int right)
   {
     int pivotIndex = ((left + right) / 2) & ~1;
     int pivotFrom = array[pivotIndex], pivotTo = array[pivotIndex + 1];
@@ -377,12 +376,12 @@ public class CharClass
 
     while (i <= j)
     {
-      while (i < right && cmp(array, i, pivotFrom, pivotTo) < 0)
+      while (i < right && Cmp(array, i, pivotFrom, pivotTo) < 0)
       {
         i += 2;
       }
 
-      while (j > left && cmp(array, j, pivotFrom, pivotTo) > 0)
+      while (j > left && Cmp(array, j, pivotFrom, pivotTo) > 0)
       {
         j -= 2;
       }
@@ -406,17 +405,17 @@ public class CharClass
 
     if (left < j)
     {
-      qsortIntPair(array, left, j);
+      QsortIntPair(array, left, j);
     }
 
     if (i < right)
     {
-      qsortIntPair(array, i, right);
+      QsortIntPair(array, i, right);
     }
   }
 
   // Exposed, since useful for debugging CharGroups too.
-  static String charClassToString(int[] r, int len)
+  static string CharClassToString(int[] r, int len)
   {
     var b = new StringBuilder();
     b.Append('[');
@@ -448,5 +447,5 @@ public class CharClass
     return b.ToString();
   }
 
-  public override string ToString() => charClassToString(r, len);
+  public override string ToString() => CharClassToString(_r, _len);
 }

@@ -14,7 +14,7 @@ public class CharGroup
     this.cls = cls;
   }
 
-  private static int[] code1 =
+  private static readonly int[] code1 =
   {
     /* \d */
     0x30, 0x39,

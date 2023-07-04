@@ -191,9 +191,9 @@ dotnet_naming_style.interface_style.word_separator =
 dotnet_naming_style.interface_style.capitalization = pascal_case
 
 # Types should be PascalCase
-dotnet_naming_rule.types_should_be_pascal_case.severity = suggestion
-dotnet_naming_rule.types_should_be_pascal_case.symbols = types
-dotnet_naming_rule.types_should_be_pascal_case.style = types_style
+# dotnet_naming_rule.types_should_be_pascal_case.severity = suggestion
+# dotnet_naming_rule.types_should_be_pascal_case.symbols = types
+# dotnet_naming_rule.types_should_be_pascal_case.style = types_style
 
 dotnet_naming_symbols.types.applicable_kinds = class, struct, interface, enum
 dotnet_naming_symbols.types.applicable_accessibilities = public, internal, private, protected, protected_internal
