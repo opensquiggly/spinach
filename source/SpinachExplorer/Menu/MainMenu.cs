@@ -39,6 +39,7 @@ internal static partial class Program
       Console.WriteLine("11. Print Files for Intersection of Two Trigrams");
       Console.WriteLine("12. Print Files for Intersection of Two Literals");
       Console.WriteLine("13. Analyze Regex");
+      Console.WriteLine("14. Find Files");
       Console.WriteLine("X. Exit program");
       Console.WriteLine();
       Console.Write("Enter selection: ");
@@ -99,6 +100,10 @@ internal static partial class Program
 
           case "13":
             AnalyzeRegex();
+            break;
+
+          case "14":
+            FindFiles();
             break;
 
           case "x":
