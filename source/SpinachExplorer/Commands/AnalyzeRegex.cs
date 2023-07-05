@@ -40,5 +40,23 @@ internal static partial class Program
     // RegexPrinter.Print(normalized);
 
     Pause();
+
+    IFastEnumerable<IFastEnumerator<TrigramFileInfo, int>, TrigramFileInfo, int> queryEnumerable = LiteralQueryBuilder.BuildEnumerable(TextSearchIndex, queryNode);
+
+    try
+    {
+      foreach (TrigramFileInfo tfi in queryEnumerable)
+      {
+        long nameAddress = TextSearchIndex.InternalFileIdTree.Find(tfi.FileId);
+        DiskImmutableString nameString = TextSearchIndex.DiskBlockManager.ImmutableStringFactory.LoadExisting(nameAddress);
+        Console.WriteLine($"Match on FileId = {tfi.FileId} at Position {tfi.Position} : {nameString.GetValue()}");
+      }
+    }
+    catch (Exception e)
+    {
+      Console.WriteLine(e);
+    }
+
+    Pause();
   }
 }
