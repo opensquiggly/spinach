@@ -1,4 +1,4 @@
-namespace Spinach.Trigrams;
+namespace Spinach.Helpers;
 
 public struct TrigramInfo
 {

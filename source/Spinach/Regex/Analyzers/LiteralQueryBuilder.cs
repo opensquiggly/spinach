@@ -1,7 +1,5 @@
 namespace Spinach.Regex.Analyzers;
 
-using Eugene.Linq;
-using System.Collections.Immutable;
 
 public static class LiteralQueryBuilder
 {

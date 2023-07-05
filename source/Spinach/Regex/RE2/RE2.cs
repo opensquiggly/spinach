@@ -256,7 +256,7 @@ public class RE2 : IRegexRunner
   /**
      * Returns true iff this regexp matches the string {@code s}.
      */
-  public bool match(string s)
+  public bool Match(string s)
   {
     bool result = doExecute(MachineInput.fromUTF16(s), 0, UNANCHORED, 0) != null;
     return result;
@@ -319,7 +319,7 @@ public class RE2 : IRegexRunner
          * </p>
          */
   // This is visible for testing.
-  static bool match(String pattern, string s) => Compile(pattern).match(s);
+  static bool match(String pattern, string s) => Compile(pattern).Match(s);
 
   // This is visible for testing.
   public delegate string ReplaceFunc(string orig);
