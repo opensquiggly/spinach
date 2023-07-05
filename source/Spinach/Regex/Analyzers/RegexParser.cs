@@ -171,6 +171,6 @@ public class RegexParser
   {
     Regexp re = Parser.Parse(expr, RE2.PERL | RE2.PERL_X);
     Regexp sre = Simply.Simplify(re);
-    return BuildNormalizedRegex(sre);
+    return BuildNormalizedRegex(re);
   }
 }
