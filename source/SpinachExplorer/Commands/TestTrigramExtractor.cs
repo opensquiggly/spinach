@@ -68,12 +68,9 @@ internal static partial class Program
           char ch3 = (char)(trigramInfo.Key % 128L);
           count++;
           Console.Write(".");
-
-          // Console.WriteLine($"Key = {trigramInfo.Key}  Position = {trigramInfo.Position}");
         }
 
         Console.WriteLine($"{fileId} : {count} : {nameString.GetValue()}");
-        // Console.WriteLine($"{fileId} : {count}");
       }
     }
 

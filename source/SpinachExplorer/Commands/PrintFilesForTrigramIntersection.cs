@@ -12,12 +12,11 @@ internal static partial class Program
     Console.Write("Enter trigram 2: ");
     string trigram2 = Console.ReadLine();
 
-    int key1 = char.ToLower(trigram1[0]) * 128 * 128 + char.ToLower(trigram1[1]) * 128 + char.ToLower(trigram1[2]);
-    int key2 = char.ToLower(trigram2[0]) * 128 * 128 + char.ToLower(trigram2[1]) * 128 + char.ToLower(trigram2[2]);
+    int key1 = TrigramHelper.GetTrigramKey(trigram1);
+    int key2 = TrigramHelper.GetTrigramKey(trigram2);
 
     FastTrigramFileEnumerable enumerable1 = TextSearchIndex.GetFastTrigramFileEnumerable(key1);
     FastTrigramFileEnumerable enumerable2 = TextSearchIndex.GetFastTrigramFileEnumerable(key2);
-
     FastIntersectEnumerable<TrigramFileInfo, int> intersection = enumerable1.FastIntersect(enumerable2);
 
     try

@@ -1,8 +1,5 @@
 namespace SpinachExplorer;
 
-using Spinach.Regex;
-using Spinach.Regex.Analyzers;
-
 internal static partial class Program
 {
   private static void FindFiles()
