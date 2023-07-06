@@ -229,6 +229,8 @@ public class TextSearchIndex
     );
   }
 
+  public IEnumerable<RegexEnumerable.MatchingFile> RegexEnumerable(string regex) => new RegexEnumerable(this, regex);
+
   public long AddRepository(string externalRepoId, string repoName)
   {
     long internalId = RepoInternalIdTable.FindRepo(externalRepoId);

@@ -1,6 +1,5 @@
 namespace Spinach.Regex.Analyzers;
 
-
 public static class LiteralQueryBuilder
 {
   // /////////////////////////////////////////////////////////////////////////////////////////////
@@ -36,6 +35,33 @@ public static class LiteralQueryBuilder
   // /////////////////////////////////////////////////////////////////////////////////////////////
   // Public Static Methods
   // /////////////////////////////////////////////////////////////////////////////////////////////
+
+  public static IFastEnumerable<IFastEnumerator<TrigramFileInfo, int>, TrigramFileInfo, int> BuildEnumerable(
+    TextSearchIndex textSearchIndex, LiteralQueryNode queryNode)
+  {
+    switch (queryNode.NodeType)
+    {
+      case LiteralQueryNodeTypes.Literal:
+        return textSearchIndex.GetFastLiteralEnumerable(queryNode.Literal);
+
+      case LiteralQueryNodeTypes.Union:
+        IFastEnumerable<IFastEnumerator<TrigramFileInfo, int>, TrigramFileInfo, int> unionEnumerable1 = BuildEnumerable(textSearchIndex, queryNode.Subs[0]);
+        IFastEnumerable<IFastEnumerator<TrigramFileInfo, int>, TrigramFileInfo, int> unionEnumerable2 = BuildEnumerable(textSearchIndex, queryNode.Subs[1]);
+        IFastUnionEnumerable<TrigramFileInfo, int> union = unionEnumerable1.FastUnion(unionEnumerable2);
+        var unionEnumerator = union.GetFastEnumerator() as IFastEnumerator<TrigramFileInfo, int>;
+        return new FastEnumerableWrapper(unionEnumerator);
+
+      case LiteralQueryNodeTypes.Intersect:
+        IFastEnumerable<IFastEnumerator<TrigramFileInfo, int>, TrigramFileInfo, int> intersectEnumerable1 = BuildEnumerable(textSearchIndex, queryNode.Subs[0]);
+        IFastEnumerable<IFastEnumerator<TrigramFileInfo, int>, TrigramFileInfo, int> intersectEnumerable2 = BuildEnumerable(textSearchIndex, queryNode.Subs[1]);
+        FastIntersectEnumerable<TrigramFileInfo, int> intersect = intersectEnumerable1.FastIntersect(intersectEnumerable2);
+        var intersectEnumerator = intersect.GetFastEnumerator() as IFastEnumerator<TrigramFileInfo, int>;
+        return new FastEnumerableWrapper(intersectEnumerator);
+
+      default:
+        throw new NotImplementedException();
+    }
+  }
 
   public static LiteralQueryNode BuildQuery(NormalizedRegex regex)
   {
@@ -140,34 +166,9 @@ public static class LiteralQueryBuilder
     }
   }
 
-  public static IFastEnumerable<IFastEnumerator<TrigramFileInfo, int>, TrigramFileInfo, int> BuildEnumerable(
-    TextSearchIndex textSearchIndex, LiteralQueryNode queryNode)
-  {
-    switch (queryNode.NodeType)
-    {
-      case LiteralQueryNodeTypes.Literal:
-        return textSearchIndex.GetFastLiteralEnumerable(queryNode.Literal);
-
-      case LiteralQueryNodeTypes.Union:
-        IFastEnumerable<IFastEnumerator<TrigramFileInfo, int>, TrigramFileInfo, int> unionEnumerable1 = BuildEnumerable(textSearchIndex, queryNode.Subs[0]);
-        IFastEnumerable<IFastEnumerator<TrigramFileInfo, int>, TrigramFileInfo, int> unionEnumerable2 = BuildEnumerable(textSearchIndex, queryNode.Subs[1]);
-        IFastUnionEnumerable<TrigramFileInfo, int> union = unionEnumerable1.FastUnion(unionEnumerable2);
-        var unionEnumerator = union.GetFastEnumerator() as IFastEnumerator<TrigramFileInfo, int>;
-        return new FastEnumerableWrapper(unionEnumerator);
-      // return union as IFastEnumerable<IFastEnumerator<TrigramFileInfo, int>, TrigramFileInfo, int>;
-
-      case LiteralQueryNodeTypes.Intersect:
-        IFastEnumerable<IFastEnumerator<TrigramFileInfo, int>, TrigramFileInfo, int> intersectEnumerable1 = BuildEnumerable(textSearchIndex, queryNode.Subs[0]);
-        IFastEnumerable<IFastEnumerator<TrigramFileInfo, int>, TrigramFileInfo, int> intersectEnumerable2 = BuildEnumerable(textSearchIndex, queryNode.Subs[1]);
-        FastIntersectEnumerable<TrigramFileInfo, int> intersect = intersectEnumerable1.FastIntersect(intersectEnumerable2);
-        var intersectEnumerator = intersect.GetFastEnumerator() as IFastEnumerator<TrigramFileInfo, int>;
-        return new FastEnumerableWrapper(intersectEnumerator);
-      // return intersect as IFastEnumerable<IFastEnumerator<TrigramFileInfo, int>, TrigramFileInfo, int>;
-
-      default:
-        throw new NotImplementedException();
-    }
-  }
+  // /////////////////////////////////////////////////////////////////////////////////////////////
+  // PUblic Inner Classes
+  // /////////////////////////////////////////////////////////////////////////////////////////////
 
   public class FastEnumerableWrapper :
     IFastEnumerable<IFastEnumerator<TrigramFileInfo, int>, TrigramFileInfo, int>
