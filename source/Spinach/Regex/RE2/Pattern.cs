@@ -73,7 +73,7 @@ public class Pattern
          * Releases memory used by internal caches associated with this pattern. Does not change the
          * observable behaviour. Useful for tests that detect memory leaks via allocation tracking.
          */
-  public void reset() => _re2.reset();
+  public void reset() => _re2.Reset();
 
   /**
          * Returns the flags used in the constructor.
@@ -255,7 +255,7 @@ public class Pattern
          * @param s The string to be literalized
          * @return A literal string replacement
          */
-  public static String quote(String s) => RE2.quoteMeta(s);
+  public static String quote(String s) => RE2.QuoteMeta(s);
 
   public override string ToString() => _pattern;
 

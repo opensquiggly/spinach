@@ -27,7 +27,7 @@ internal static partial class Program
           DiskImmutableString nameString =
             TextSearchIndex.DiskBlockManager.ImmutableStringFactory.LoadExisting(nameAddress);
           string text = File.ReadAllText(nameString.GetValue());
-          IList<int[]> matches = compiled.findAllIndex(text, 10);
+          IList<int[]> matches = compiled.FindAllIndex(text, 10);
           if (matches != null)
           {
             Console.WriteLine($"{nameString.GetValue()}");
