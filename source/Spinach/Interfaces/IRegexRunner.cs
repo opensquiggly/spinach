@@ -2,5 +2,5 @@ namespace Spinach.Interfaces;
 
 public interface IRegexRunner
 {
-  bool match(string input);
+  bool Match(string input);
 }

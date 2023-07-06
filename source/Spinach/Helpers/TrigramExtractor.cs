@@ -1,4 +1,4 @@
-namespace Spinach.Trigrams;
+namespace Spinach.Helpers;
 
 public class TrigramExtractor : IEnumerable<TrigramInfo>
 {
@@ -15,8 +15,6 @@ public class TrigramExtractor : IEnumerable<TrigramInfo>
     TrigramInfo trigramInfo = default;
     char[] buffer = new char[3];
     int trigramStartIndex = 0;
-
-    // var fileContent = File.ReadAllText(FileName);
 
     if (Input.Length >= 3)
     {

@@ -217,7 +217,7 @@ public class RE2 : IRegexRunner
 
   // get() returns a machine to use for matching |this|.  It uses |this|'s
   // machine cache if possible, to avoid unnecessary allocation.
-  Machine get()
+  Machine Get()
   {
     int n = machine.Count();
     if (n > 0)
@@ -231,7 +231,7 @@ public class RE2 : IRegexRunner
   }
 
   // Clears the memory associated with this machine.
-  public void reset() => machine.Clear();
+  public void Reset() => machine.Clear();
 
   // put() returns a machine to |this|'s machine cache.  There is no attempt to
   // limit the size of the cache, so it will grow to the maximum number of
@@ -244,9 +244,9 @@ public class RE2 : IRegexRunner
   // doExecute() finds the leftmost match in the input and returns
   // the position of its subexpressions.
   // Derived from exec.go.
-  public int[] doExecute(MachineInput @in, int pos, int anchor, int ncap)
+  public int[] DoExecute(MachineInput @in, int pos, int anchor, int ncap)
   {
-    Machine m = get();
+    Machine m = Get();
     m.init(ncap);
     int[] cap = m.match(@in, pos, anchor) ? m.submatches() : null;
     put(m);
@@ -256,9 +256,9 @@ public class RE2 : IRegexRunner
   /**
      * Returns true iff this regexp matches the string {@code s}.
      */
-  public bool match(string s)
+  public bool Match(string s)
   {
-    bool result = doExecute(MachineInput.fromUTF16(s), 0, UNANCHORED, 0) != null;
+    bool result = DoExecute(MachineInput.fromUTF16(s), 0, UNANCHORED, 0) != null;
     return result;
   }
 
@@ -276,7 +276,7 @@ public class RE2 : IRegexRunner
          * @param ngroup the number of array pairs to fill in
          * @return true if a match was found
          */
-  public bool match(string input, int start, int end, int anchor, int[] group, int ngroup)
+  public bool Match(string input, int start, int end, int anchor, int[] group, int ngroup)
   {
     if (start >= end) // strings in Java and C# indexed from zero. But, java doesn't crash if over, c# crashes.
     {
@@ -290,7 +290,7 @@ public class RE2 : IRegexRunner
     // In Russ' own words:
     // That is, I believe doExecute needs to know the bounds of the whole input
     // as well as the bounds of the subpiece that is being searched.
-    int[] groupMatch = doExecute(MachineInput.fromUTF16(input, 0, end), start, anchor, 2 * ngroup);
+    int[] groupMatch = DoExecute(MachineInput.fromUTF16(input, 0, end), start, anchor, 2 * ngroup);
 
     if (groupMatch == null)
     {
@@ -309,7 +309,7 @@ public class RE2 : IRegexRunner
          * Returns true iff this regexp matches the UTF-8 byte array {@code b}.
          */
   // This is visible for testing.
-  bool matchUTF8(byte[] b) => doExecute(MachineInput.fromUTF8(b), 0, UNANCHORED, 0) != null;
+  bool MatchUTF8(byte[] b) => DoExecute(MachineInput.fromUTF8(b), 0, UNANCHORED, 0) != null;
 
   /**
          * Returns true iff textual regular expression {@code pattern} matches string {@code s}.
@@ -319,7 +319,7 @@ public class RE2 : IRegexRunner
          * </p>
          */
   // This is visible for testing.
-  static bool match(String pattern, string s) => Compile(pattern).match(s);
+  static bool Match(String pattern, string s) => Compile(pattern).Match(s);
 
   // This is visible for testing.
   public delegate string ReplaceFunc(string orig);
@@ -330,9 +330,9 @@ public class RE2 : IRegexRunner
          * replacement string.
          */
   // This is visible for testing.
-  string replaceAll(String src, String repl)
+  string ReplaceAll(String src, String repl)
   {
-    return replaceAllFunc(
+    return ReplaceAllFunc(
       src,
       (string orig) => { return repl; },
       2 * src.Length + 1);
@@ -347,9 +347,9 @@ public class RE2 : IRegexRunner
          * replacement string.
          */
   // This is visible for testing.
-  String replaceFirst(String src, String repl)
+  String ReplaceFirst(String src, String repl)
   {
-    return replaceAllFunc(
+    return ReplaceAllFunc(
       src,
       (String orig) => { return repl; },
       1);
@@ -362,7 +362,7 @@ public class RE2 : IRegexRunner
          * replacement string.
          */
   // This is visible for testing.
-  public string replaceAllFunc(string src, ReplaceFunc repl, int maxReplaces)
+  public string ReplaceAllFunc(string src, ReplaceFunc repl, int maxReplaces)
   {
     int lastMatchEnd = 0; // end position of the most recent match
     int searchPos = 0; // position where we next look for a match
@@ -371,7 +371,7 @@ public class RE2 : IRegexRunner
     int numReplaces = 0;
     while (searchPos <= src.Length)
     {
-      int[] a = doExecute(input, searchPos, UNANCHORED, 2);
+      int[] a = DoExecute(input, searchPos, UNANCHORED, 2);
       if (a == null || a.Length == 0)
       {
         break; // no more matches
@@ -434,7 +434,7 @@ public class RE2 : IRegexRunner
          * the returned string is a regular expression matching the literal text. For example,
          * {@code quoteMeta("[foo]").equals("\\[foo\\]")}.
          */
-  public static String quoteMeta(String s)
+  public static String QuoteMeta(String s)
   {
     var b = new StringBuilder(2 * s.Length);
     // A char loop is correct because all metacharacters fit in one UTF-16 code.
@@ -458,7 +458,7 @@ public class RE2 : IRegexRunner
   // maximum capture in the program is 0 but we need to return
   // an expression for \1.  Pad returns a with -1s appended as needed;
   // the result may alias a.
-  private int[] pad(int[] a)
+  private int[] Pad(int[] a)
   {
     if (a == null)
     {
@@ -483,7 +483,7 @@ public class RE2 : IRegexRunner
   delegate void DeliverFunc(int[] x);
 
   // Find matches in input.
-  private void allMatches(MachineInput input, int n, DeliverFunc deliver)
+  private void AllMatches(MachineInput input, int n, DeliverFunc deliver)
   {
     int end = input.endPos();
     if (n < 0)
@@ -493,7 +493,7 @@ public class RE2 : IRegexRunner
 
     for (int pos = 0, i = 0, prevMatchEnd = -1; i < n && pos <= end;)
     {
-      int[] matches = doExecute(input, pos, UNANCHORED, prog.numCap);
+      int[] matches = DoExecute(input, pos, UNANCHORED, prog.numCap);
       if (matches == null || matches.Length == 0)
       {
         break;
@@ -530,7 +530,7 @@ public class RE2 : IRegexRunner
 
       if (accept)
       {
-        deliver(pad(matches));
+        deliver(Pad(matches));
         i++;
       }
     }
@@ -583,7 +583,7 @@ public class RE2 : IRegexRunner
   // This is visible for testing.
   public byte[] findUTF8(byte[] b)
   {
-    int[] a = doExecute(MachineInput.fromUTF8(b), 0, UNANCHORED, 2);
+    int[] a = DoExecute(MachineInput.fromUTF8(b), 0, UNANCHORED, 2);
     if (a == null)
     {
       return null;
@@ -601,9 +601,9 @@ public class RE2 : IRegexRunner
          * </p>
          */
   // This is visible for testing.
-  public int[] findUTF8Index(byte[] b)
+  public int[] FindUtf8Index(byte[] b)
   {
-    int[] a = doExecute(MachineInput.fromUTF8(b), 0, UNANCHORED, 2);
+    int[] a = DoExecute(MachineInput.fromUTF8(b), 0, UNANCHORED, 2);
     if (a == null)
     {
       return null;
@@ -623,9 +623,9 @@ public class RE2 : IRegexRunner
          * </p>        
          */
   // This is visible for testing.
-  public String find(String s)
+  public String Find(String s)
   {
-    int[] a = doExecute(MachineInput.fromUTF16(s), 0, UNANCHORED, 2);
+    int[] a = DoExecute(MachineInput.fromUTF16(s), 0, UNANCHORED, 2);
     if (a == null)
     {
       return "";
@@ -644,9 +644,9 @@ public class RE2 : IRegexRunner
          * </p>
          */
   // This is visible for testing.
-  public int[] findIndex(String s)
+  public int[] FindIndex(String s)
   {
-    int[] a = doExecute(MachineInput.fromUTF16(s), 0, UNANCHORED, 2);
+    int[] a = DoExecute(MachineInput.fromUTF16(s), 0, UNANCHORED, 2);
     if (a == null)
     {
       return null;
@@ -665,9 +665,9 @@ public class RE2 : IRegexRunner
          * </p>
          */
   // This is visible for testing.
-  public byte[][] findUTF8Submatch(byte[] b)
+  public byte[][] FindUtf8Submatch(byte[] b)
   {
-    int[] a = doExecute(MachineInput.fromUTF8(b), 0, UNANCHORED, prog.numCap);
+    int[] a = DoExecute(MachineInput.fromUTF8(b), 0, UNANCHORED, prog.numCap);
     if (a == null)
     {
       return null;
@@ -695,7 +695,7 @@ public class RE2 : IRegexRunner
          * </p>
          */
   // This is visible for testing.
-  public int[] findUTF8SubmatchIndex(byte[] b) => pad(doExecute(MachineInput.fromUTF8(b), 0, UNANCHORED, prog.numCap));
+  public int[] FindUtf8SubmatchIndex(byte[] b) => Pad(DoExecute(MachineInput.fromUTF8(b), 0, UNANCHORED, prog.numCap));
 
   /**
          * Returns an array of strings holding the text of the leftmost match of the regular expression in
@@ -707,9 +707,9 @@ public class RE2 : IRegexRunner
          * </p>
          */
   // This is visible for testing.
-  public string[] findSubmatch(String s)
+  public string[] FindSubmatch(String s)
   {
-    int[] a = doExecute(MachineInput.fromUTF16(s), 0, UNANCHORED, prog.numCap);
+    int[] a = DoExecute(MachineInput.fromUTF16(s), 0, UNANCHORED, prog.numCap);
     if (a == null)
     {
       return null;
@@ -737,7 +737,7 @@ public class RE2 : IRegexRunner
          * </p>
          */
   // This is visible for testing.
-  public int[] findSubmatchIndex(String s) => pad(doExecute(MachineInput.fromUTF16(s), 0, UNANCHORED, prog.numCap));
+  public int[] FindSubmatchIndex(String s) => Pad(DoExecute(MachineInput.fromUTF16(s), 0, UNANCHORED, prog.numCap));
 
   /**
          * {@code findAllUTF8()} is the <a href='#all'>All</a> version of {@link #findUTF8}; it returns a
@@ -752,10 +752,10 @@ public class RE2 : IRegexRunner
          * by |b|.
          */
   // This is visible for testing.
-  public List<byte[]> findAllUTF8(byte[] b, int n)
+  public List<byte[]> FindAllUtf8(byte[] b, int n)
   {
     var result = new List<byte[]>();
-    allMatches(
+    AllMatches(
       MachineInput.fromUTF8(b),
       n,
       (int[] match) =>
@@ -780,10 +780,10 @@ public class RE2 : IRegexRunner
          * </p>
          */
   // This is visible for testing.
-  public List<int[]> findAllUTF8Index(byte[] b, int n)
+  public List<int[]> FindAllUtf8Index(byte[] b, int n)
   {
     var result = new List<int[]>();
-    allMatches(
+    AllMatches(
       MachineInput.fromUTF8(b),
       n,
       (int[] match) =>
@@ -808,10 +808,10 @@ public class RE2 : IRegexRunner
          * </p>
          */
   // This is visible for testing.
-  public List<String> findAll(String s, int n)
+  public List<String> FindAll(String s, int n)
   {
     var result = new List<String>();
-    allMatches(
+    AllMatches(
       MachineInput.fromUTF16(s),
       n,
       (int[] match) =>
@@ -836,10 +836,10 @@ public class RE2 : IRegexRunner
          * </p>
          */
   // This is visible for testing.
-  public List<int[]> findAllIndex(String s, int n)
+  public List<int[]> FindAllIndex(String s, int n)
   {
     var result = new List<int[]>();
-    allMatches(
+    AllMatches(
       MachineInput.fromUTF16(s),
       n,
       (int[] match) =>
@@ -864,10 +864,10 @@ public class RE2 : IRegexRunner
          * </p>
          */
   // This is visible for testing.
-  public List<byte[][]> findAllUTF8Submatch(byte[] b, int n)
+  public List<byte[][]> FindAllUtf8Submatch(byte[] b, int n)
   {
     var result = new List<byte[][]>();
-    allMatches(
+    AllMatches(
       MachineInput.fromUTF8(b),
       n,
       (int[] match) =>
@@ -900,10 +900,10 @@ public class RE2 : IRegexRunner
          * </p>
          */
   // This is visible for testing.
-  public List<int[]> findAllUTF8SubmatchIndex(byte[] b, int n)
+  public List<int[]> FindAllUtf8SubmatchIndex(byte[] b, int n)
   {
     var result = new List<int[]>();
-    allMatches(
+    AllMatches(
       MachineInput.fromUTF8(b),
       n,
       (int[] match) =>
@@ -928,10 +928,10 @@ public class RE2 : IRegexRunner
          * </p>
          */
   // This is visible for testing.
-  public List<String[]> findAllSubmatch(String s, int n)
+  public List<String[]> FindAllSubmatch(String s, int n)
   {
     var result = new List<String[]>();
-    allMatches(
+    AllMatches(
       MachineInput.fromUTF16(s),
       n,
       (int[] match) =>
@@ -964,10 +964,10 @@ public class RE2 : IRegexRunner
          * </p>
          */
   // This is visible for testing.
-  public List<int[]> findAllSubmatchIndex(String s, int n)
+  public List<int[]> FindAllSubmatchIndex(String s, int n)
   {
     var result = new List<int[]>();
-    allMatches(
+    AllMatches(
       MachineInput.fromUTF16(s),
       n,
       (int[] match) =>

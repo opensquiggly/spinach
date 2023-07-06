@@ -17,18 +17,11 @@ internal static partial class Program
 
     FastIntersectEnumerable<TrigramFileInfo, int> intersection = enumerable1.FastIntersect(enumerable2);
 
-    try
+    foreach (TrigramFileInfo tfi in intersection)
     {
-      foreach (TrigramFileInfo tfi in intersection)
-      {
-        long nameAddress = TextSearchIndex.InternalFileIdTree.Find(tfi.FileId);
-        DiskImmutableString nameString = TextSearchIndex.DiskBlockManager.ImmutableStringFactory.LoadExisting(nameAddress);
-        Console.WriteLine($"Match on FileId = {tfi.FileId} at Position {tfi.Position} : {nameString.GetValue()}");
-      }
-    }
-    catch (Exception e)
-    {
-      Console.WriteLine(e);
+      long nameAddress = TextSearchIndex.InternalFileIdTree.Find(tfi.FileId);
+      DiskImmutableString nameString = TextSearchIndex.DiskBlockManager.ImmutableStringFactory.LoadExisting(nameAddress);
+      Console.WriteLine($"Match on FileId = {tfi.FileId} at Position {tfi.Position} : {nameString.GetValue()}");
     }
 
     Pause();

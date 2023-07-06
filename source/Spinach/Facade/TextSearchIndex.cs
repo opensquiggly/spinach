@@ -202,19 +202,6 @@ public class TextSearchIndex
 
   public void Close() => IsOpen = false;
 
-  public TrigramFileEnumerator GetTrigramFileEnumerable(int key)
-  {
-    return new TrigramFileEnumerator(
-      TrigramFileIdTreeCache,
-      TrigramTree,
-      TrigramFileTreeFactory,
-      InternalFileIdTree,
-      PostingsListCache,
-      LinkedListOfLongFactory,
-      key
-    );
-  }
-
   public FastTrigramFileEnumerable GetFastTrigramFileEnumerable(int key)
   {
     return new FastTrigramFileEnumerable(
@@ -241,6 +228,8 @@ public class TextSearchIndex
       literal
     );
   }
+
+  public IEnumerable<RegexEnumerable.MatchingFile> RegexEnumerable(string regex) => new RegexEnumerable(this, regex);
 
   public long AddRepository(string externalRepoId, string repoName)
   {

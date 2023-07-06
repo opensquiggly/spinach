@@ -234,7 +234,7 @@ public class Matcher
     }
 
     bool ok =
-      _pattern.re2().match(inputSequence, groups[0], end, anchorFlag, groups, 1 + _groupCount);
+      _pattern.re2().Match(inputSequence, groups[0], end, anchorFlag, groups, 1 + _groupCount);
     // Must match - hasMatch says that the last call with these
     // parameters worked just fine.
     if (!ok)
@@ -308,7 +308,7 @@ public class Matcher
   {
     // TODO(rsc): Is matches/lookingAt supposed to reset the append or input positions?
     // From the JDK docs, looks like no.
-    bool ok = _pattern.re2().match(inputSequence, startByte, _inputLength, anchor, groups, 1);
+    bool ok = _pattern.re2().Match(inputSequence, startByte, _inputLength, anchor, groups, 1);
     if (!ok)
     {
       return false;

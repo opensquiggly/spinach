@@ -1,53 +1,42 @@
-namespace Spinach.Exceptions;
-
 // Copyright 2010 The Go Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-/**
-     * An exception thrown by the parser if the pattern was invalid.
-     *
-     * Following {@code java.util.regex.PatternSyntaxException}, this is an unchecked exception.
-     */
+namespace Spinach.Exceptions;
+
 [Serializable]
 public class PatternSyntaxException : Exception
 {
-
-  private string error; // the nature of the error
-  private string input; // the partial input at the point of error.
+  // /////////////////////////////////////////////////////////////////////////////////////////////
+  // Constructors
+  // /////////////////////////////////////////////////////////////////////////////////////////////
 
   public PatternSyntaxException(string error, string input)
   {
-    // this.error = "Syntax Error: " + error + ": `" + input + "`";
-    this.error = error;
-    this.input = input;
+    this._error = error;
+    this._input = input;
   }
 
   public PatternSyntaxException(string error)
   {
-    this.error = "error parsing regexp: " + error;
-    this.input = "";
+    this._error = "error parsing regexp: " + error;
+    this._input = "";
   }
 
-  /**
-         * Retrieves the error index.
-         *
-         * @return The approximate index in the pattern of the error, or <tt>-1</tt> if the index is not
-         * known
-         */
-  public int getIndex() => -1;
+  // /////////////////////////////////////////////////////////////////////////////////////////////
+  // Private Member Variables
+  // /////////////////////////////////////////////////////////////////////////////////////////////
 
-  /**
-         * Retrieves the description of the error.
-         *
-         * @return The description of the error
-         */
-  public string getDescription() => error;
+  private string _error; // the nature of the error
+  private string _input; // the partial input at the point of error.
 
-  /**
-         * Retrieves the erroneous regular-expression pattern.
-         *
-         * @return The erroneous pattern
-         */
-  public string getPattern() => input;
+  // /////////////////////////////////////////////////////////////////////////////////////////////
+  // Public Methods
+  // /////////////////////////////////////////////////////////////////////////////////////////////
+
+  public int GetIndex() => -1;
+
+  public string GetDescription() => _error;
+
+  public string GetPattern() => _input;
 }
