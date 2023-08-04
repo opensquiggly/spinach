@@ -17,6 +17,19 @@ internal static partial class Program
       }
     }
 
+    // If Spinach were thread-safe, we could do this
+    // var matchingFiles = TextSearchIndex.RegexEnumerable(regex).AsParallel().AsOrdered();
+    //
+    // matchingFiles.ForAll(matchingFile =>
+    // {
+    //   Console.WriteLine($"{matchingFile.FileName}");
+    //
+    //   matchingFile.Matches.AsParallel().ForAll(matchingPosition =>
+    //   {
+    //     Console.WriteLine($"  From {matchingPosition.StartIndex} to {matchingPosition.EndIndex}");
+    //   });
+    // });    
+
     Pause();
   }
 }
