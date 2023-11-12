@@ -1,24 +1,20 @@
 namespace Spinach.Enumerators;
 
-public class FastTrigramFileEnumerator : IFastEnumerator<TrigramFileInfo, int>
+public class FastLiteralFileEnumerator : IFastEnumerator<TrigramFileInfo, int>
 {
   // /////////////////////////////////////////////////////////////////////////////////////////////
   // Constructors
   // /////////////////////////////////////////////////////////////////////////////////////////////
 
-  public FastTrigramFileEnumerator(
+  public FastLiteralFileEnumerator(
+    TextSearchIndex textSearchIndex,
     InternalFileInfoTable internalFileInfoTable,
-    DiskBTree<int, long> trigramTree,
-    LruCache<int, DiskSortedVarIntList> trigramPostingsListCache,
-    DiskSortedVarIntListFactory sortedVarIntListFactory,
-    int trigramKey
+    string literal
   )
   {
+    TextSearchIndex = textSearchIndex;
     InternalFileInfoTable = internalFileInfoTable;
-    TrigramTree = trigramTree;
-    TrigramPostingsListCache = trigramPostingsListCache;
-    SortedVarIntListFactory = sortedVarIntListFactory;
-    TrigramKey = trigramKey;
+    Literal = literal;
 
     Reset();
   }
@@ -27,17 +23,13 @@ public class FastTrigramFileEnumerator : IFastEnumerator<TrigramFileInfo, int>
   // Private Properties
   // /////////////////////////////////////////////////////////////////////////////////////////////
 
+  private TextSearchIndex TextSearchIndex { get; }
+
   private InternalFileInfoTable InternalFileInfoTable { get; }
 
-  private DiskSortedVarIntListFactory SortedVarIntListFactory { get; }
+  private string Literal { get; }
 
-  private LruCache<int, DiskSortedVarIntList> TrigramPostingsListCache { get; }
-
-  private int TrigramKey { get; }
-
-  private DiskBTree<int, long> TrigramTree { get; }
-
-  private FastTrigramEnumerator FastTrigramEnumerator { get; set; }
+  private FastLiteralEnumerator FastLiteralEnumerator { get; set; }
 
   // /////////////////////////////////////////////////////////////////////////////////////////////
   // Public Properties
@@ -61,16 +53,16 @@ public class FastTrigramFileEnumerator : IFastEnumerator<TrigramFileInfo, int>
 
   public bool MoveNext()
   {
-    bool hasValue = FastTrigramEnumerator.MoveNext();
+    bool hasValue = FastLiteralEnumerator.MoveNext();
 
     if (hasValue)
     {
       (_, InternalFileInfoTable.InternalFileInfo internalFileInfo) =
-        InternalFileInfoTable.FindLastWithOffsetLessThanOrEqual(0L, FastTrigramEnumerator.CurrentKey);
+        InternalFileInfoTable.FindLastWithOffsetLessThanOrEqual(0L, FastLiteralEnumerator.CurrentKey);
 
       CurrentKey = new TrigramFileInfo(
         internalFileInfo.InternalId,
-        (long)(FastTrigramEnumerator.CurrentKey - internalFileInfo.StartingOffset)
+        (long)(FastLiteralEnumerator.CurrentKey - internalFileInfo.StartingOffset)
       );
     }
 
@@ -84,16 +76,16 @@ public class FastTrigramFileEnumerator : IFastEnumerator<TrigramFileInfo, int>
 
     ulong offsetTarget = internalFileInfo.StartingOffset + (ulong)target.Position;
 
-    bool hasValue = FastTrigramEnumerator.MoveUntilGreaterThanOrEqual(offsetTarget);
+    bool hasValue = FastLiteralEnumerator.MoveUntilGreaterThanOrEqual(offsetTarget);
 
     if (hasValue)
     {
       (_, internalFileInfo) =
-        InternalFileInfoTable.FindLastWithOffsetLessThanOrEqual(0L, FastTrigramEnumerator.CurrentKey);
+        InternalFileInfoTable.FindLastWithOffsetLessThanOrEqual(0L, FastLiteralEnumerator.CurrentKey);
 
       CurrentKey = new TrigramFileInfo(
         internalFileInfo.InternalId,
-        (long)(FastTrigramEnumerator.CurrentKey - internalFileInfo.StartingOffset)
+        (long)(FastLiteralEnumerator.CurrentKey - internalFileInfo.StartingOffset)
       );
     }
 
@@ -103,13 +95,8 @@ public class FastTrigramFileEnumerator : IFastEnumerator<TrigramFileInfo, int>
   public void Reset()
   {
     // ReSharper disable once ArrangeMethodOrOperatorBody
-    FastTrigramEnumerator = new FastTrigramEnumerator(
-      TrigramTree,
-      TrigramPostingsListCache,
-      SortedVarIntListFactory,
-      TrigramKey
-    );
+    FastLiteralEnumerator = new FastLiteralEnumerator(TextSearchIndex, Literal);
 
-    FastTrigramEnumerator.Reset();
+    FastLiteralEnumerator.Reset();
   }
 }

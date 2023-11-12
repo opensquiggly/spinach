@@ -42,7 +42,7 @@ public static class LiteralQueryBuilder
     switch (queryNode.NodeType)
     {
       case LiteralQueryNodeTypes.Literal:
-        return textSearchIndex.GetFastLiteralEnumerable(queryNode.Literal);
+        return textSearchIndex.GetFastLiteralFileEnumerable(queryNode.Literal);
 
       case LiteralQueryNodeTypes.Union:
         IFastEnumerable<IFastEnumerator<TrigramFileInfo, int>, TrigramFileInfo, int> unionEnumerable1 = BuildEnumerable(textSearchIndex, queryNode.Subs[0]);
@@ -167,7 +167,7 @@ public static class LiteralQueryBuilder
   }
 
   // /////////////////////////////////////////////////////////////////////////////////////////////
-  // PUblic Inner Classes
+  // Public Inner Classes
   // /////////////////////////////////////////////////////////////////////////////////////////////
 
   public class FastEnumerableWrapper :
@@ -186,5 +186,4 @@ public static class LiteralQueryBuilder
 
     IEnumerator IEnumerable.GetEnumerator() => GetFastEnumerator();
   }
-
 }

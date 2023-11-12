@@ -1,20 +1,18 @@
 namespace Spinach.Enumerators;
 
-public class FastTrigramFileEnumerable : IFastEnumerable<IFastEnumerator<TrigramFileInfo, int>, TrigramFileInfo, int>
+public class FastTrigramEnumerable : IFastEnumerable<IFastEnumerator<ulong, long>, ulong, long>
 {
   // /////////////////////////////////////////////////////////////////////////////////////////////
   // Constructors
   // /////////////////////////////////////////////////////////////////////////////////////////////
 
-  public FastTrigramFileEnumerable(
-    InternalFileInfoTable internalFileInfoTable,
+  public FastTrigramEnumerable(
     DiskBTree<int, long> trigramTree,
     LruCache<int, DiskSortedVarIntList> trigramPostingsListCache,
     DiskSortedVarIntListFactory sortedVarIntListFactory,
     int trigramKey
   )
   {
-    InternalFileInfoTable = internalFileInfoTable;
     TrigramTree = trigramTree;
     TrigramPostingsListCache = trigramPostingsListCache;
     SortedVarIntListFactory = sortedVarIntListFactory;
@@ -25,21 +23,13 @@ public class FastTrigramFileEnumerable : IFastEnumerable<IFastEnumerator<Trigram
   // Private Properties
   // /////////////////////////////////////////////////////////////////////////////////////////////
 
-  private InternalFileInfoTable InternalFileInfoTable { get; set; }
+  private LruCache<int, DiskSortedVarIntList> TrigramPostingsListCache { get; set; }
 
   private DiskSortedVarIntListFactory SortedVarIntListFactory { get; set; }
 
-  private LruCache<int, DiskSortedVarIntList> TrigramPostingsListCache { get; set; }
-
-  private DiskSortedVarIntList PostingsList { get; set; }
-
-  private DiskSortedVarIntListCursor PostingsListCursor { get; set; }
-
-  private int TrigramKey { get; }
+  private int TrigramKey { get; set; }
 
   private DiskBTree<int, long> TrigramTree { get; set; }
-
-  private FastTrigramEnumerator FastTrigramEnumerator { get; set; }
 
   // /////////////////////////////////////////////////////////////////////////////////////////////
   // Public Properties
@@ -47,13 +37,12 @@ public class FastTrigramFileEnumerable : IFastEnumerable<IFastEnumerator<Trigram
 
   IEnumerator IEnumerable.GetEnumerator() => GetFastEnumerator();
 
-  public IEnumerator<TrigramFileInfo> GetEnumerator() => GetFastEnumerator();
+  public IEnumerator<ulong> GetEnumerator() => GetFastEnumerator();
 
-  public IFastEnumerator<TrigramFileInfo, int> GetFastEnumerator()
+  public IFastEnumerator<ulong, long> GetFastEnumerator()
   {
     // ReSharper disable once ArrangeMethodOrOperatorBody
-    return new FastTrigramFileEnumerator(
-      InternalFileInfoTable,
+    return new FastTrigramEnumerator(
       TrigramTree,
       TrigramPostingsListCache,
       SortedVarIntListFactory,

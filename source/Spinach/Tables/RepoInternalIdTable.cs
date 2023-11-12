@@ -6,9 +6,10 @@ public class RepoInternalIdTable
   // Constructors
   // /////////////////////////////////////////////////////////////////////////////////////////////
 
-  public RepoInternalIdTable(DiskBlockManager diskBlockManager)
+  public RepoInternalIdTable(DiskBlockManager diskBlockManager, DiskBTreeFactory<long, RepoInfoBlock> factory)
   {
     DiskBlockManager = diskBlockManager;
+    Factory = factory;
   }
 
   // /////////////////////////////////////////////////////////////////////////////////////////////
@@ -17,21 +18,59 @@ public class RepoInternalIdTable
 
   private DiskBlockManager DiskBlockManager { get; }
 
+  private DiskBTreeFactory<long, RepoInfoBlock> Factory { get; }
+
+  public DiskBTree<long, RepoInfoBlock> RepoIdTree { get; private set; }
+
   // /////////////////////////////////////////////////////////////////////////////////////////////
   // Public Methods
   // /////////////////////////////////////////////////////////////////////////////////////////////
 
   public long FindRepo(string externalId) => 0;
 
-  public void AddRepo(long internalId, string externalId, string name)
+  public DiskBTree<long, RepoInfoBlock> AppendNew()
   {
-    Eugene.Collections.DiskImmutableString externalIdString = DiskBlockManager.ImmutableStringFactory.Append(externalId);
-    Eugene.Collections.DiskImmutableString nameString = DiskBlockManager.ImmutableStringFactory.Append(name);
+    RepoIdTree = Factory.AppendNew(25);
+    return RepoIdTree;
+  }
+  public void Load(long address) => RepoIdTree = Factory.LoadExisting(address);
 
+  public void AddRepo(long internalId, string externalId, string name, string rootFolder)
+  {
     RepoInfoBlock repoInfoBlock = default;
+
+    if (externalId != null)
+    {
+      Eugene.Collections.DiskImmutableString externalIdString =
+        DiskBlockManager.ImmutableStringFactory.Append(externalId);
+      repoInfoBlock.ExternalIdAddress = externalIdString.Address;
+    }
+    else
+    {
+      repoInfoBlock.ExternalIdAddress = 0;
+    }
+
+    DiskImmutableString nameString = DiskBlockManager.ImmutableStringFactory.Append(name);
+    DiskImmutableString rootFolderString = DiskBlockManager.ImmutableStringFactory.Append(rootFolder);
+
     repoInfoBlock.InternalId = internalId;
-    repoInfoBlock.ExternalIdAddress = externalIdString.Address;
     repoInfoBlock.NameAddress = nameString.Address;
+    repoInfoBlock.RootFolderAddress = rootFolderString.Address;
+
+    RepoIdTree.Insert(internalId, repoInfoBlock);
   }
 
+  public IEnumerable<RepoInfoBlock> GetRepositories()
+  {
+    var cursor = new DiskBTreeCursor<long, RepoInfoBlock>(RepoIdTree);
+
+    while (cursor.MoveNext())
+    {
+      yield return cursor.CurrentData;
+    }
+  }
+
+  public DiskBTreeCursor<long, RepoInfoBlock> GetRepositoriesCursor() => new(RepoIdTree);
+
+  public RepoInfoBlock FindRepository(long internalId) => RepoIdTree.Find(internalId);
 }
