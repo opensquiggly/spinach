@@ -1,14 +1,19 @@
 namespace Spinach.Enumerators;
 
-public class FastLiteralEnumerable : IFastEnumerable<IFastEnumerator<ulong, long>, ulong, long>
+public class FastLiteralFileEnumerable : IFastEnumerable<IFastEnumerator<TrigramFileInfo, int>, TrigramFileInfo, int>
 {
   // /////////////////////////////////////////////////////////////////////////////////////////////
   // Constructors
   // /////////////////////////////////////////////////////////////////////////////////////////////
 
-  public FastLiteralEnumerable(TextSearchIndex textSearchIndex, string literal)
+  public FastLiteralFileEnumerable(
+    TextSearchIndex textSearchIndex,
+    InternalFileInfoTable internalFileInfoTable,
+    string literal
+  )
   {
     TextSearchIndex = textSearchIndex;
+    InternalFileInfoTable = internalFileInfoTable;
     Literal = literal;
   }
 
@@ -16,9 +21,11 @@ public class FastLiteralEnumerable : IFastEnumerable<IFastEnumerator<ulong, long
   // Private Properties
   // /////////////////////////////////////////////////////////////////////////////////////////////
 
-  private string Literal { get; }
-
   private TextSearchIndex TextSearchIndex { get; }
+
+  private InternalFileInfoTable InternalFileInfoTable { get; }
+
+  private string Literal { get; }
 
   // /////////////////////////////////////////////////////////////////////////////////////////////
   // Public Methods
@@ -26,11 +33,12 @@ public class FastLiteralEnumerable : IFastEnumerable<IFastEnumerator<ulong, long
 
   IEnumerator IEnumerable.GetEnumerator() => GetFastEnumerator();
 
-  public IEnumerator<ulong> GetEnumerator() => GetFastEnumerator();
+  public IEnumerator<TrigramFileInfo> GetEnumerator() => GetFastEnumerator();
 
-  public IFastEnumerator<ulong, long> GetFastEnumerator()
-  {
-    // ReSharper disable once ArrangeMethodOrOperatorBody
-    return new FastLiteralEnumerator(TextSearchIndex, Literal);
-  }
+  public IFastEnumerator<TrigramFileInfo, int> GetFastEnumerator() =>
+    new FastLiteralFileEnumerator(
+      TextSearchIndex,
+      InternalFileInfoTable,
+      Literal
+    );
 }

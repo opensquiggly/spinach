@@ -1,32 +1,20 @@
 namespace Spinach.Enumerators;
 
-public class FastLiteralEnumerator : IFastEnumerator<TrigramFileInfo, int>
+public class FastLiteralEnumerator : IFastEnumerator<ulong, long>
 {
   // /////////////////////////////////////////////////////////////////////////////////////////////
   // Constructors
   // /////////////////////////////////////////////////////////////////////////////////////////////
 
-  public FastLiteralEnumerator(
-    TextSearchIndex textSearchIndex,
-    LruCache<int, DiskBTree<long, long>> trigramFileIdTreeCache,
-    DiskBTree<int, long> trigramTree,
-    DiskBTreeFactory<long, long> trigramFileTreeFactory,
-    DiskBTree<long, long> internalFileIdTree,
-    LruCache<Tuple<int, long>, DiskLinkedList<long>> postingsListCache,
-    DiskLinkedListFactory<long> linkedListOfLongFactory,
-    string literal
-  )
+  public FastLiteralEnumerator(TextSearchIndex textSearchIndex, string literal)
   {
-    TrigramFileIdTreeCache = trigramFileIdTreeCache;
-    TrigramTree = trigramTree;
-    TrigramFileTreeFactory = trigramFileTreeFactory;
-    InternalFileIdTree = internalFileIdTree;
-    PostingsListCache = postingsListCache;
-    LinkedListOfLongFactory = linkedListOfLongFactory;
+    TextSearchIndex = textSearchIndex;
     Literal = literal;
-    Offset = Literal.Length - 3;
-    Enumerable1 = textSearchIndex.GetFastTrigramFileEnumerable(TrigramHelper.GetLeadingTrigramKey(Literal));
-    Enumerable2 = textSearchIndex.GetFastTrigramFileEnumerable(TrigramHelper.GetTrailingTrigramKey(Literal));
+    Offset = (ulong) (Literal.Length - 3);
+    int trigramKey1 = TrigramHelper.GetLeadingTrigramKey(Literal);
+    int trigramKey2 = TrigramHelper.GetTrailingTrigramKey(Literal);
+    Enumerable1 = TextSearchIndex.GetFastTrigramEnumerable(trigramKey1);
+    Enumerable2 = TextSearchIndex.GetFastTrigramEnumerable(trigramKey2);
     Enumerator1 = Enumerable1.GetFastEnumerator();
     Enumerator2 = Enumerable2.GetFastEnumerator();
     Reset();
@@ -36,37 +24,19 @@ public class FastLiteralEnumerator : IFastEnumerator<TrigramFileInfo, int>
   // Private Properties
   // /////////////////////////////////////////////////////////////////////////////////////////////
 
-  private DiskBTreeCursor<long, long> BTreeCursor { get; set; }
+  private FastTrigramEnumerable Enumerable1 { get; }
 
-  private FastTrigramFileEnumerable Enumerable1 { get; }
+  private FastTrigramEnumerable Enumerable2 { get; }
 
-  private FastTrigramFileEnumerable Enumerable2 { get; }
+  private IFastEnumerator<ulong, long> Enumerator1 { get; }
 
-  private IFastEnumerator<TrigramFileInfo, int> Enumerator1 { get; }
+  private IFastEnumerator<ulong, long> Enumerator2 { get; }
 
-  private IFastEnumerator<TrigramFileInfo, int> Enumerator2 { get; }
+  private string Literal { get; }
 
-  private DiskBTree<long, long> InternalFileIdTree { get; set; }
+  private ulong Offset { get; }
 
-  private DiskLinkedListFactory<long> LinkedListOfLongFactory { get; set; }
-
-  private string Literal { get; set; }
-
-  private int Offset { get; }
-
-  private LruCache<Tuple<int, long>, DiskLinkedList<long>> PostingsListCache { get; set; }
-
-  private DiskLinkedList<long>.Position PostingsListPosition { get; set; }
-
-  private DiskBTree<long, long> TrigramFileIdTree { get; set; }
-
-  private LruCache<int, DiskBTree<long, long>> TrigramFileIdTreeCache { get; }
-
-  private DiskBTreeFactory<long, long> TrigramFileTreeFactory { get; set; }
-
-  private int TrigramKey { get; set; }
-
-  private DiskBTree<int, long> TrigramTree { get; set; }
+  private TextSearchIndex TextSearchIndex { get; }
 
   // /////////////////////////////////////////////////////////////////////////////////////////////
   // Public Properties
@@ -74,27 +44,11 @@ public class FastLiteralEnumerator : IFastEnumerator<TrigramFileInfo, int>
 
   object IEnumerator.Current => Current;
 
-  public TrigramFileInfo Current => CurrentKey;
+  public ulong Current => CurrentKey;
 
-  public int CurrentData { get; }
+  public long CurrentData { get; private set; }
 
-  public TrigramFileInfo CurrentKey { get; private set; }
-
-  // /////////////////////////////////////////////////////////////////////////////////////////////
-  // Private Methods
-  // /////////////////////////////////////////////////////////////////////////////////////////////
-
-  private int CompareTo(TrigramFileInfo tfi1, TrigramFileInfo tfi2)
-  {
-    // The trigram positions need to correlate to the corresponding
-    // positions within the target string literal
-    if (tfi1.FileId < tfi2.FileId) return -1;
-    if (tfi1.FileId > tfi2.FileId) return 1;
-    if (tfi1.Position < tfi2.Position - Offset) return -1;
-    if (tfi1.Position > tfi2.Position - Offset) return 1;
-
-    return 0;
-  }
+  public ulong CurrentKey { get; private set; }
 
   // /////////////////////////////////////////////////////////////////////////////////////////////
   // Public Methods
@@ -111,21 +65,18 @@ public class FastLiteralEnumerator : IFastEnumerator<TrigramFileInfo, int>
 
     while (hasValue1 && hasValue2)
     {
-      int comparison = CompareTo(Enumerator1.CurrentKey, Enumerator2.CurrentKey);
-
-      if (comparison < 0)
+      if (Enumerator1.CurrentKey < Enumerator2.CurrentKey - Offset)
       {
-        var next = new TrigramFileInfo(Enumerator2.CurrentKey.FileId, Enumerator2.CurrentKey.Position - Offset);
-        hasValue1 = Enumerator1.MoveUntilGreaterThanOrEqual(next);
+        hasValue1 = Enumerator1.MoveUntilGreaterThanOrEqual(Enumerator2.CurrentKey - Offset);
       }
-      else if (comparison > 0)
+      else if (Enumerator1.CurrentKey > Enumerator2.CurrentKey - Offset)
       {
-        var next = new TrigramFileInfo(Enumerator1.CurrentKey.FileId, Enumerator1.CurrentKey.Position + Offset);
-        hasValue2 = Enumerator2.MoveUntilGreaterThanOrEqual(next);
+        hasValue2 = Enumerator2.MoveUntilGreaterThanOrEqual(Enumerator1.CurrentKey + Offset);
       }
       else
       {
         CurrentKey = Enumerator1.CurrentKey;
+        CurrentData = Enumerator1.CurrentData;
         return true;
       }
     }
@@ -133,28 +84,25 @@ public class FastLiteralEnumerator : IFastEnumerator<TrigramFileInfo, int>
     return false;
   }
 
-  public bool MoveUntilGreaterThanOrEqual(TrigramFileInfo target)
+  public bool MoveUntilGreaterThanOrEqual(ulong target)
   {
     bool hasValue1 = Enumerator1.MoveUntilGreaterThanOrEqual(target);
     bool hasValue2 = Enumerator2.MoveUntilGreaterThanOrEqual(target);
 
     while (hasValue1 && hasValue2)
     {
-      int comparison = CompareTo(Enumerator1.CurrentKey, Enumerator2.CurrentKey);
-
-      if (comparison < 0)
+      if (Enumerator1.CurrentKey < Enumerator2.CurrentKey - Offset)
       {
-        var next = new TrigramFileInfo(Enumerator2.CurrentKey.FileId, Enumerator2.CurrentKey.Position - Offset);
-        hasValue1 = Enumerator1.MoveUntilGreaterThanOrEqual(next);
+        hasValue1 = Enumerator1.MoveUntilGreaterThanOrEqual(Enumerator2.CurrentKey - Offset);
       }
-      else if (comparison > 0)
+      else if (Enumerator1.CurrentKey > Enumerator2.CurrentKey - Offset)
       {
-        var next = new TrigramFileInfo(Enumerator1.CurrentKey.FileId, Enumerator1.CurrentKey.Position + Offset);
-        hasValue2 = Enumerator2.MoveUntilGreaterThanOrEqual(next);
+        hasValue2 = Enumerator2.MoveUntilGreaterThanOrEqual(Enumerator1.CurrentKey + Offset);
       }
       else
       {
         CurrentKey = Enumerator1.CurrentKey;
+        CurrentData = Enumerator1.CurrentData;
         return true;
       }
     }

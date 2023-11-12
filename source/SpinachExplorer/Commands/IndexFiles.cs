@@ -15,6 +15,7 @@ internal static partial class Program
     if (int.TryParse(firstResponse, out int firstFileId) && int.TryParse(lastResponse, out int lastFileId))
     {
       TextSearchIndex.IndexFiles(firstFileId, lastFileId);
+      TextSearchIndex.Flush();
     }
 
     Pause();

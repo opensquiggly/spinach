@@ -1,31 +1,29 @@
 namespace Spinach.Enumerators;
 
-public class FastTrigramFileEnumerable : IFastEnumerable<IFastEnumerator<TrigramFileInfo, int>, TrigramFileInfo, int>
+public class FastTrigramEnumerator : IFastEnumerator<ulong, long>
 {
   // /////////////////////////////////////////////////////////////////////////////////////////////
   // Constructors
   // /////////////////////////////////////////////////////////////////////////////////////////////
 
-  public FastTrigramFileEnumerable(
-    InternalFileInfoTable internalFileInfoTable,
+  public FastTrigramEnumerator(
     DiskBTree<int, long> trigramTree,
     LruCache<int, DiskSortedVarIntList> trigramPostingsListCache,
     DiskSortedVarIntListFactory sortedVarIntListFactory,
     int trigramKey
   )
   {
-    InternalFileInfoTable = internalFileInfoTable;
     TrigramTree = trigramTree;
     TrigramPostingsListCache = trigramPostingsListCache;
     SortedVarIntListFactory = sortedVarIntListFactory;
     TrigramKey = trigramKey;
+
+    Reset();
   }
 
   // /////////////////////////////////////////////////////////////////////////////////////////////
   // Private Properties
   // /////////////////////////////////////////////////////////////////////////////////////////////
-
-  private InternalFileInfoTable InternalFileInfoTable { get; set; }
 
   private DiskSortedVarIntListFactory SortedVarIntListFactory { get; set; }
 
@@ -39,25 +37,51 @@ public class FastTrigramFileEnumerable : IFastEnumerable<IFastEnumerator<Trigram
 
   private DiskBTree<int, long> TrigramTree { get; set; }
 
-  private FastTrigramEnumerator FastTrigramEnumerator { get; set; }
-
   // /////////////////////////////////////////////////////////////////////////////////////////////
   // Public Properties
   // /////////////////////////////////////////////////////////////////////////////////////////////
 
-  IEnumerator IEnumerable.GetEnumerator() => GetFastEnumerator();
+  object IEnumerator.Current => Current;
 
-  public IEnumerator<TrigramFileInfo> GetEnumerator() => GetFastEnumerator();
+  public ulong Current => CurrentKey;
 
-  public IFastEnumerator<TrigramFileInfo, int> GetFastEnumerator()
+  public long CurrentData => PostingsListCursor.CurrentData;
+
+  public ulong CurrentKey => PostingsListCursor.CurrentKey;
+
+  // /////////////////////////////////////////////////////////////////////////////////////////////
+  // Public Methods
+  // /////////////////////////////////////////////////////////////////////////////////////////////
+
+  public void Dispose()
+  {
+  }
+
+  public bool MoveNext()
   {
     // ReSharper disable once ArrangeMethodOrOperatorBody
-    return new FastTrigramFileEnumerator(
-      InternalFileInfoTable,
-      TrigramTree,
-      TrigramPostingsListCache,
-      SortedVarIntListFactory,
-      TrigramKey
-    );
+    return PostingsListCursor.MoveNext();
+  }
+
+  public bool MoveUntilGreaterThanOrEqual(ulong target)
+  {
+    // ReSharper disable once ArrangeMethodOrOperatorBody
+    return PostingsListCursor.MoveUntilGreaterThanOrEqual(target);
+  }
+
+  public void Reset()
+  {
+    if (!TrigramPostingsListCache.TryGetValue(TrigramKey, out DiskSortedVarIntList postingsList))
+    {
+      if (TrigramTree.TryFind(TrigramKey, out long postingsListAddress))
+      {
+        postingsList = SortedVarIntListFactory.LoadExisting(postingsListAddress);
+        TrigramPostingsListCache.Add(TrigramKey, postingsList);
+      }
+    }
+
+    PostingsList = postingsList;
+    PostingsListCursor = new DiskSortedVarIntListCursor(PostingsList);
+    PostingsListCursor.Reset();
   }
 }

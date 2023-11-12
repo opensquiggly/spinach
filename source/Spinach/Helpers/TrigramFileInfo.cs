@@ -10,9 +10,9 @@ public struct TrigramFileInfo : IComparable<TrigramFileInfo>
   {
   }
 
-  public TrigramFileInfo(long fileId, long position)
+  public TrigramFileInfo(ulong fileId, long position)
   {
-    FileId = fileId;
+    FileId = (long)fileId;
     Position = position;
   }
 
