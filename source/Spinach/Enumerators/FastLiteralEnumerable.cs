@@ -28,9 +28,7 @@ public class FastLiteralEnumerable : IFastEnumerable<IFastEnumerator<ulong, long
 
   public IEnumerator<ulong> GetEnumerator() => GetFastEnumerator();
 
-  public IFastEnumerator<ulong, long> GetFastEnumerator()
-  {
+  public IFastEnumerator<ulong, long> GetFastEnumerator() =>
     // ReSharper disable once ArrangeMethodOrOperatorBody
-    return new FastLiteralEnumerator(TextSearchIndex, Literal);
-  }
+    new FastLiteralEnumerator(TextSearchIndex, Literal);
 }

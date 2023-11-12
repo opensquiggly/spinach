@@ -70,7 +70,7 @@ public class FastTrigramFileEnumerator : IFastEnumerator<TrigramFileInfo, int>
 
       CurrentKey = new TrigramFileInfo(
         internalFileInfo.InternalId,
-        (long) (FastTrigramEnumerator.CurrentKey - internalFileInfo.StartingOffset)
+        (long)(FastTrigramEnumerator.CurrentKey - internalFileInfo.StartingOffset)
       );
     }
 
@@ -80,9 +80,9 @@ public class FastTrigramFileEnumerator : IFastEnumerator<TrigramFileInfo, int>
   public bool MoveUntilGreaterThanOrEqual(TrigramFileInfo target)
   {
     InternalFileInfoTable.InternalFileInfo internalFileInfo =
-      InternalFileInfoTable.FindById((ulong) target.FileId);
+      InternalFileInfoTable.FindById((ulong)target.FileId);
 
-    ulong offsetTarget = internalFileInfo.StartingOffset + (ulong) target.Position;
+    ulong offsetTarget = internalFileInfo.StartingOffset + (ulong)target.Position;
 
     bool hasValue = FastTrigramEnumerator.MoveUntilGreaterThanOrEqual(offsetTarget);
 
@@ -93,7 +93,7 @@ public class FastTrigramFileEnumerator : IFastEnumerator<TrigramFileInfo, int>
 
       CurrentKey = new TrigramFileInfo(
         internalFileInfo.InternalId,
-        (long) (FastTrigramEnumerator.CurrentKey - internalFileInfo.StartingOffset)
+        (long)(FastTrigramEnumerator.CurrentKey - internalFileInfo.StartingOffset)
       );
     }
 

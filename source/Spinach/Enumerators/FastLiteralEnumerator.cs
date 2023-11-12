@@ -10,7 +10,7 @@ public class FastLiteralEnumerator : IFastEnumerator<ulong, long>
   {
     TextSearchIndex = textSearchIndex;
     Literal = literal;
-    Offset = (ulong) (Literal.Length - 3);
+    Offset = (ulong)(Literal.Length - 3);
     int trigramKey1 = TrigramHelper.GetLeadingTrigramKey(Literal);
     int trigramKey2 = TrigramHelper.GetTrailingTrigramKey(Literal);
     Enumerable1 = TextSearchIndex.GetFastTrigramEnumerable(trigramKey1);

@@ -212,11 +212,9 @@ public class TextSearchIndex
     );
   }
 
-  public FastLiteralEnumerable GetFastLiteralEnumerable(string literal)
-  {
+  public FastLiteralEnumerable GetFastLiteralEnumerable(string literal) =>
     // ReSharper disable once ArrangeMethodOrOperatorBody
-    return new FastLiteralEnumerable(this, literal);
-  }
+    new FastLiteralEnumerable(this, literal);
 
   public FastLiteralFileEnumerable GetFastLiteralFileEnumerable(string literal)
   {
@@ -289,7 +287,7 @@ public class TextSearchIndex
     _headerBlock = DiskBlockManager.GetHeaderBlock();
 
     RepoInternalIdTable = new RepoInternalIdTable(DiskBlockManager, RepoIdTreeFactory);
-    var tree = RepoInternalIdTable.AppendNew();
+    DiskBTree<long, RepoInfoBlock> tree = RepoInternalIdTable.AppendNew();
     InternalFileIdTree = FileIdTreeFactory.AppendNew(25);
     InternalFileInfoTree = FileInfoTreeFactory.AppendNew(25);
     TrigramTree = TrigramTreeFactory.AppendNew(25);
@@ -410,13 +408,13 @@ public class TextSearchIndex
         DiskSortedVarIntList postingsList = LoadOrAddTrigramPostingsList(trigramInfo.Key, out bool _);
 
         // TODO: As-is, this is very inefficient
-        postingsList.AppendData(new ulong[] { totalOffset + (ulong) trigramInfo.Position });
+        postingsList.AppendData(new ulong[] { totalOffset + (ulong)trigramInfo.Position });
 
         count++;
       }
 
       Console.WriteLine($" {count} trigrams");
-      totalOffset += (ulong) fileInfoBlock.Length;
+      totalOffset += (ulong)fileInfoBlock.Length;
     }
   }
 
@@ -446,7 +444,7 @@ public class TextSearchIndex
       DiskImmutableString nameString = DiskBlockManager.ImmutableStringFactory.Append(filePath);
       InternalFileIdTree.Insert(currentFileId, nameString.Address);
       FileInfoBlock fileInfoBlock = default;
-      fileInfoBlock.InternalId = (ulong) currentFileId;
+      fileInfoBlock.InternalId = (ulong)currentFileId;
       fileInfoBlock.NameAddress = nameString.Address;
       fileInfoBlock.Length = GetFileLength(filePath);
       Console.WriteLine($"{currentFileId} : {filePath} (Length = {fileInfoBlock.Length})");

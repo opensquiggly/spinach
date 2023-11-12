@@ -44,9 +44,9 @@ public class InternalFileInfoTable
     }
 
     // Doesn't the b-tree keep track of its own count???
-    FileCount = (ulong) FileInfoTree.Count();
+    FileCount = (ulong)FileInfoTree.Count();
     ByIdDictionary = new SortedDictionary<ulong, InternalFileInfo>();
-    ByOffsetList = new List<Tuple<ulong, InternalFileInfo>>((int) FileCount);
+    ByOffsetList = new List<Tuple<ulong, InternalFileInfo>>((int)FileCount);
 
     ulong currentOffset = 0;
     var cursor = new DiskBTreeCursor<long, FileInfoBlock>(FileInfoTree);
@@ -73,7 +73,7 @@ public class InternalFileInfoTable
         ByOffsetList.Add(new Tuple<ulong, InternalFileInfo>(currentOffset, internalFileInfo));
       }
 
-      currentOffset += (ulong) internalFileInfo.Length;
+      currentOffset += (ulong)internalFileInfo.Length;
     }
 
     IsBuilt = true;
@@ -90,16 +90,16 @@ public class InternalFileInfoTable
   {
     EnsureBuilt();
 
-    ulong end = (ulong) (ByOffsetList.Count - 1);
+    ulong end = (ulong)(ByOffsetList.Count - 1);
     ulong nextStartingIndex = startingIndex;
     InternalFileInfo resultFileInfo = null;
 
     while (nextStartingIndex <= end)
     {
       ulong mid = (nextStartingIndex + end) / 2;
-      if (ByOffsetList[(int) mid].Item1 <= offset)
+      if (ByOffsetList[(int)mid].Item1 <= offset)
       {
-        resultFileInfo = ByOffsetList[(int) mid].Item2;
+        resultFileInfo = ByOffsetList[(int)mid].Item2;
         nextStartingIndex = mid + 1;
       }
       else
@@ -115,16 +115,16 @@ public class InternalFileInfoTable
   {
     EnsureBuilt();
 
-    ulong end = (ulong) (ByOffsetList.Count - 1);
+    ulong end = (ulong)(ByOffsetList.Count - 1);
     ulong nextStartingIndex = startingIndex;
     InternalFileInfo resultFileInfo = null;
 
     while (nextStartingIndex <= end)
     {
       ulong mid = (nextStartingIndex + end) / 2;
-      if (ByOffsetList[(int) mid].Item1 >= offset)
+      if (ByOffsetList[(int)mid].Item1 >= offset)
       {
-        resultFileInfo = ByOffsetList[(int) mid].Item2;
+        resultFileInfo = ByOffsetList[(int)mid].Item2;
         end = mid - 1;
       }
       else

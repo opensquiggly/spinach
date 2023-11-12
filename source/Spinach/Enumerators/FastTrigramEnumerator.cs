@@ -57,17 +57,13 @@ public class FastTrigramEnumerator : IFastEnumerator<ulong, long>
   {
   }
 
-  public bool MoveNext()
-  {
+  public bool MoveNext() =>
     // ReSharper disable once ArrangeMethodOrOperatorBody
-    return PostingsListCursor.MoveNext();
-  }
+    PostingsListCursor.MoveNext();
 
-  public bool MoveUntilGreaterThanOrEqual(ulong target)
-  {
+  public bool MoveUntilGreaterThanOrEqual(ulong target) =>
     // ReSharper disable once ArrangeMethodOrOperatorBody
-    return PostingsListCursor.MoveUntilGreaterThanOrEqual(target);
-  }
+    PostingsListCursor.MoveUntilGreaterThanOrEqual(target);
 
   public void Reset()
   {
