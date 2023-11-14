@@ -1,6 +1,6 @@
 namespace Spinach.Helpers;
 
-public struct TrigramFileInfo : IComparable<TrigramFileInfo>
+public readonly struct TrigramFileInfo : IComparable<TrigramFileInfo>
 {
   // /////////////////////////////////////////////////////////////////////////////////////////////
   // Costructors
