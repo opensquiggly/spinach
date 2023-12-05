@@ -6,17 +6,16 @@ internal static partial class Program
   {
     Console.WriteLine();
 
-    Console.Write("Enter first internal file id: ");
-    string firstResponse = Console.ReadLine();
+    Console.Write("Ready to index files. Continue? (y/n) : ");
+    string confirm = Console.ReadLine();
 
-    Console.Write("Enter last internal file id: ");
-    string lastResponse = Console.ReadLine();
-
-    if (int.TryParse(firstResponse, out int firstFileId) && int.TryParse(lastResponse, out int lastFileId))
+    if (confirm.ToLower() != "y")
     {
-      TextSearchIndex.IndexFiles(firstFileId, lastFileId);
-      TextSearchIndex.Flush();
+      return;
     }
+
+    TextSearchIndex.IndexFiles();
+    TextSearchIndex.Flush();
 
     Pause();
   }
