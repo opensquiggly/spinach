@@ -303,6 +303,9 @@ public class TextSearchIndex
     Console.WriteLine($"InternalFileIdTree Stored at Address: {_headerBlock.Address1}");
     Console.WriteLine($"TrigramTree Stored at Address: {_headerBlock.Address2}");
 
+    InternalFileInfoTable = new InternalFileInfoTable(DiskBlockManager, InternalFileInfoTree);
+    InternalFileInfoTable.EnsureBuilt();
+
     IsOpen = true;
     FileName = filename;
   }
@@ -325,14 +328,14 @@ public class TextSearchIndex
     InternalFileInfoTable.EnsureBuilt();
 
     Console.WriteLine($"Currently Indexed Files: {InternalFileInfoTable.FileCount}");
-    ulong startingIndex = 0;
-    InternalFileInfoTable.InternalFileInfo resultFileInfo = null;
+    // ulong startingIndex = 0;
+    // InternalFileInfoTable.InternalFileInfo resultFileInfo = null;
 
-    (startingIndex, resultFileInfo) = InternalFileInfoTable.FindFirstWithOffsetGreaterThanOrEqual(startingIndex, 10);
-    Console.WriteLine($"File corresponding to offset 10 is {resultFileInfo.Name}");
-
-    (_, resultFileInfo) = InternalFileInfoTable.FindFirstWithOffsetGreaterThanOrEqual(startingIndex, 1000);
-    Console.WriteLine($"File corresponding to offset 1000 is {resultFileInfo.Name}");
+    // (startingIndex, resultFileInfo) = InternalFileInfoTable.FindFirstWithOffsetGreaterThanOrEqual(startingIndex, 10);
+    // Console.WriteLine($"File corresponding to offset 10 is {resultFileInfo.Name}");
+    //
+    // (_, resultFileInfo) = InternalFileInfoTable.FindFirstWithOffsetGreaterThanOrEqual(startingIndex, 1000);
+    // Console.WriteLine($"File corresponding to offset 1000 is {resultFileInfo.Name}");
 
     IsOpen = true;
     FileName = filename;
@@ -385,18 +388,19 @@ public class TextSearchIndex
     return true;
   }
 
-  public void IndexFiles(long firstFileId, long lastFileId)
+  public void IndexFiles()
   {
     ulong totalOffset = 0;
 
-    for (long fileId = firstFileId; fileId <= lastFileId; fileId++)
+    var cursor = new DiskBTreeCursor<long, FileInfoBlock>(InternalFileInfoTree);
+    cursor.Reset();
+
+    while (cursor.MoveNext())
     {
-      // long nameAddress = InternalFileIdTree.Find(fileId);
-      FileInfoBlock fileInfoBlock = InternalFileInfoTree.Find(fileId);
+      FileInfoBlock fileInfoBlock = cursor.CurrentData;
       DiskImmutableString nameString = DiskBlockManager.ImmutableStringFactory.LoadExisting(fileInfoBlock.NameAddress);
       string name = nameString.GetValue();
-
-      Console.Write($"Indexing {fileId} : {name} ...");
+      Console.Write($"Indexing {fileInfoBlock.InternalId} : {name} ...");
 
       string content = File.ReadAllText(name);
 
@@ -451,6 +455,9 @@ public class TextSearchIndex
       InternalFileInfoTree.Insert(currentFileId, fileInfoBlock);
       currentFileId++;
     }
+
+    InternalFileInfoTable = new InternalFileInfoTable(DiskBlockManager, InternalFileInfoTree);
+    InternalFileInfoTable.EnsureBuilt();
   }
 
   public void PrintFileIdsInRange(long firstFileId, long lastFileId)
