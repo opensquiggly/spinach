@@ -75,7 +75,7 @@ RepoInfoPerRepoIdTree
    +--- Tells us the payload data type of the tree
 ```
 
-As noted in the previous section, when we refer to a RepoInfo we really mean to say a 
+As noted in the previous section, when we refer to a RepoInfo we really mean to say a
 RepoInfoBlock, but by convention we drop the "Block" suffix to keep the data structure names
 shorter.
 
@@ -260,15 +260,15 @@ alias name.
 Reading of the type name should be done from right to left. In the above example, we have a cache,
 indexed by the repository id, of trees which are indexed by file id and contain FileInfoBlocks.
 
-Likewise, caches themselves can also be cached. As with cached trees, this is done when there is more 
-than one of the same type of cache. Consider, for example, the FileInfoPerFileIdTree. There is one of 
-these trees per repository. We could either cache the tree itself per repository, or if we choose to 
+Likewise, caches themselves can also be cached. As with cached trees, this is done when there is more
+than one of the same type of cache. Consider, for example, the FileInfoPerFileIdTree. There is one of
+these trees per repository. We could either cache the tree itself per repository, or if we choose to
 create a cache for the tree, we could cache the corresponding cache per repository.
 
 Consideration should be given as to whether or not a tree cache is necessary. Following the above
 example, if we have a FileInfoPerFileIdTree, then we might want to create a corresponding,
-FileInfoPerFileIdCache, which would give us faster lookup times to find a FileInfoBlock given a 
-file id. But if we are intending the cache the FileInfoBlock in another cache somewhere else, then we 
+FileInfoPerFileIdCache, which would give us faster lookup times to find a FileInfoBlock given a
+file id. But if we are intending the cache the FileInfoBlock in another cache somewhere else, then we
 might not need to utilize a FileInfoPerFileIdCache.
 
 This last point is particularly relevant if we are using flattened caches, which we'll discuss in
@@ -276,15 +276,9 @@ the next section.
 
 # Flattened Caches
 
-You might think we'd want a cache to go along with the tree, and if we did, we'd naturally want
-to name it:
-
-```
-PostingsListAddressPerRepoIdCache
-```
-
-But we're not going to do that because what we want to do is flatten this two-tiered data structure
-and create a single postings list cache that is keyed per trigram/repository id pair.
+Because we have nested trees, it is sometimes useful to flatten the data structure and create a
+single cache that is indexed by a combination of keys. This is useful when we want to avoid having
+to load multiple trees to get the data we need.
 
 # Summary of Caches
 
