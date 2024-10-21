@@ -11,7 +11,9 @@ public class TextSearchIndex
     DiskBlockManager = new DiskBlockManager();
     RepoInfoBlockType = DiskBlockManager.RegisterBlockType<RepoInfoBlock>();
     FileInfoBlockType = DiskBlockManager.RegisterBlockType<FileInfoBlock>();
+    FileInfoKeyType = DiskBlockManager.RegisterBlockType<FileInfoKey>();
     TrigramKeyType = DiskBlockManager.RegisterBlockType<TrigramKey>();
+    TrigramMatchKeyType = DiskBlockManager.RegisterBlockType<TrigramMatchKey>();
 
     FileExternalIdTable = new FileExternalIdTable(DiskBlockManager);
     FileInternalIdTable = new FileInternalIdTable(DiskBlockManager);
@@ -21,14 +23,14 @@ public class TextSearchIndex
     // The FileIdTree is used to look up file names based on their internal id
     // Given a key of internal file id, it returns an address to a DiskImmutableString
     FileIdTreeFactory =
-      DiskBlockManager.BTreeManager.CreateFactory<long, long>(
-        DiskBlockManager.LongBlockType,
+      DiskBlockManager.BTreeManager.CreateFactory<FileInfoKey, long>(
+        FileInfoKeyType,
         DiskBlockManager.LongBlockType
       );
 
     FileInfoTreeFactory =
-      DiskBlockManager.BTreeManager.CreateFactory<long, FileInfoBlock>(
-        DiskBlockManager.LongBlockType,
+      DiskBlockManager.BTreeManager.CreateFactory<FileInfoKey, FileInfoBlock>(
+        FileInfoKeyType,
         FileInfoBlockType
       );
 
@@ -48,6 +50,12 @@ public class TextSearchIndex
         DiskBlockManager.LongBlockType
       );
 
+    TrigramMatchesFactory =
+      DiskBlockManager.BTreeManager.CreateFactory<TrigramMatchKey, long>(
+        TrigramMatchKeyType,
+        DiskBlockManager.LongBlockType
+      );
+
     // The TrigramFileTree is used to look up a file for a given trigram. Each individual trigram
     // corresponds to a BTree of file ids that contain that trigram. Given a key of an internal
     // file id, it returns an address to a DiskLinkedList<long> which is a list that contains the
@@ -62,8 +70,9 @@ public class TextSearchIndex
       DiskBlockManager.LinkedListManager.CreateFactory<long>(DiskBlockManager.LongBlockType);
 
     // TrigramFileIdTreeCache = new LruCache<int, DiskBTree<long, long>>(2200000);
-    TrigramPostingsListCache = new LruCache<int, DiskSortedVarIntList>(2200000);
-    PostingsListCache = new LruCache<Tuple<int, long>, DiskLinkedList<long>>(2200000);
+    // TrigramPostingsListCache = new LruCache<int, DiskSortedVarIntList>(2200000);
+    TrigramMatchesCache = new LruCache<int, DiskBTree<TrigramMatchKey, long>>(2200000);
+    PostingsListCache = new LruCache<TrigramMatchCacheKey, DiskSortedVarIntList>(2200000);
   }
 
   // /////////////////////////////////////////////////////////////////////////////////////////////
@@ -92,23 +101,31 @@ public class TextSearchIndex
 
   public bool IsOpen { get; set; } = false;
 
-  public DiskBTree<long, long> InternalFileIdTree { get; private set; }
+  public DiskBTree<FileInfoKey, long> InternalFileIdTree { get; private set; }
 
-  public DiskBTree<long, FileInfoBlock> InternalFileInfoTree { get; private set; }
+  public DiskBTree<FileInfoKey, FileInfoBlock> InternalFileInfoTree { get; private set; }
 
   public InternalFileInfoTable InternalFileInfoTable { get; set; }
 
-  private DiskBTree<int, long> TrigramTree { get; set; }
+  public DiskBTree<int, long> TrigramTree { get; set; }
+
+  private DiskBTree<TrigramMatchKey, long> TrigramMatches { get; set; }
 
   private short TrigramKeyType { get; set; }
 
-  private DiskBTreeFactory<long, long> FileIdTreeFactory { get; set; }
+  private short TrigramMatchKeyType { get; set; }
 
-  private DiskBTreeFactory<long, FileInfoBlock> FileInfoTreeFactory { get; set; }
+  private short FileInfoKeyType { get; set; }
+
+  private DiskBTreeFactory<FileInfoKey, long> FileIdTreeFactory { get; set; }
+
+  private DiskBTreeFactory<FileInfoKey, FileInfoBlock> FileInfoTreeFactory { get; set; }
 
   private DiskBTreeFactory<long, RepoInfoBlock> RepoIdTreeFactory { get; set; }
 
   private DiskBTreeFactory<int, long> TrigramTreeFactory { get; set; }
+
+  public DiskBTreeFactory<TrigramMatchKey, long> TrigramMatchesFactory { get; set; }
 
   private DiskBTreeFactory<long, long> TrigramFileTreeFactory { get; set; }
 
@@ -116,9 +133,11 @@ public class TextSearchIndex
 
   // private LruCache<int, DiskBTree<long, long>> TrigramFileIdTreeCache { get; set; }
 
-  private LruCache<int, DiskSortedVarIntList> TrigramPostingsListCache { get; set; }
+  // private LruCache<int, DiskSortedVarIntList> TrigramPostingsListCache { get; set; }
 
-  private LruCache<Tuple<int, long>, DiskLinkedList<long>> PostingsListCache { get; set; }
+  private LruCache<int, DiskBTree<TrigramMatchKey, long>> TrigramMatchesCache { get; set; }
+
+  private LruCache<TrigramMatchCacheKey, DiskSortedVarIntList> PostingsListCache { get; set; }
 
   // /////////////////////////////////////////////////////////////////////////////////////////////
   // Private Methods
@@ -131,39 +150,82 @@ public class TextSearchIndex
     return _headerBlock.Data1;
   }
 
-  public DiskSortedVarIntList LoadTrigramPostingsList(int trigramKey)
+  public DiskBTree<TrigramMatchKey, long> LoadTrigramMatches(int trigramKey)
   {
-    if (TrigramPostingsListCache.TryGetValue(trigramKey, out DiskSortedVarIntList postingsList))
+    if (TrigramMatchesCache.TryGetValue(trigramKey, out DiskBTree<TrigramMatchKey, long> trigramMatches))
     {
-      return postingsList;
+      return trigramMatches;
     }
 
-    if (TrigramTree.TryFind(trigramKey, out long postingsListAddress))
+    if (TrigramTree.TryFind(trigramKey, out long trigramMatchesAddress))
     {
-      DiskSortedVarIntList existingPostingsList =
-        DiskBlockManager.SortedVarIntListFactory.LoadExisting(postingsListAddress);
+      var existingTrigramMatches =
+        TrigramMatchesFactory.LoadExisting(trigramMatchesAddress);
 
-      TrigramPostingsListCache.Add(trigramKey, existingPostingsList);
-      return existingPostingsList;
+      TrigramMatchesCache.Add(trigramKey, existingTrigramMatches);
+      return existingTrigramMatches;
     }
 
     return null;
   }
 
-  public DiskSortedVarIntList LoadOrAddTrigramPostingsList(int trigramKey, out bool created)
+  public DiskBTree<TrigramMatchKey, long> LoadOrAddTrigramMatches(int trigramKey, out bool created)
   {
     created = false;
 
-    DiskSortedVarIntList result = LoadTrigramPostingsList(trigramKey);
+    DiskBTree<TrigramMatchKey, long> result = LoadTrigramMatches(trigramKey);
     if (result != null)
     {
       return result;
     }
 
-    DiskSortedVarIntList postingsList = DiskBlockManager.SortedVarIntListFactory.AppendNew();
-    TrigramTree.Insert(trigramKey, postingsList.Address);
-    TrigramPostingsListCache.Add(trigramKey, postingsList);
+    var trigramMatches = TrigramMatchesFactory.AppendNew(25);
+    TrigramTree.Insert(trigramKey, trigramMatches.Address);
+    TrigramMatchesCache.Add(trigramKey, trigramMatches);
     created = true;
+
+    return trigramMatches;
+  }
+
+  public DiskSortedVarIntList LoadOrAddTrigramPostingsList(TrigramMatchCacheKey key)
+  {
+    if (PostingsListCache.TryGetValue(key, out DiskSortedVarIntList postingsList))
+    {
+      return postingsList;
+    }
+
+    var trigramMatchKey = new TrigramMatchKey(key.UserType, key.UserId, key.RepoId);
+
+    if (TrigramTree.TryFind(key.TrigramKey, out long trigramMatchesAddress))
+    {
+      DiskBTree<TrigramMatchKey, long> trigramMatches = TrigramMatchesFactory.LoadExisting(trigramMatchesAddress);
+      if (trigramMatches == null)
+      {
+        throw new Exception(
+          "Could not find an existing postings list stored in the TrigramMatches key. The index file appears to be corrupted.");
+      }
+
+      if (trigramMatches.TryFind(trigramMatchKey, out long postingsListAddress))
+      {
+        DiskSortedVarIntList existingPostingsList =
+          DiskBlockManager.SortedVarIntListFactory.LoadExisting(postingsListAddress);
+
+        PostingsListCache.Add(key, existingPostingsList);
+        return existingPostingsList;
+      }
+
+      DiskSortedVarIntList newPostingsList = DiskBlockManager.SortedVarIntListFactory.AppendNew();
+      trigramMatches.Insert(trigramMatchKey, newPostingsList.Address);
+      PostingsListCache.Add(key, newPostingsList);
+
+      return newPostingsList;
+    }
+
+    DiskBTree<TrigramMatchKey, long> newTrigramMatches = TrigramMatchesFactory.AppendNew(25);
+    postingsList = DiskBlockManager.SortedVarIntListFactory.AppendNew();
+    newTrigramMatches.Insert(trigramMatchKey, postingsList.Address);
+    TrigramTree.Insert(key.TrigramKey, newTrigramMatches.Address);
+    PostingsListCache.Add(key, postingsList);
 
     return postingsList;
   }
@@ -194,8 +256,9 @@ public class TextSearchIndex
     // ReSharper disable once ArrangeMethodOrOperatorBody
     return new FastTrigramEnumerable(
       TrigramTree,
-      TrigramPostingsListCache,
+      PostingsListCache,
       DiskBlockManager.SortedVarIntListFactory,
+      TrigramMatchesFactory,
       trigramKey
     );
   }
@@ -203,13 +266,14 @@ public class TextSearchIndex
   public FastTrigramFileEnumerable GetFastTrigramFileEnumerable(int key)
   {
     // ReSharper disable once ArrangeMethodOrOperatorBody
-    return new FastTrigramFileEnumerable(
-      InternalFileInfoTable,
-      TrigramTree,
-      TrigramPostingsListCache,
-      DiskBlockManager.SortedVarIntListFactory,
-      key
-    );
+    // return new FastTrigramFileEnumerable(
+    //   InternalFileInfoTable,
+    //   TrigramTree,
+    //   TrigramPostingsListCache,
+    //   DiskBlockManager.SortedVarIntListFactory,
+    //   key
+    // );
+    throw new NotImplementedException();
   }
 
   public FastLiteralEnumerable GetFastLiteralEnumerable(string literal) =>
@@ -324,10 +388,16 @@ public class TextSearchIndex
     Console.WriteLine($"InternalFileIdTree Loaded from Address: {_headerBlock.Address1}");
     Console.WriteLine($"TrigramTree Loaded from Address: {_headerBlock.Address2}");
 
-    InternalFileInfoTable = new InternalFileInfoTable(DiskBlockManager, InternalFileInfoTree);
-    InternalFileInfoTable.EnsureBuilt();
+    var cursor = new DiskBTreeCursor<FileInfoKey, long>(InternalFileIdTree);
+    while (cursor.MoveNext())
+    {
+      Console.WriteLine($"UserType = {cursor.CurrentKey.UserType}, UserId = {cursor.CurrentKey.UserId}, RepoId = {cursor.CurrentKey.RepoId}, FileId = {cursor.CurrentKey.FileId}");
+    }
 
-    Console.WriteLine($"Currently Indexed Files: {InternalFileInfoTable.FileCount}");
+    // InternalFileInfoTable = new InternalFileInfoTable(DiskBlockManager, InternalFileInfoTree);
+    // InternalFileInfoTable.EnsureBuilt();
+
+    // Console.WriteLine($"Currently Indexed Files: {InternalFileInfoTable.FileCount}");
     // ulong startingIndex = 0;
     // InternalFileInfoTable.InternalFileInfo resultFileInfo = null;
 
@@ -392,7 +462,7 @@ public class TextSearchIndex
   {
     ulong totalOffset = 0;
 
-    var cursor = new DiskBTreeCursor<long, FileInfoBlock>(InternalFileInfoTree);
+    var cursor = new DiskBTreeCursor<FileInfoKey, FileInfoBlock>(InternalFileInfoTree);
     cursor.Reset();
 
     while (cursor.MoveNext())
@@ -409,7 +479,15 @@ public class TextSearchIndex
 
       foreach (TrigramInfo trigramInfo in trigramExtractor)
       {
-        DiskSortedVarIntList postingsList = LoadOrAddTrigramPostingsList(trigramInfo.Key, out bool _);
+        var trigramMatchCacheKey = new TrigramMatchCacheKey
+        {
+          TrigramKey = trigramInfo.Key,
+          UserType = cursor.CurrentKey.UserType,
+          UserId = cursor.CurrentKey.UserId,
+          RepoId = cursor.CurrentKey.RepoId
+        };
+
+        DiskSortedVarIntList postingsList = LoadOrAddTrigramPostingsList(trigramMatchCacheKey);
 
         // TODO: As-is, this is very inefficient
         postingsList.AppendData(new ulong[] { totalOffset + (ulong)trigramInfo.Position });
@@ -434,9 +512,10 @@ public class TextSearchIndex
     return characterCount;
   }
 
-  public void IndexLocalFiles(string folderPath)
+  public void IndexLocalFiles(ushort userType, uint userId, uint repoId, string folderPath)
   {
-    long currentFileId = 1;
+    ulong currentFileId = 1;
+    ulong currentOffset = 0;
 
     foreach (string filePath in Directory.GetFiles(folderPath, "*.*", SearchOption.AllDirectories))
     {
@@ -446,28 +525,31 @@ public class TextSearchIndex
       }
 
       DiskImmutableString nameString = DiskBlockManager.ImmutableStringFactory.Append(filePath);
-      InternalFileIdTree.Insert(currentFileId, nameString.Address);
+      var fileInfoKey = new FileInfoKey(userType, userId, repoId, currentFileId);
+      InternalFileIdTree.Insert(fileInfoKey, nameString.Address);
       FileInfoBlock fileInfoBlock = default;
       fileInfoBlock.InternalId = (ulong)currentFileId;
       fileInfoBlock.NameAddress = nameString.Address;
       fileInfoBlock.Length = GetFileLength(filePath);
+      fileInfoBlock.StartingOffset = currentOffset;
       Console.WriteLine($"{currentFileId} : {filePath} (Length = {fileInfoBlock.Length})");
-      InternalFileInfoTree.Insert(currentFileId, fileInfoBlock);
+      InternalFileInfoTree.Insert(fileInfoKey, fileInfoBlock);
       currentFileId++;
+      currentOffset += (ulong) fileInfoBlock.Length;
     }
 
-    InternalFileInfoTable = new InternalFileInfoTable(DiskBlockManager, InternalFileInfoTree);
-    InternalFileInfoTable.EnsureBuilt();
+    // InternalFileInfoTable = new InternalFileInfoTable(DiskBlockManager, InternalFileInfoTree);
+    // InternalFileInfoTable.EnsureBuilt();
   }
 
   public void PrintFileIdsInRange(long firstFileId, long lastFileId)
   {
-    for (long fileId = firstFileId; fileId <= lastFileId; fileId++)
-    {
-      // long nameAddress = InternalFileIdTree.Find(fileId);
-      FileInfoBlock fileInfoBlock = InternalFileInfoTree.Find(fileId);
-      DiskImmutableString nameString = DiskBlockManager.ImmutableStringFactory.LoadExisting(fileInfoBlock.NameAddress);
-      Console.WriteLine($"{fileId}: {nameString.GetValue()} (Length = {fileInfoBlock.Length})");
-    }
+    // for (long fileId = firstFileId; fileId <= lastFileId; fileId++)
+    // {
+    //   // long nameAddress = InternalFileIdTree.Find(fileId);
+    //   FileInfoBlock fileInfoBlock = InternalFileInfoTree.Find(fileId);
+    //   DiskImmutableString nameString = DiskBlockManager.ImmutableStringFactory.LoadExisting(fileInfoBlock.NameAddress);
+    //   Console.WriteLine($"{fileId}: {nameString.GetValue()} (Length = {fileInfoBlock.Length})");
+    // }
   }
 }

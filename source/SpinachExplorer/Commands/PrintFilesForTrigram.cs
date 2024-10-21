@@ -11,6 +11,23 @@ internal static partial class Program
 
     int key = char.ToLower(trigram[0]) * 128 * 128 + char.ToLower(trigram[1]) * 128 + char.ToLower(trigram[2]);
 
+    var trigramFound = TextSearchIndex.TrigramTree.TryFind(key, out long trigramMatchesAddress);
+    Console.WriteLine($"Found = {trigramFound}");
+    Console.WriteLine($"Address = {trigramMatchesAddress}");
+    var trigramMatches = TextSearchIndex.TrigramMatchesFactory.LoadExisting(trigramMatchesAddress);
+    var cursor = new DiskBTreeCursor<TrigramMatchKey, long>(trigramMatches);
+
+    while (cursor.MoveNext())
+    {
+      Console.WriteLine($"User Type = {cursor.CurrentKey.UserType}, User Id = {cursor.CurrentKey.UserId}, RepoId = {cursor.CurrentKey.RepoId}");
+      var postingsList = TextSearchIndex.DiskBlockManager.SortedVarIntListFactory.LoadExisting(cursor.CurrentData);
+      var postingsListCursor = new DiskSortedVarIntListCursor(postingsList);
+      while (postingsListCursor.MoveNext())
+      {
+        Console.WriteLine($"  Offset = {postingsListCursor.CurrentKey}");
+      }
+    }
+
     // Console.WriteLine($"key = {key}");
     // DiskSortedVarIntList postingsList = TextSearchIndex.LoadOrAddTrigramPostingsList(key, out bool _);
     //
@@ -53,11 +70,11 @@ internal static partial class Program
     // Console.WriteLine();
     // Console.WriteLine($"Total results found = {count}");
 
-    FastTrigramEnumerable enumerable = TextSearchIndex.GetFastTrigramEnumerable(key);
+    // FastTrigramEnumerable enumerable = TextSearchIndex.GetFastTrigramEnumerable(key);
 
-    var stopwatch = Stopwatch.StartNew();
-    int count = enumerable.Count();
-    stopwatch.Stop();
+    // var stopwatch = Stopwatch.StartNew();
+    // int count = enumerable.Count();
+    // stopwatch.Stop();
 
     // foreach (ulong fileOffset in enumerable)
     // {
@@ -71,7 +88,7 @@ internal static partial class Program
     //   Console.WriteLine();
     // }
 
-    Console.WriteLine($"Found {count} matches in {stopwatch.ElapsedMilliseconds} milliseconds");
+    // Console.WriteLine($"Found {count} matches in {stopwatch.ElapsedMilliseconds} milliseconds");
 
     // FastTrigramFileEnumerable enumerable = TextSearchIndex.GetFastTrigramFileEnumerable(key);
     //

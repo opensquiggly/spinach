@@ -1,6 +1,6 @@
 namespace Spinach.Enumerators;
 
-public class FastTrigramEnumerable : IFastEnumerable<IFastEnumerator<ulong, long>, ulong, long>
+public class FastTrigramEnumerable : IFastEnumerable<IFastEnumerator<TrigramMatchPositionKey, ulong>, TrigramMatchPositionKey, ulong>
 {
   // /////////////////////////////////////////////////////////////////////////////////////////////
   // Constructors
@@ -8,14 +8,16 @@ public class FastTrigramEnumerable : IFastEnumerable<IFastEnumerator<ulong, long
 
   public FastTrigramEnumerable(
     DiskBTree<int, long> trigramTree,
-    LruCache<int, DiskSortedVarIntList> trigramPostingsListCache,
+    LruCache<TrigramMatchCacheKey, DiskSortedVarIntList> postingsListCache,
     DiskSortedVarIntListFactory sortedVarIntListFactory,
+    DiskBTreeFactory<TrigramMatchKey, long> trigramMatchesFactory,
     int trigramKey
   )
   {
     TrigramTree = trigramTree;
-    TrigramPostingsListCache = trigramPostingsListCache;
+    PostingsListCache = postingsListCache;
     SortedVarIntListFactory = sortedVarIntListFactory;
+    TrigramMatchesFactory = trigramMatchesFactory;
     TrigramKey = trigramKey;
   }
 
@@ -23,9 +25,11 @@ public class FastTrigramEnumerable : IFastEnumerable<IFastEnumerator<ulong, long
   // Private Properties
   // /////////////////////////////////////////////////////////////////////////////////////////////
 
-  private LruCache<int, DiskSortedVarIntList> TrigramPostingsListCache { get; set; }
+  private LruCache<TrigramMatchCacheKey, DiskSortedVarIntList> PostingsListCache { get; set; }
 
   private DiskSortedVarIntListFactory SortedVarIntListFactory { get; set; }
+
+  DiskBTreeFactory<TrigramMatchKey, long> TrigramMatchesFactory { get; set; }
 
   private int TrigramKey { get; set; }
 
@@ -37,15 +41,16 @@ public class FastTrigramEnumerable : IFastEnumerable<IFastEnumerator<ulong, long
 
   IEnumerator IEnumerable.GetEnumerator() => GetFastEnumerator();
 
-  public IEnumerator<ulong> GetEnumerator() => GetFastEnumerator();
+  public IEnumerator<TrigramMatchPositionKey> GetEnumerator() => GetFastEnumerator();
 
-  public IFastEnumerator<ulong, long> GetFastEnumerator()
+  public IFastEnumerator<TrigramMatchPositionKey, ulong> GetFastEnumerator()
   {
     // ReSharper disable once ArrangeMethodOrOperatorBody
     return new FastTrigramEnumerator(
       TrigramTree,
-      TrigramPostingsListCache,
+      PostingsListCache,
       SortedVarIntListFactory,
+      TrigramMatchesFactory,
       TrigramKey
     );
   }

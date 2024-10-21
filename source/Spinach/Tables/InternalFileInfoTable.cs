@@ -6,7 +6,7 @@ public class InternalFileInfoTable
   // Constructors
   // /////////////////////////////////////////////////////////////////////////////////////////////
 
-  public InternalFileInfoTable(DiskBlockManager diskBlockManager, DiskBTree<long, FileInfoBlock> fileInfoTree)
+  public InternalFileInfoTable(DiskBlockManager diskBlockManager, DiskBTree<FileInfoKey, FileInfoBlock> fileInfoTree)
   {
     DiskBlockManager = diskBlockManager;
     FileInfoTree = fileInfoTree;
@@ -20,7 +20,7 @@ public class InternalFileInfoTable
 
   private DiskBlockManager DiskBlockManager { get; }
 
-  DiskBTree<long, FileInfoBlock> FileInfoTree { get; }
+  DiskBTree<FileInfoKey, FileInfoBlock> FileInfoTree { get; }
 
   private SortedDictionary<ulong, InternalFileInfo> ByIdDictionary { get; set; }
 
@@ -49,7 +49,7 @@ public class InternalFileInfoTable
     ByOffsetList = new List<Tuple<ulong, InternalFileInfo>>((int)FileCount);
 
     ulong currentOffset = 0;
-    var cursor = new DiskBTreeCursor<long, FileInfoBlock>(FileInfoTree);
+    var cursor = new DiskBTreeCursor<FileInfoKey, FileInfoBlock>(FileInfoTree);
 
     while (cursor.MoveNext())
     {

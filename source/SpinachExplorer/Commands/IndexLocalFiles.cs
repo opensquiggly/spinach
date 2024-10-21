@@ -36,7 +36,7 @@ internal static partial class Program
           string confirm = Console.ReadLine();
           if (confirm != null && confirm.ToLower() == "y")
           {
-            TextSearchIndex.IndexLocalFiles(rootFolder);
+            TextSearchIndex.IndexLocalFiles(0, 1, (uint) internalId, rootFolder);
             TextSearchIndex.Flush();
           }
         }

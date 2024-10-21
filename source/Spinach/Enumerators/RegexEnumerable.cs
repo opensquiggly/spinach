@@ -30,32 +30,33 @@ public class RegexEnumerable : IEnumerable<RegexEnumerable.MatchingFile>
 
   public IEnumerator<MatchingFile> GetEnumerator()
   {
-    Spinach.Regex.Types.NormalizedRegex normalized = RegexParser.Parse(Regex);
-    Spinach.Regex.Types.LiteralQueryNode queryNode = LiteralQueryBuilder.BuildQuery(normalized);
-
-    IFastEnumerable<IFastEnumerator<TrigramFileInfo, int>, TrigramFileInfo, int> queryEnumerable =
-      LiteralQueryBuilder.BuildEnumerable(TextSearchIndex, queryNode);
-    CompiledRegex = RE2.CompileCaseInsensitive(Regex);
-
-    long currentFile = 0;
-
-    foreach (TrigramFileInfo tfi in queryEnumerable)
-    {
-      if (tfi.FileId > currentFile)
-      {
-        currentFile = tfi.FileId;
-        long nameAddress = TextSearchIndex.InternalFileIdTree.Find(tfi.FileId);
-        DiskImmutableString nameString =
-          TextSearchIndex.DiskBlockManager.ImmutableStringFactory.LoadExisting(nameAddress);
-        string fileName = nameString.GetValue();
-        string contents = File.ReadAllText(nameString.GetValue());
-
-        if (CompiledRegex.Match(contents))
-        {
-          yield return new MatchingFile(this, tfi.FileId, fileName, contents);
-        }
-      }
-    }
+    throw new NotImplementedException();
+    // Spinach.Regex.Types.NormalizedRegex normalized = RegexParser.Parse(Regex);
+    // Spinach.Regex.Types.LiteralQueryNode queryNode = LiteralQueryBuilder.BuildQuery(normalized);
+    //
+    // IFastEnumerable<IFastEnumerator<TrigramFileInfo, int>, TrigramFileInfo, int> queryEnumerable =
+    //   LiteralQueryBuilder.BuildEnumerable(TextSearchIndex, queryNode);
+    // CompiledRegex = RE2.CompileCaseInsensitive(Regex);
+    //
+    // long currentFile = 0;
+    //
+    // foreach (TrigramFileInfo tfi in queryEnumerable)
+    // {
+    //   if (tfi.FileId > currentFile)
+    //   {
+    //     currentFile = tfi.FileId;
+    //     long nameAddress = TextSearchIndex.InternalFileIdTree.Find(tfi.FileId);
+    //     DiskImmutableString nameString =
+    //       TextSearchIndex.DiskBlockManager.ImmutableStringFactory.LoadExisting(nameAddress);
+    //     string fileName = nameString.GetValue();
+    //     string contents = File.ReadAllText(nameString.GetValue());
+    //
+    //     if (CompiledRegex.Match(contents))
+    //     {
+    //       yield return new MatchingFile(this, tfi.FileId, fileName, contents);
+    //     }
+    //   }
+    // }
   }
 
   // /////////////////////////////////////////////////////////////////////////////////////////////

@@ -66,11 +66,11 @@ public class FastTrigramFileEnumerator : IFastEnumerator<TrigramFileInfo, int>
     if (hasValue)
     {
       (_, InternalFileInfoTable.InternalFileInfo internalFileInfo) =
-        InternalFileInfoTable.FindLastWithOffsetLessThanOrEqual(0L, FastTrigramEnumerator.CurrentKey);
+        InternalFileInfoTable.FindLastWithOffsetLessThanOrEqual(0L, FastTrigramEnumerator.CurrentKey.Offset);
 
       CurrentKey = new TrigramFileInfo(
         internalFileInfo.InternalId,
-        (long)(FastTrigramEnumerator.CurrentKey - internalFileInfo.StartingOffset)
+        (long)(FastTrigramEnumerator.CurrentKey.Offset - internalFileInfo.StartingOffset)
       );
     }
 
@@ -79,37 +79,39 @@ public class FastTrigramFileEnumerator : IFastEnumerator<TrigramFileInfo, int>
 
   public bool MoveUntilGreaterThanOrEqual(TrigramFileInfo target)
   {
-    InternalFileInfoTable.InternalFileInfo internalFileInfo =
-      InternalFileInfoTable.FindById((ulong)target.FileId);
-
-    ulong offsetTarget = internalFileInfo.StartingOffset + (ulong)target.Position;
-
-    bool hasValue = FastTrigramEnumerator.MoveUntilGreaterThanOrEqual(offsetTarget);
-
-    if (hasValue)
-    {
-      (_, internalFileInfo) =
-        InternalFileInfoTable.FindLastWithOffsetLessThanOrEqual(0L, FastTrigramEnumerator.CurrentKey);
-
-      CurrentKey = new TrigramFileInfo(
-        internalFileInfo.InternalId,
-        (long)(FastTrigramEnumerator.CurrentKey - internalFileInfo.StartingOffset)
-      );
-    }
-
-    return hasValue;
+    // InternalFileInfoTable.InternalFileInfo internalFileInfo =
+    //   InternalFileInfoTable.FindById((ulong)target.FileId);
+    //
+    // ulong offsetTarget = internalFileInfo.StartingOffset + (ulong)target.Position;
+    //
+    // bool hasValue = FastTrigramEnumerator.MoveUntilGreaterThanOrEqual(offsetTarget);
+    //
+    // if (hasValue)
+    // {
+    //   (_, internalFileInfo) =
+    //     InternalFileInfoTable.FindLastWithOffsetLessThanOrEqual(0L, FastTrigramEnumerator.CurrentKey);
+    //
+    //   CurrentKey = new TrigramFileInfo(
+    //     internalFileInfo.InternalId,
+    //     (long)(FastTrigramEnumerator.CurrentKey - internalFileInfo.StartingOffset)
+    //   );
+    // }
+    //
+    // return hasValue;
+    throw new NotImplementedException();
   }
 
   public void Reset()
   {
     // ReSharper disable once ArrangeMethodOrOperatorBody
-    FastTrigramEnumerator = new FastTrigramEnumerator(
-      TrigramTree,
-      TrigramPostingsListCache,
-      SortedVarIntListFactory,
-      TrigramKey
-    );
-
-    FastTrigramEnumerator.Reset();
+    // FastTrigramEnumerator = new FastTrigramEnumerator(
+    //   TrigramTree,
+    //   TrigramPostingsListCache,
+    //   SortedVarIntListFactory,
+    //   TrigramKey
+    // );
+    //
+    // FastTrigramEnumerator.Reset();
+    throw new NotImplementedException();
   }
 }
