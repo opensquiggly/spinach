@@ -34,7 +34,7 @@ public class TrigramFileIdTreeCache : LruCache<int, DiskBTree<long, long>>
       return btree;
     }
 
-    if (TrigramTree.TryFind(trigramKey, out long trigramFileIdTreeAddress))
+    if (TrigramTree.TryFind(trigramKey, out long trigramFileIdTreeAddress, out DiskBTreeNode<int, long> node, out int index))
     {
       DiskBTree<long, long> trigramFileIdTree =
         TrigramFileTreeFactory.LoadExisting(trigramFileIdTreeAddress);

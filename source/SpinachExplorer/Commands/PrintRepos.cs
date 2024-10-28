@@ -1,6 +1,7 @@
 namespace SpinachExplorer;
 
 using Spinach.Blocks;
+using Spinach.Interfaces;
 
 internal static partial class Program
 {
@@ -8,16 +9,9 @@ internal static partial class Program
   {
     Console.WriteLine("Current Repositories");
     Console.WriteLine("--------------------");
-    foreach (RepoInfoBlock repoInfoBlock in TextSearchIndex.GetRepositories())
+    foreach (IRepository repo in TextSearchManager.GetRepositories())
     {
-      string name = TextSearchIndex.LoadImmutableString(repoInfoBlock.NameAddress);
-      string rootFolder = TextSearchIndex.LoadImmutableString(repoInfoBlock.RootFolderAddress);
-      string externalId = TextSearchIndex.LoadImmutableString(repoInfoBlock.ExternalIdAddress);
-      if (externalId == string.Empty)
-      {
-        externalId = "<<none>>";
-      }
-      Console.WriteLine($"InternalId: {repoInfoBlock.InternalId}, ExternalId: '{externalId}', Name: '{name}', Root Folder: '{rootFolder}'");
+      Console.WriteLine($"User Type: {repo.UserType}, User Id: {repo.UserId}, Type: {repo.Type}, Id: {repo.Id}, Name: {repo.Name}, External Id: {repo.ExternalId}, Last Doc Id: {repo.LastDocId}, Root Folder Path: {repo.RootFolderPath}");
     }
 
     Pause();

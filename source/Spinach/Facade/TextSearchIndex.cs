@@ -10,8 +10,8 @@ public class TextSearchIndex
   {
     DiskBlockManager = new DiskBlockManager();
     RepoInfoBlockType = DiskBlockManager.RegisterBlockType<RepoInfoBlock>();
-    FileInfoBlockType = DiskBlockManager.RegisterBlockType<FileInfoBlock>();
-    FileInfoKeyType = DiskBlockManager.RegisterBlockType<FileInfoKey>();
+    FileInfoBlockType = DiskBlockManager.RegisterBlockType<DocInfoBlock>();
+    FileInfoKeyType = DiskBlockManager.RegisterBlockType<DocIdCompoundKeyBlock>();
     TrigramKeyType = DiskBlockManager.RegisterBlockType<TrigramKey>();
     TrigramMatchKeyType = DiskBlockManager.RegisterBlockType<TrigramMatchKey>();
 
@@ -23,13 +23,13 @@ public class TextSearchIndex
     // The FileIdTree is used to look up file names based on their internal id
     // Given a key of internal file id, it returns an address to a DiskImmutableString
     FileIdTreeFactory =
-      DiskBlockManager.BTreeManager.CreateFactory<FileInfoKey, long>(
+      DiskBlockManager.BTreeManager.CreateFactory<DocIdCompoundKeyBlock, long>(
         FileInfoKeyType,
         DiskBlockManager.LongBlockType
       );
 
     FileInfoTreeFactory =
-      DiskBlockManager.BTreeManager.CreateFactory<FileInfoKey, FileInfoBlock>(
+      DiskBlockManager.BTreeManager.CreateFactory<DocIdCompoundKeyBlock, DocInfoBlock>(
         FileInfoKeyType,
         FileInfoBlockType
       );
@@ -101,9 +101,9 @@ public class TextSearchIndex
 
   public bool IsOpen { get; set; } = false;
 
-  public DiskBTree<FileInfoKey, long> InternalFileIdTree { get; private set; }
+  public DiskBTree<DocIdCompoundKeyBlock, long> InternalFileIdTree { get; private set; }
 
-  public DiskBTree<FileInfoKey, FileInfoBlock> InternalFileInfoTree { get; private set; }
+  public DiskBTree<DocIdCompoundKeyBlock, DocInfoBlock> InternalFileInfoTree { get; private set; }
 
   public InternalFileInfoTable InternalFileInfoTable { get; set; }
 
@@ -117,9 +117,9 @@ public class TextSearchIndex
 
   private short FileInfoKeyType { get; set; }
 
-  private DiskBTreeFactory<FileInfoKey, long> FileIdTreeFactory { get; set; }
+  private DiskBTreeFactory<DocIdCompoundKeyBlock, long> FileIdTreeFactory { get; set; }
 
-  private DiskBTreeFactory<FileInfoKey, FileInfoBlock> FileInfoTreeFactory { get; set; }
+  private DiskBTreeFactory<DocIdCompoundKeyBlock, DocInfoBlock> FileInfoTreeFactory { get; set; }
 
   private DiskBTreeFactory<long, RepoInfoBlock> RepoIdTreeFactory { get; set; }
 
@@ -157,7 +157,7 @@ public class TextSearchIndex
       return trigramMatches;
     }
 
-    if (TrigramTree.TryFind(trigramKey, out long trigramMatchesAddress))
+    if (TrigramTree.TryFind(trigramKey, out long trigramMatchesAddress, out DiskBTreeNode<int, long> node, out int index))
     {
       var existingTrigramMatches =
         TrigramMatchesFactory.LoadExisting(trigramMatchesAddress);
@@ -196,7 +196,7 @@ public class TextSearchIndex
 
     var trigramMatchKey = new TrigramMatchKey(key.UserType, key.UserId, key.RepoId);
 
-    if (TrigramTree.TryFind(key.TrigramKey, out long trigramMatchesAddress))
+    if (TrigramTree.TryFind(key.TrigramKey, out long trigramMatchesAddress, out _, out _))
     {
       DiskBTree<TrigramMatchKey, long> trigramMatches = TrigramMatchesFactory.LoadExisting(trigramMatchesAddress);
       if (trigramMatches == null)
@@ -205,7 +205,7 @@ public class TextSearchIndex
           "Could not find an existing postings list stored in the TrigramMatches key. The index file appears to be corrupted.");
       }
 
-      if (trigramMatches.TryFind(trigramMatchKey, out long postingsListAddress))
+      if (trigramMatches.TryFind(trigramMatchKey, out long postingsListAddress, out _, out _))
       {
         DiskSortedVarIntList existingPostingsList =
           DiskBlockManager.SortedVarIntListFactory.LoadExisting(postingsListAddress);
@@ -388,10 +388,10 @@ public class TextSearchIndex
     Console.WriteLine($"InternalFileIdTree Loaded from Address: {_headerBlock.Address1}");
     Console.WriteLine($"TrigramTree Loaded from Address: {_headerBlock.Address2}");
 
-    var cursor = new DiskBTreeCursor<FileInfoKey, long>(InternalFileIdTree);
+    var cursor = new DiskBTreeCursor<DocIdCompoundKeyBlock, long>(InternalFileIdTree);
     while (cursor.MoveNext())
     {
-      Console.WriteLine($"UserType = {cursor.CurrentKey.UserType}, UserId = {cursor.CurrentKey.UserId}, RepoId = {cursor.CurrentKey.RepoId}, FileId = {cursor.CurrentKey.FileId}");
+      Console.WriteLine($"UserType = {cursor.CurrentKey.UserType}, UserId = {cursor.CurrentKey.UserId}, RepoId = {cursor.CurrentKey.RepoId}, FileId = {cursor.CurrentKey.Id}");
     }
 
     // InternalFileInfoTable = new InternalFileInfoTable(DiskBlockManager, InternalFileInfoTree);
@@ -462,15 +462,15 @@ public class TextSearchIndex
   {
     ulong totalOffset = 0;
 
-    var cursor = new DiskBTreeCursor<FileInfoKey, FileInfoBlock>(InternalFileInfoTree);
+    var cursor = new DiskBTreeCursor<DocIdCompoundKeyBlock, DocInfoBlock>(InternalFileInfoTree);
     cursor.Reset();
 
     while (cursor.MoveNext())
     {
-      FileInfoBlock fileInfoBlock = cursor.CurrentData;
-      DiskImmutableString nameString = DiskBlockManager.ImmutableStringFactory.LoadExisting(fileInfoBlock.NameAddress);
+      DocInfoBlock docInfoBlock = cursor.CurrentData;
+      DiskImmutableString nameString = DiskBlockManager.ImmutableStringFactory.LoadExisting(docInfoBlock.NameAddress);
       string name = nameString.GetValue();
-      Console.Write($"Indexing {fileInfoBlock.InternalId} : {name} ...");
+      // Console.Write($"Indexing {fileInfoBlock.InternalId} : {name} ...");
 
       string content = File.ReadAllText(name);
 
@@ -496,7 +496,7 @@ public class TextSearchIndex
       }
 
       Console.WriteLine($" {count} trigrams");
-      totalOffset += (ulong)fileInfoBlock.Length;
+      totalOffset += (ulong)docInfoBlock.Length;
     }
   }
 
@@ -514,7 +514,7 @@ public class TextSearchIndex
 
   public void IndexLocalFiles(ushort userType, uint userId, uint repoId, string folderPath)
   {
-    ulong currentFileId = 1;
+    uint currentFileId = 1;
     ulong currentOffset = 0;
 
     foreach (string filePath in Directory.GetFiles(folderPath, "*.*", SearchOption.AllDirectories))
@@ -525,17 +525,17 @@ public class TextSearchIndex
       }
 
       DiskImmutableString nameString = DiskBlockManager.ImmutableStringFactory.Append(filePath);
-      var fileInfoKey = new FileInfoKey(userType, userId, repoId, currentFileId);
+      var fileInfoKey = new DocIdCompoundKeyBlock(userType, userId, 0, repoId, currentFileId);
       InternalFileIdTree.Insert(fileInfoKey, nameString.Address);
-      FileInfoBlock fileInfoBlock = default;
-      fileInfoBlock.InternalId = (ulong)currentFileId;
-      fileInfoBlock.NameAddress = nameString.Address;
-      fileInfoBlock.Length = GetFileLength(filePath);
-      fileInfoBlock.StartingOffset = currentOffset;
-      Console.WriteLine($"{currentFileId} : {filePath} (Length = {fileInfoBlock.Length})");
-      InternalFileInfoTree.Insert(fileInfoKey, fileInfoBlock);
+      DocInfoBlock docInfoBlock = default;
+      // fileInfoBlock.InternalId = (ulong)currentFileId;
+      docInfoBlock.NameAddress = nameString.Address;
+      docInfoBlock.Length = GetFileLength(filePath);
+      docInfoBlock.StartingOffset = currentOffset;
+      Console.WriteLine($"{currentFileId} : {filePath} (Length = {docInfoBlock.Length})");
+      InternalFileInfoTree.Insert(fileInfoKey, docInfoBlock);
       currentFileId++;
-      currentOffset += (ulong) fileInfoBlock.Length;
+      currentOffset += (ulong) docInfoBlock.Length;
     }
 
     // InternalFileInfoTable = new InternalFileInfoTable(DiskBlockManager, InternalFileInfoTree);

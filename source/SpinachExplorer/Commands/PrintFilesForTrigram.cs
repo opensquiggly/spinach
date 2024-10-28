@@ -11,7 +11,7 @@ internal static partial class Program
 
     int key = char.ToLower(trigram[0]) * 128 * 128 + char.ToLower(trigram[1]) * 128 + char.ToLower(trigram[2]);
 
-    var trigramFound = TextSearchIndex.TrigramTree.TryFind(key, out long trigramMatchesAddress);
+    var trigramFound = TextSearchIndex.TrigramTree.TryFind(key, out long trigramMatchesAddress, out _, out _);
     Console.WriteLine($"Found = {trigramFound}");
     Console.WriteLine($"Address = {trigramMatchesAddress}");
     var trigramMatches = TextSearchIndex.TrigramMatchesFactory.LoadExisting(trigramMatchesAddress);

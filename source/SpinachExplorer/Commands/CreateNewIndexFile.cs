@@ -23,7 +23,8 @@ internal static partial class Program
       }
     }
 
-    TextSearchIndex.CreateNewIndexFile(filename);
+    // TextSearchIndex.CreateNewIndexFile(filename);
+    TextSearchManager.CreateNewIndexFile(filename);
 
     Pause();
   }
