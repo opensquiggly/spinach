@@ -8,13 +8,11 @@ internal static partial class Program
     {
       Console.WriteLine();
       Console.WriteLine($"The index file '{TextSearchManager.FileName}' is currently open.");
-      Console.Write("Are you sure want to close it? (y/n) : ");
-      string response = Console.ReadLine();
-      if (response.ToLower() != "y")
+
+      if (PromptToConfirm("Are you sure want to close it? (y/n)"))
       {
-        return;
+        Console.WriteLine($"Closing current index file: {TextSearchManager.FileName}");
       }
-      Console.WriteLine($"Closing current index file: {TextSearchManager.FileName}");
     }
 
     TextSearchManager.Close();

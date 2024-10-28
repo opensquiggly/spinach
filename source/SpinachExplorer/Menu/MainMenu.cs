@@ -2,6 +2,64 @@ namespace SpinachExplorer;
 
 internal static partial class Program
 {
+  internal static ushort PromptForUInt16Value(string prompt)
+  {
+    bool valid;
+    ushort result;
+
+    do
+    {
+      Console.Write($"{prompt} : ");
+      string response = Console.ReadLine();
+      valid = ushort.TryParse(response, out result);
+
+      if (!valid)
+      {
+        Console.WriteLine($"{response} is not a valid 16-bit value. Try again.");
+        Console.WriteLine();
+      }
+    } while (!valid);
+
+    return result;
+  }
+
+  internal static uint PromptForUInt32Value(string prompt)
+  {
+    bool valid;
+    uint result;
+
+    do
+    {
+      Console.Write($"{prompt} : ");
+      string response = Console.ReadLine();
+      valid = uint.TryParse(response, out result);
+
+      if (!valid)
+      {
+        Console.WriteLine($"{response} is not a valid 16-bit value. Try again.");
+        Console.WriteLine();
+      }
+    } while (!valid);
+
+    return result;
+  }
+
+  internal static string PromptForString(string prompt)
+  {
+    Console.Write($"{prompt} : ");
+    string response = Console.ReadLine();
+
+    return response;
+  }
+
+  internal static bool PromptToConfirm(string prompt)
+  {
+    Console.Write($"{prompt} : ");
+    string response = Console.ReadLine();
+
+    return response is "y" or "Y";
+  }
+
   internal static void MainMenu()
   {
     ClearScreen();

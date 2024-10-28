@@ -5,8 +5,7 @@ internal static partial class Program
   private static void OpenExistingIndexFile()
   {
     Console.WriteLine();
-    Console.Write("Enter index file name: ");
-    string filename = Console.ReadLine();
+    string filename = PromptForString("Enter index file name");
 
     if (!File.Exists(filename))
     {
@@ -16,7 +15,6 @@ internal static partial class Program
       return;
     }
 
-    // TextSearchIndex.OpenExistingIndexFile(filename);
     TextSearchManager.OpenExistingIndexFile(filename);
 
     Console.WriteLine($"Index file {filename} is now open for exploration.");

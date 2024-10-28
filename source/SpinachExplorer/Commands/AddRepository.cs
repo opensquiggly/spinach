@@ -6,38 +6,20 @@ internal static partial class Program
   {
     Console.WriteLine();
 
-    Console.Write("Enter user type of repository owner: ");
-    string userTypeResponse = Console.ReadLine();
-    ushort.TryParse(userTypeResponse, out ushort userType);
-
-    Console.Write("Enter user id of repository owner: ");
-    string userIdResponse = Console.ReadLine();
-    uint.TryParse(userIdResponse, out uint userId);
-
-    Console.Write("Enter repository type (0 = User Topic Pages, 1 = Git Repo): ");
-    string repoTypeResponse = Console.ReadLine();
-    ushort.TryParse(repoTypeResponse, out ushort repoType);
-
-    Console.Write("Enter repository name: ");
-    string repoName = Console.ReadLine();
-
-    Console.Write("Enter repository root folder: ");
-    string rootFolder = Console.ReadLine();
-
-    Console.Write("Enter external id: ");
-    string externalId = Console.ReadLine();
+    ushort userType = PromptForUInt16Value("Enter user type of repository owner");
+    uint userId = PromptForUInt32Value("Enter user id of repository owner");
+    ushort repoType = PromptForUInt16Value("Enter repository type (0 = User Topic Pages, 1 = Git Repo)");
+    string repoName = PromptForString("Enter repository name");
+    string rootFolder = PromptForString("Enter repository root folder");
+    string externalId = PromptForString("Enter external id");
 
     Console.WriteLine();
     Console.WriteLine($"Repository Name: {repoName}");
     Console.WriteLine($"Root Folder: {rootFolder}");
-    Console.Write("Add repository? (y/n) : ");
-    string confirm = Console.ReadLine();
 
-    if (confirm.ToLower() == "y")
+    if (PromptToConfirm("Add repository? (y/n)"))
     {
       TextSearchManager.AddRepository(userType, userId, repoType, externalId, repoName, rootFolder);
-      // TextSearchIndex.AddRepository(null, repoName, rootFolder);
-      // TextSearchIndex.Flush();
     }
 
     Pause();
