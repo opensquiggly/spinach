@@ -107,6 +107,17 @@ public class TextSearchManager : ITextSearchManager
     FileName = filename;
   }
 
+  public void Close()
+  {
+    if (DiskBlockManager != null && IsOpen)
+    {
+      DiskBlockManager.Flush();
+      DiskBlockManager.Close();
+    }
+
+    IsOpen = false;
+  }
+
   public void Flush()
   {
     // ReSharper disable once ArrangeMethodOrOperatorBody

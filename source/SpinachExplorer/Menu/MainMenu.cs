@@ -14,9 +14,9 @@ internal static partial class Program
       Console.WriteLine("\nWelcome to Spinach Explorer");
       Console.WriteLine();
 
-      if (TextSearchIndex.IsOpen)
+      if (TextSearchManager.IsOpen)
       {
-        Console.WriteLine($"The index file '{TextSearchIndex.FileName}' is currently open");
+        Console.WriteLine($"The index file '{TextSearchManager.FileName}' is currently open");
       }
       else
       {
