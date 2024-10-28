@@ -92,7 +92,7 @@ internal static partial class Program
       Console.WriteLine(" 6. Add repository");
       Console.WriteLine(" 7. Print repositories");
       Console.WriteLine(" 8. View files in a local folder");
-      Console.WriteLine(" 9. Index local files");
+      Console.WriteLine(" 9. Add repository file names to the index");
       Console.WriteLine("10. Lookup file id");
       Console.WriteLine("11. Test trigram extractor");
       Console.WriteLine("12. Index files");
