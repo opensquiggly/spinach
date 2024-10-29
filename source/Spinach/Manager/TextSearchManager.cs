@@ -293,7 +293,6 @@ public class TextSearchManager : ITextSearchManager
 
     bool found = RepoTree.TryFind(repoIdCompoundKey, out RepoInfoBlock data, out DiskBTreeNode<RepoIdCompoundKeyBlock, RepoInfoBlock> node, out int nodeIndex);
     string rootFolderPath = LoadString(data.RootFolderPathAddress);
-    Console.WriteLine($"RootFolderPath = {rootFolderPath}");
     uint currentDocId = data.LastDocId;
 
     foreach (string filePath in Directory.GetFiles(rootFolderPath, "*.*", SearchOption.AllDirectories))
@@ -333,6 +332,31 @@ public class TextSearchManager : ITextSearchManager
 
     data.LastDocId = currentDocId;
     node.ReplaceDataAtIndex(data, nodeIndex);
+  }
+
+  public void PrintLocalFiles(ushort userType, uint userId, ushort repoType, uint repoId)
+  {
+    var repoIdCompoundKey = new RepoIdCompoundKeyBlock()
+    {
+      UserType = userType, UserId = userId, RepoType = repoType, RepoId = repoId
+    };
+
+    bool found = RepoTree.TryFind(repoIdCompoundKey, out RepoInfoBlock data, out _, out _);
+    if (!found) return;
+
+    string rootFolderPath = LoadString(data.RootFolderPathAddress);
+
+    foreach (string filePath in Directory.GetFiles(rootFolderPath, "*.*", SearchOption.AllDirectories))
+    {
+      if (!IncludeFileInIndex(filePath))
+      {
+        Console.WriteLine($"EXCLUDE: {filePath}");
+      }
+      else
+      {
+        Console.WriteLine($"{filePath}");
+      }
+    }
   }
 
   public IEnumerable<UserInfoBlock> GetUserBlocks()
