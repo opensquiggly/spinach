@@ -6,10 +6,11 @@ public class TrigramMatchPositionKey : IComparable<TrigramMatchPositionKey>, ICo
   {
   }
 
-  public TrigramMatchPositionKey(ushort userType, uint userId, uint repoId, ulong offset)
+  public TrigramMatchPositionKey(ushort userType, uint userId, ushort repoType, uint repoId, ulong offset)
   {
     UserType = userType;
     UserId = userId;
+    RepoType = repoType;
     RepoId = repoId;
     Offset = offset;
   }
@@ -17,6 +18,8 @@ public class TrigramMatchPositionKey : IComparable<TrigramMatchPositionKey>, ICo
   public ushort UserType { get; set; }
 
   public uint UserId { get; set; }
+
+  public ushort RepoType { get; set; }
 
   public uint RepoId { get; set; }
 
@@ -28,6 +31,8 @@ public class TrigramMatchPositionKey : IComparable<TrigramMatchPositionKey>, ICo
     if (UserType > other.UserType) return 1;
     if (UserId < other.UserId) return -1;
     if (UserId > other.UserId) return 1;
+    if (RepoType < other.RepoType) return -1;
+    if (RepoType > other.RepoType) return 1;
     if (RepoId < other.RepoId) return -1;
     if (RepoId > other.RepoId) return 1;
     if (Offset < other.Offset) return -1;

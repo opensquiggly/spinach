@@ -102,7 +102,7 @@ public class FastTrigramEnumerator : IFastEnumerator<TrigramMatchPositionKey, ul
     }
 
     TrigramMatchesCursor.MoveNext();
-    var nextMatchKey = new TrigramMatchKey(target.UserType, target.UserId, target.RepoId);
+    var nextMatchKey = new TrigramMatchKey(target.UserType, target.UserId, target.RepoType, target.RepoId);
     bool hasNextMatch = TrigramMatchesCursor.MoveUntilGreaterThanOrEqual(nextMatchKey);
 
     if (!hasNextMatch) return false;

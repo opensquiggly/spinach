@@ -6,15 +6,17 @@ public struct TrigramMatchKey : IComparable<TrigramMatchKey>, IComparable
   {
   }
 
-  public TrigramMatchKey(ushort userType, uint userId, uint repoId)
+  public TrigramMatchKey(ushort userType, uint userId, ushort repoType, uint repoId)
   {
     UserType = userType;
     UserId = userId;
+    RepoType = repoType;
     RepoId = repoId;
   }
 
   public ushort UserType { get; set; }
   public uint UserId { get; set; }
+  public ushort RepoType { get; set; }
   public uint RepoId { get; set; }
 
   public int CompareTo(TrigramMatchKey other)
@@ -23,6 +25,8 @@ public struct TrigramMatchKey : IComparable<TrigramMatchKey>, IComparable
     if (UserType > other.UserType) return 1;
     if (UserId < other.UserId) return -1;
     if (UserId > other.UserId) return 1;
+    if (RepoType < other.RepoType) return -1;
+    if (RepoType > other.RepoType) return 1;
     if (RepoId < other.RepoId) return -1;
     if (RepoId > other.RepoId) return 1;
 

@@ -194,7 +194,7 @@ public class TextSearchIndex
       return postingsList;
     }
 
-    var trigramMatchKey = new TrigramMatchKey(key.UserType, key.UserId, key.RepoId);
+    var trigramMatchKey = new TrigramMatchKey(key.UserType, key.UserId, key.RepoType, key.RepoId);
 
     if (TrigramTree.TryFind(key.TrigramKey, out long trigramMatchesAddress, out _, out _))
     {

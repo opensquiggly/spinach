@@ -14,8 +14,8 @@ internal static partial class Program
       return;
     }
 
-    TextSearchIndex.IndexFiles();
-    TextSearchIndex.Flush();
+    TextSearchManager.IndexFiles();
+    TextSearchManager.Flush();
 
     Pause();
   }

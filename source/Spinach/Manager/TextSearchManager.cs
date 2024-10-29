@@ -19,6 +19,20 @@ public class TextSearchManager : ITextSearchManager
     DocInfoBlockType = DiskBlockManager.RegisterBlockType<DocInfoBlock>();
     DocIdCompoundKeyBlockType = DiskBlockManager.RegisterBlockType<DocIdCompoundKeyBlock>();
 
+    // The TrigramTree is used to look up a trigram and figure out which TrigramFileTree goes with it.
+    // Given a key representing a trigram, it returns an address a a TrigramFileTree BTree
+    TrigramTreeFactory =
+      DiskBlockManager.BTreeManager.CreateFactory<int, long>(
+        DiskBlockManager.IntBlockType,
+        DiskBlockManager.LongBlockType
+      );
+
+    TrigramMatchesFactory =
+      DiskBlockManager.BTreeManager.CreateFactory<TrigramMatchKey, long>(
+        TrigramMatchKeyType,
+        DiskBlockManager.LongBlockType
+      );
+
     UserTreeFactory =
       DiskBlockManager.BTreeManager.CreateFactory<UserIdCompoundKeyBlock, UserInfoBlock>(
         UserIdCompoundKeyBlockType,
@@ -60,16 +74,24 @@ public class TextSearchManager : ITextSearchManager
 
   public bool IsOpen { get; set; } = false;
 
+  public DiskBTree<int, long> TrigramTree { get; set; }
+
   public DiskBTree<UserIdCompoundKeyBlock, UserInfoBlock> UserTree { get; private set; }
 
   public DiskBTree<RepoIdCompoundKeyBlock, RepoInfoBlock> RepoTree { get; private set; }
 
   public DiskBTree<DocIdCompoundKeyBlock, DocInfoBlock> DocTree { get; private set; }
 
+  protected DiskBTreeFactory<int, long> TrigramTreeFactory { get; set; }
+
+  public DiskBTreeFactory<TrigramMatchKey, long> TrigramMatchesFactory { get; set; }
+
   protected DiskBTreeFactory<UserIdCompoundKeyBlock, UserInfoBlock> UserTreeFactory { get; private set; }
 
   protected DiskBTreeFactory<RepoIdCompoundKeyBlock, RepoInfoBlock> RepoTreeFactory { get; private set; }
   protected DiskBTreeFactory<DocIdCompoundKeyBlock, DocInfoBlock> DocTreeFactory { get; private set; }
+
+  protected LruCache<TrigramMatchCacheKey, DiskSortedVarIntList> PostingsListCache { get; set; }
 
   public void CreateNewIndexFile(string filename)
   {
@@ -80,12 +102,15 @@ public class TextSearchManager : ITextSearchManager
     UserTree = UserTreeFactory.AppendNew(25);
     RepoTree = RepoTreeFactory.AppendNew(25);
     DocTree = DocTreeFactory.AppendNew(25);
+    TrigramTree = TrigramTreeFactory.AppendNew(25);
 
-    // TrigramTree = TrigramTreeFactory.AppendNew(25);
+    PostingsListCache = new LruCache<TrigramMatchCacheKey, DiskSortedVarIntList>(2200000);
 
     _headerBlock.Address1 = UserTree.Address;
     _headerBlock.Address2 = RepoTree.Address;
     _headerBlock.Address3 = DocTree.Address;
+    _headerBlock.Address4 = TrigramTree.Address;
+
     DiskBlockManager.WriteHeaderBlock(ref _headerBlock, true);
     DiskBlockManager.Flush();
 
@@ -102,6 +127,9 @@ public class TextSearchManager : ITextSearchManager
     UserTree = UserTreeFactory.LoadExisting(_headerBlock.Address1);
     RepoTree = RepoTreeFactory.LoadExisting(_headerBlock.Address2);
     DocTree = DocTreeFactory.LoadExisting(_headerBlock.Address3);
+    TrigramTree = TrigramTreeFactory.LoadExisting(_headerBlock.Address4);
+
+    PostingsListCache = new LruCache<TrigramMatchCacheKey, DiskSortedVarIntList>(2200000);
 
     IsOpen = true;
     FileName = filename;
@@ -332,6 +360,92 @@ public class TextSearchManager : ITextSearchManager
 
     data.LastDocId = currentDocId;
     node.ReplaceDataAtIndex(data, nodeIndex);
+  }
+
+  public DiskSortedVarIntList LoadOrAddTrigramPostingsList(TrigramMatchCacheKey key)
+  {
+    if (PostingsListCache.TryGetValue(key, out DiskSortedVarIntList postingsList))
+    {
+      return postingsList;
+    }
+
+    var trigramMatchKey = new TrigramMatchKey(key.UserType, key.UserId, key.RepoType, key.RepoId);
+
+    if (TrigramTree.TryFind(key.TrigramKey, out long trigramMatchesAddress, out _, out _))
+    {
+      DiskBTree<TrigramMatchKey, long> trigramMatches = TrigramMatchesFactory.LoadExisting(trigramMatchesAddress);
+      if (trigramMatches == null)
+      {
+        throw new Exception(
+          "Could not find an existing postings list stored in the TrigramMatches key. The index file appears to be corrupted.");
+      }
+
+      if (trigramMatches.TryFind(trigramMatchKey, out long postingsListAddress, out _, out _))
+      {
+        DiskSortedVarIntList existingPostingsList =
+          DiskBlockManager.SortedVarIntListFactory.LoadExisting(postingsListAddress);
+
+        PostingsListCache.Add(key, existingPostingsList);
+        return existingPostingsList;
+      }
+
+      DiskSortedVarIntList newPostingsList = DiskBlockManager.SortedVarIntListFactory.AppendNew();
+      trigramMatches.Insert(trigramMatchKey, newPostingsList.Address);
+      PostingsListCache.Add(key, newPostingsList);
+
+      return newPostingsList;
+    }
+
+    DiskBTree<TrigramMatchKey, long> newTrigramMatches = TrigramMatchesFactory.AppendNew(25);
+    postingsList = DiskBlockManager.SortedVarIntListFactory.AppendNew();
+    newTrigramMatches.Insert(trigramMatchKey, postingsList.Address);
+    TrigramTree.Insert(key.TrigramKey, newTrigramMatches.Address);
+    PostingsListCache.Add(key, postingsList);
+
+    return postingsList;
+  }
+
+  public void IndexFiles()
+  {
+    ulong totalOffset = 0;
+
+    var cursor = new DiskBTreeCursor<DocIdCompoundKeyBlock, DocInfoBlock>(DocTree);
+    cursor.Reset();
+
+    while (cursor.MoveNext())
+    {
+      DocInfoBlock docInfoBlock = cursor.CurrentData;
+      DiskImmutableString nameString = DiskBlockManager.ImmutableStringFactory.LoadExisting(docInfoBlock.ExternalIdOrPathAddress);
+      string name = nameString.GetValue();
+      Console.Write($"Indexing: {name}");
+
+      string content = File.ReadAllText(name);
+
+      var trigramExtractor = new TrigramExtractor(content);
+      int count = 0;
+
+      foreach (TrigramInfo trigramInfo in trigramExtractor)
+      {
+        var trigramMatchCacheKey = new TrigramMatchCacheKey
+        {
+          TrigramKey = trigramInfo.Key,
+          UserType = cursor.CurrentKey.UserType,
+          UserId = cursor.CurrentKey.UserId,
+          RepoType = cursor.CurrentKey.RepoType,
+          RepoId = cursor.CurrentKey.RepoId
+        };
+
+        DiskSortedVarIntList postingsList = LoadOrAddTrigramPostingsList(trigramMatchCacheKey);
+
+        // TODO: As-is, this is very inefficient
+        postingsList.AppendData(new ulong[] { totalOffset + (ulong)trigramInfo.Position });
+
+        count++;
+      }
+
+      Console.WriteLine($" {count} trigrams");
+      totalOffset += (ulong)docInfoBlock.Length;
+    }
   }
 
   public void PrintLocalFiles(ushort userType, uint userId, ushort repoType, uint repoId)

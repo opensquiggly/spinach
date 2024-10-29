@@ -5,6 +5,7 @@ public struct TrigramMatchCacheKey : IComparable<TrigramMatchCacheKey>, ICompara
   public int TrigramKey { get; set; }
   public ushort UserType { get; set; }
   public uint UserId { get; set; }
+  public ushort RepoType { get; set; }
   public uint RepoId { get; set; }
 
   public int CompareTo(TrigramMatchCacheKey other)
@@ -15,6 +16,8 @@ public struct TrigramMatchCacheKey : IComparable<TrigramMatchCacheKey>, ICompara
     if (UserType > other.UserType) return 1;
     if (UserId < other.UserId) return -1;
     if (UserId > other.UserId) return 1;
+    if (RepoType < other.RepoType) return -1;
+    if (RepoType > other.RepoType) return 1;
     if (RepoId < other.RepoId) return -1;
     if (RepoId > other.RepoId) return 1;
 
