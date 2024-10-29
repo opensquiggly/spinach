@@ -426,4 +426,52 @@ public class TextSearchManager : ITextSearchManager
       yield return repo;
     }
   }
+
+  public IEnumerable<IDocument> GetDocuments(ushort userType, uint userId, ushort repoType, uint repoId)
+  {
+    var cursor = new DiskBTreeCursor<DocIdCompoundKeyBlock, DocInfoBlock>(DocTree);
+
+    var firstKey = new DocIdCompoundKeyBlock()
+    {
+      UserType = userType,
+      UserId = userId,
+      RepoType = repoType,
+      RepoId = repoId,
+      Id = 0
+    };
+
+    var pastKey = new DocIdCompoundKeyBlock()
+    {
+      UserType = userType,
+      UserId = userId,
+      RepoType = repoType,
+      RepoId = repoId + 1,
+      Id = 0
+    };
+
+    bool hasValue = cursor.MoveUntilGreaterThanOrEqual(firstKey);
+
+    while (hasValue && cursor.CurrentKey.CompareTo(pastKey) < 0)
+    {
+      var doc = new Document()
+      {
+        UserType = cursor.CurrentKey.UserType,
+        UserId = cursor.CurrentKey.UserId,
+        RepoType = cursor.CurrentKey.RepoType,
+        RepoId = cursor.CurrentKey.RepoId,
+        DocId = cursor.CurrentKey.Id
+        // NameAddress = cursor.CurrentData.NameAddress,
+        // Name = LoadString(cursor.CurrentData.NameAddress),
+        // ExternalIdAddress = cursor.CurrentData.ExternalIdAddress,
+        // ExternalId = LoadString(cursor.CurrentData.ExternalIdAddress),
+        // RootFolderPathAddress = cursor.CurrentData.RootFolderPathAddress,
+        // RootFolderPath = LoadString(cursor.CurrentData.RootFolderPathAddress),
+        // LastDocId = cursor.CurrentData.LastDocId
+      };
+
+      yield return doc;
+
+      hasValue = cursor.MoveNext();
+    }
+  }
 }
