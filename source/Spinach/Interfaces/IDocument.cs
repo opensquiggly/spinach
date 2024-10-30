@@ -7,4 +7,9 @@ public interface IDocument
   ushort RepoType { get; set; }
   uint RepoId { get; set; }
   uint DocId { get; set; }
+  ulong StartingOffset { get; set; }
+  long NameAddress { get; set; }
+  string Name { get; set; }
+  long ExternalIdOrPathAddress { get; set; }
+  string ExternalIdOrPath { get; set; }
 }

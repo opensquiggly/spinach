@@ -18,6 +18,7 @@ public class TextSearchManager : ITextSearchManager
     RepoInfoBlockType = DiskBlockManager.RegisterBlockType<RepoInfoBlock>();
     DocInfoBlockType = DiskBlockManager.RegisterBlockType<DocInfoBlock>();
     DocIdCompoundKeyBlockType = DiskBlockManager.RegisterBlockType<DocIdCompoundKeyBlock>();
+    DocOffsetCompoundKeyBlockType = DiskBlockManager.RegisterBlockType<DocOffsetCompoundKeyBlock>();
 
     // The TrigramTree is used to look up a trigram and figure out which TrigramFileTree goes with it.
     // Given a key representing a trigram, it returns an address a a TrigramFileTree BTree
@@ -50,11 +51,19 @@ public class TextSearchManager : ITextSearchManager
         DocIdCompoundKeyBlockType,
         DocInfoBlockType
       );
+
+    DocTreeByOffsetFactory =
+      DiskBlockManager.BTreeManager.CreateFactory<DocOffsetCompoundKeyBlock, uint>(
+        DocOffsetCompoundKeyBlockType,
+        DiskBlockManager.IntBlockType
+      );
   }
 
   protected short DocInfoBlockType { get; set; }
 
   protected short DocIdCompoundKeyBlockType { get; set; }
+
+  protected short DocOffsetCompoundKeyBlockType { get; set; }
 
   protected short TrigramKeyType { get; set; }
 
@@ -82,6 +91,8 @@ public class TextSearchManager : ITextSearchManager
 
   public DiskBTree<DocIdCompoundKeyBlock, DocInfoBlock> DocTree { get; private set; }
 
+  public DiskBTree<DocOffsetCompoundKeyBlock, uint> DocTreeByOffset { get; private set; }
+
   protected DiskBTreeFactory<int, long> TrigramTreeFactory { get; set; }
 
   public DiskBTreeFactory<TrigramMatchKey, long> TrigramMatchesFactory { get; set; }
@@ -90,6 +101,8 @@ public class TextSearchManager : ITextSearchManager
 
   protected DiskBTreeFactory<RepoIdCompoundKeyBlock, RepoInfoBlock> RepoTreeFactory { get; private set; }
   protected DiskBTreeFactory<DocIdCompoundKeyBlock, DocInfoBlock> DocTreeFactory { get; private set; }
+
+  protected DiskBTreeFactory<DocOffsetCompoundKeyBlock, uint> DocTreeByOffsetFactory { get; private set; }
 
   protected LruCache<TrigramMatchCacheKey, DiskSortedVarIntList> PostingsListCache { get; set; }
 
@@ -102,6 +115,7 @@ public class TextSearchManager : ITextSearchManager
     UserTree = UserTreeFactory.AppendNew(25);
     RepoTree = RepoTreeFactory.AppendNew(25);
     DocTree = DocTreeFactory.AppendNew(25);
+    DocTreeByOffset = DocTreeByOffsetFactory.AppendNew(25);
     TrigramTree = TrigramTreeFactory.AppendNew(25);
 
     PostingsListCache = new LruCache<TrigramMatchCacheKey, DiskSortedVarIntList>(2200000);
@@ -109,7 +123,8 @@ public class TextSearchManager : ITextSearchManager
     _headerBlock.Address1 = UserTree.Address;
     _headerBlock.Address2 = RepoTree.Address;
     _headerBlock.Address3 = DocTree.Address;
-    _headerBlock.Address4 = TrigramTree.Address;
+    _headerBlock.Address4 = DocTreeByOffset.Address;
+    _headerBlock.Address5 = TrigramTree.Address;
 
     DiskBlockManager.WriteHeaderBlock(ref _headerBlock, true);
     DiskBlockManager.Flush();
@@ -127,7 +142,8 @@ public class TextSearchManager : ITextSearchManager
     UserTree = UserTreeFactory.LoadExisting(_headerBlock.Address1);
     RepoTree = RepoTreeFactory.LoadExisting(_headerBlock.Address2);
     DocTree = DocTreeFactory.LoadExisting(_headerBlock.Address3);
-    TrigramTree = TrigramTreeFactory.LoadExisting(_headerBlock.Address4);
+    DocTreeByOffset = DocTreeByOffsetFactory.LoadExisting(_headerBlock.Address4);
+    TrigramTree = TrigramTreeFactory.LoadExisting(_headerBlock.Address5);
 
     PostingsListCache = new LruCache<TrigramMatchCacheKey, DiskSortedVarIntList>(2200000);
 
@@ -341,6 +357,15 @@ public class TextSearchManager : ITextSearchManager
         Id = ++currentDocId
       };
 
+      var docOffsetCompoundKey = new DocOffsetCompoundKeyBlock()
+      {
+        UserType = userType,
+        UserId = userId,
+        RepoType = repoType,
+        RepoId = repoId,
+        StartingOffset = currentOffset
+      };
+
       var docInfoBlock = new DocInfoBlock()
       {
         NameAddress = 0,
@@ -350,12 +375,17 @@ public class TextSearchManager : ITextSearchManager
       };
 
       DocTree.Insert(docIdCompoundKey, docInfoBlock);
+      DocTreeByOffset.Insert(docOffsetCompoundKey, docIdCompoundKey.Id);
+
       Console.Write($"Adding file ... Id = {docIdCompoundKey.Id}, ");
       Console.Write($"UserType = {docIdCompoundKey.UserType}, ");
       Console.Write($"UserId = {docIdCompoundKey.UserId}, ");
       Console.Write($"RepoType = {docIdCompoundKey.RepoType}, ");
       Console.Write($"RepoId = {docIdCompoundKey.RepoId}, ");
+      Console.Write($"Starting Offset = {docInfoBlock.StartingOffset}, ");
       Console.WriteLine($"{filePath}");
+
+      currentOffset += (ulong) docInfoBlock.Length;
     }
 
     data.LastDocId = currentDocId;
@@ -407,8 +437,6 @@ public class TextSearchManager : ITextSearchManager
 
   public void IndexFiles()
   {
-    ulong totalOffset = 0;
-
     var cursor = new DiskBTreeCursor<DocIdCompoundKeyBlock, DocInfoBlock>(DocTree);
     cursor.Reset();
 
@@ -438,13 +466,12 @@ public class TextSearchManager : ITextSearchManager
         DiskSortedVarIntList postingsList = LoadOrAddTrigramPostingsList(trigramMatchCacheKey);
 
         // TODO: As-is, this is very inefficient
-        postingsList.AppendData(new ulong[] { totalOffset + (ulong)trigramInfo.Position });
+        postingsList.AppendData(new ulong[] { docInfoBlock.StartingOffset + (ulong)trigramInfo.Position });
 
         count++;
       }
 
       Console.WriteLine($" {count} trigrams");
-      totalOffset += (ulong)docInfoBlock.Length;
     }
   }
 
@@ -573,11 +600,12 @@ public class TextSearchManager : ITextSearchManager
         UserId = cursor.CurrentKey.UserId,
         RepoType = cursor.CurrentKey.RepoType,
         RepoId = cursor.CurrentKey.RepoId,
-        DocId = cursor.CurrentKey.Id
-        // NameAddress = cursor.CurrentData.NameAddress,
-        // Name = LoadString(cursor.CurrentData.NameAddress),
-        // ExternalIdAddress = cursor.CurrentData.ExternalIdAddress,
-        // ExternalId = LoadString(cursor.CurrentData.ExternalIdAddress),
+        DocId = cursor.CurrentKey.Id,
+        StartingOffset = cursor.CurrentData.StartingOffset,
+        NameAddress = cursor.CurrentData.NameAddress,
+        Name = LoadString(cursor.CurrentData.NameAddress),
+        ExternalIdOrPathAddress = cursor.CurrentData.ExternalIdOrPathAddress,
+        ExternalIdOrPath = LoadString(cursor.CurrentData.ExternalIdOrPathAddress),
         // RootFolderPathAddress = cursor.CurrentData.RootFolderPathAddress,
         // RootFolderPath = LoadString(cursor.CurrentData.RootFolderPathAddress),
         // LastDocId = cursor.CurrentData.LastDocId

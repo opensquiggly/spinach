@@ -33,7 +33,9 @@ internal static partial class Program
       Console.Write($"User Id: {doc.UserId} ");
       Console.Write($"Repo Type: {doc.RepoType} ");
       Console.Write($"Repo Id: {doc.RepoId} ");
-      Console.WriteLine($"Doc Id: {doc.DocId} ");
+      Console.Write($"Doc Id: {doc.DocId} ");
+      Console.Write($"Starting Offset: {doc.StartingOffset} ");
+      Console.WriteLine($"{doc.ExternalIdOrPath}");
     }
 
     Pause();
