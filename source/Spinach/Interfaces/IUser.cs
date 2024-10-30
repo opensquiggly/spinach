@@ -2,6 +2,7 @@ namespace Spinach.Interfaces;
 
 public interface IUser
 {
+  bool IsValid { get; set; }
   ushort Type { get; set; }
   uint Id { get; set; }
   long NameAddress { get; set; }

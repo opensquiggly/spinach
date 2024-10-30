@@ -2,7 +2,7 @@ namespace Spinach.Manager;
 
 using TrackingObjects;
 
-public class TextSearchManager : ITextSearchManager
+public class TextSearchManager : ITextSearchManager, ITextSearchEnumeratorContext
 {
   private HeaderBlock _headerBlock;
 
@@ -93,18 +93,18 @@ public class TextSearchManager : ITextSearchManager
 
   public DiskBTree<DocOffsetCompoundKeyBlock, uint> DocTreeByOffset { get; private set; }
 
-  protected DiskBTreeFactory<int, long> TrigramTreeFactory { get; set; }
+  public DiskBTreeFactory<int, long> TrigramTreeFactory { get; set; }
 
   public DiskBTreeFactory<TrigramMatchKey, long> TrigramMatchesFactory { get; set; }
 
-  protected DiskBTreeFactory<UserIdCompoundKeyBlock, UserInfoBlock> UserTreeFactory { get; private set; }
+  public DiskBTreeFactory<UserIdCompoundKeyBlock, UserInfoBlock> UserTreeFactory { get; private set; }
 
-  protected DiskBTreeFactory<RepoIdCompoundKeyBlock, RepoInfoBlock> RepoTreeFactory { get; private set; }
-  protected DiskBTreeFactory<DocIdCompoundKeyBlock, DocInfoBlock> DocTreeFactory { get; private set; }
+  public DiskBTreeFactory<RepoIdCompoundKeyBlock, RepoInfoBlock> RepoTreeFactory { get; private set; }
+  public DiskBTreeFactory<DocIdCompoundKeyBlock, DocInfoBlock> DocTreeFactory { get; private set; }
 
-  protected DiskBTreeFactory<DocOffsetCompoundKeyBlock, uint> DocTreeByOffsetFactory { get; private set; }
+  public DiskBTreeFactory<DocOffsetCompoundKeyBlock, uint> DocTreeByOffsetFactory { get; private set; }
 
-  protected LruCache<TrigramMatchCacheKey, DiskSortedVarIntList> PostingsListCache { get; set; }
+  public LruCache<TrigramMatchCacheKey, DiskSortedVarIntList> PostingsListCache { get; set; }
 
   public void CreateNewIndexFile(string filename)
   {

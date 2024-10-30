@@ -2,6 +2,7 @@ namespace Spinach.TrackingObjects;
 
 public class User : IUser
 {
+  public bool IsValid { get; set; }
   public ushort Type { get; set; }
   public uint Id { get; set; }
   public long NameAddress { get; set; }
