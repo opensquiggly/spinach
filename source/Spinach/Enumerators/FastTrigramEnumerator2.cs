@@ -60,14 +60,6 @@ public class FastTrigramEnumerator2 : IFastEnumerator<TrigramMatchPositionKey, u
 
   public TrigramMatchPositionKey CurrentKey { get; private set; }
 
-  public ushort CurrentUserType { get; private set; }
-
-  public uint CurrentUserId { get; private set; }
-
-  public ushort CurrentRepoType { get; private set; }
-
-  public uint CurrentRepoId { get; private set; }
-
   public IUser CurrentUser { get; private set; }
 
   public IRepository CurrentRepository { get; private set; }
@@ -82,20 +74,20 @@ public class FastTrigramEnumerator2 : IFastEnumerator<TrigramMatchPositionKey, u
   {
     if (TrigramMatchesCursor == null) return;
 
-    if (CurrentUserType == TrigramMatchesCursor.CurrentKey.UserType &&
-        CurrentUserId == TrigramMatchesCursor.CurrentKey.UserId)
+    if (CurrentKey.UserType == TrigramMatchesCursor.CurrentKey.UserType &&
+        CurrentKey.UserId == TrigramMatchesCursor.CurrentKey.UserId)
     {
       // Nothing changed since last time
       return;
     }
 
-    CurrentUserType = TrigramMatchesCursor.CurrentKey.UserType;
-    CurrentUserId = TrigramMatchesCursor.CurrentKey.UserId;
+    CurrentKey.UserType = TrigramMatchesCursor.CurrentKey.UserType;
+    CurrentKey.UserId = TrigramMatchesCursor.CurrentKey.UserId;
 
     var userCompoundKey = new UserIdCompoundKeyBlock()
     {
-      UserType = CurrentUserType,
-      UserId = CurrentUserId
+      UserType = CurrentKey.UserType,
+      UserId = CurrentKey.UserId
     };
 
     bool found = Context.UserTree.TryFind(userCompoundKey, out UserInfoBlock data, out _, out _);
@@ -104,8 +96,8 @@ public class FastTrigramEnumerator2 : IFastEnumerator<TrigramMatchPositionKey, u
       CurrentUser = new User()
       {
         IsValid = false,
-        Type = CurrentUserType,
-        Id = CurrentUserId,
+        Type = CurrentKey.UserType,
+        Id = CurrentKey.UserId,
         NameAddress = 0,
         Name = "User Not Found",
         ExternalIdAddress = 0,
@@ -118,8 +110,8 @@ public class FastTrigramEnumerator2 : IFastEnumerator<TrigramMatchPositionKey, u
       CurrentUser = new User()
       {
         IsValid = true,
-        Type = CurrentUserType,
-        Id = CurrentUserId,
+        Type = CurrentKey.UserType,
+        Id = CurrentKey.UserId,
         NameAddress = data.NameAddress,
         Name = Context.LoadString(data.NameAddress),
         ExternalIdAddress = data.ExternalIdAddress,
@@ -133,24 +125,24 @@ public class FastTrigramEnumerator2 : IFastEnumerator<TrigramMatchPositionKey, u
   {
     if (TrigramMatchesCursor == null) return;
 
-    if (CurrentUserType == TrigramMatchesCursor.CurrentKey.UserType &&
-        CurrentUserId == TrigramMatchesCursor.CurrentKey.UserId &&
-        CurrentRepoType == TrigramMatchesCursor.CurrentKey.RepoType &&
-        CurrentRepoId == TrigramMatchesCursor.CurrentKey.RepoId)
+    if (CurrentKey.UserType == TrigramMatchesCursor.CurrentKey.UserType &&
+        CurrentKey.UserId == TrigramMatchesCursor.CurrentKey.UserId &&
+        CurrentKey.RepoType == TrigramMatchesCursor.CurrentKey.RepoType &&
+        CurrentKey.RepoId == TrigramMatchesCursor.CurrentKey.RepoId)
     {
       // Nothing changed since last time
       return;
     }
 
-    CurrentRepoType = TrigramMatchesCursor.CurrentKey.RepoType;
-    CurrentRepoId = TrigramMatchesCursor.CurrentKey.RepoId;
+    CurrentKey.RepoType = TrigramMatchesCursor.CurrentKey.RepoType;
+    CurrentKey.RepoId = TrigramMatchesCursor.CurrentKey.RepoId;
 
     var repoCompoundKey = new RepoIdCompoundKeyBlock()
     {
-      UserType = CurrentUserType,
-      UserId = CurrentUserId,
-      RepoType = CurrentRepoType,
-      RepoId = CurrentRepoId
+      UserType = CurrentKey.UserType,
+      UserId = CurrentKey.UserId,
+      RepoType = CurrentKey.RepoType,
+      RepoId = CurrentKey.RepoId
     };
 
     bool found = Context.RepoTree.TryFind(repoCompoundKey, out RepoInfoBlock data, out _, out _);
@@ -162,8 +154,8 @@ public class FastTrigramEnumerator2 : IFastEnumerator<TrigramMatchPositionKey, u
 
     CurrentRepository = new Repository()
     {
-      Type = CurrentRepoType,
-      Id = CurrentRepoId,
+      Type = CurrentKey.RepoType,
+      Id = CurrentKey.RepoId,
       NameAddress = data.NameAddress,
       Name = Context.LoadString(data.NameAddress),
       ExternalIdAddress = data.ExternalIdAddress,
@@ -178,10 +170,10 @@ public class FastTrigramEnumerator2 : IFastEnumerator<TrigramMatchPositionKey, u
   {
     var docOffsetKey = new DocOffsetCompoundKeyBlock()
     {
-      UserType = CurrentUserType,
-      UserId = CurrentUserId,
-      RepoType = CurrentRepoType,
-      RepoId = CurrentRepoId,
+      UserType = CurrentKey.UserType,
+      UserId = CurrentKey.UserId,
+      RepoType = CurrentKey.RepoType,
+      RepoId = CurrentKey.RepoId,
       StartingOffset = CurrentPostingsListCursor.CurrentKey
     };
 
@@ -262,7 +254,43 @@ public class FastTrigramEnumerator2 : IFastEnumerator<TrigramMatchPositionKey, u
 
   public bool MoveUntilGreaterThanOrEqual(TrigramMatchPositionKey target)
   {
-    throw new NotImplementedException();
+    if (CurrentKey.UserType == target.UserType &&
+        CurrentKey.UserId == target.UserId &&
+        CurrentKey.RepoType == target.RepoType &&
+        CurrentKey.RepoId == target.RepoId)
+    {
+      if (CurrentPostingsListCursor.MoveUntilGreaterThanOrEqual(target.Offset))
+      {
+        CurrentKey.Offset = CurrentPostingsListCursor.CurrentKey;
+        return true;
+      }
+    }
+
+    var nextMatchKey = new TrigramMatchKey(target.UserType, target.UserId, target.RepoType, target.RepoId + 1);
+    if (!TrigramMatchesCursor.MoveUntilGreaterThanOrEqual(nextMatchKey)) return false;
+
+    while (true)
+    {
+      SetCurrentUser();
+      SetCurrentRepository();
+
+      CurrentPostingsList = Context.DiskBlockManager.SortedVarIntListFactory.LoadExisting(TrigramMatchesCursor.CurrentData);
+      if (CurrentPostingsList == null)
+      {
+        if (!TrigramMatchesCursor.MoveNext()) return false;
+        continue;
+      }
+
+      CurrentPostingsListCursor = new DiskSortedVarIntListCursor(CurrentPostingsList);
+      if (!CurrentPostingsListCursor.MoveNext())
+      {
+        if (!TrigramMatchesCursor.MoveNext()) return false;
+        continue;
+      }
+
+      SetCurrentDocument();
+      return true;
+    }
   }
 
   public void Reset()
@@ -272,10 +300,10 @@ public class FastTrigramEnumerator2 : IFastEnumerator<TrigramMatchPositionKey, u
     DocTreeByOffsetCursor = null;
     CurrentPostingsList = null;
     CurrentPostingsListCursor = null;
-    CurrentUserType = 0;
-    CurrentUserId = 0;
-    CurrentRepoType = 0;
-    CurrentRepoId = 0;
+    CurrentKey.UserType = 0;
+    CurrentKey.UserId = 0;
+    CurrentKey.RepoType = 0;
+    CurrentKey.RepoId = 0;
     CurrentUser = null;
     CurrentRepository = null;
     CurrentDocument = null;
