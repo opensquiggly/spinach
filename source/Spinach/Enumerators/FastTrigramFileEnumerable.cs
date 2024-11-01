@@ -47,7 +47,7 @@ public class FastTrigramFileEnumerable : IFastEnumerable<IFastEnumerator<Trigram
 
   IEnumerator IEnumerable.GetEnumerator() => GetFastEnumerator();
 
-  public IEnumerator<TrigramFileInfo> GetEnumerator() => GetFastEnumerator();
+  public IEnumerator<int> GetEnumerator() => GetFastEnumerator();
 
   public IFastEnumerator<TrigramFileInfo, int> GetFastEnumerator()
   {

@@ -44,7 +44,7 @@ public class FastLiteralEnumerator : IFastEnumerator<ulong, long>
 
   object IEnumerator.Current => Current;
 
-  public ulong Current => CurrentKey;
+  public long Current => CurrentData;
 
   public long CurrentData { get; private set; }
 

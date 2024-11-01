@@ -1,6 +1,8 @@
 namespace Spinach.Enumerators;
 
-public class FastTrigramEnumerable2 : IFastEnumerable<IFastEnumerator<TrigramMatchPositionKey, ulong>, TrigramMatchPositionKey, ulong>
+using Misc;
+
+public class FastTrigramEnumerable2 : IFastEnumerable<IFastEnumerator<TrigramMatchPositionKey, TextSearchMatchData>, TrigramMatchPositionKey, TextSearchMatchData>
 {
   // /////////////////////////////////////////////////////////////////////////////////////////////
   // Constructors
@@ -26,9 +28,9 @@ public class FastTrigramEnumerable2 : IFastEnumerable<IFastEnumerator<TrigramMat
 
   IEnumerator IEnumerable.GetEnumerator() => GetFastEnumerator();
 
-  public IEnumerator<TrigramMatchPositionKey> GetEnumerator() => GetFastEnumerator();
+  public IEnumerator<TextSearchMatchData> GetEnumerator() => GetFastEnumerator();
 
-  public IFastEnumerator<TrigramMatchPositionKey, ulong> GetFastEnumerator()
+  public IFastEnumerator<TrigramMatchPositionKey, TextSearchMatchData> GetFastEnumerator()
   {
     // ReSharper disable once ArrangeMethodOrOperatorBody
     return new FastTrigramEnumerator2(Trigram, Context);

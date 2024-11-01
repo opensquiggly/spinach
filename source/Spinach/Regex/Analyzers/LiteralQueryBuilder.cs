@@ -182,7 +182,7 @@ public static class LiteralQueryBuilder
 
     public IFastEnumerator<TrigramFileInfo, int> GetFastEnumerator() => _enumerator;
 
-    public IEnumerator<TrigramFileInfo> GetEnumerator() => GetFastEnumerator();
+    public IEnumerator<int> GetEnumerator() => GetFastEnumerator();
 
     IEnumerator IEnumerable.GetEnumerator() => GetFastEnumerator();
   }

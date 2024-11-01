@@ -45,7 +45,7 @@ public class FastTrigramFileEnumerator : IFastEnumerator<TrigramFileInfo, int>
 
   object IEnumerator.Current => Current;
 
-  public TrigramFileInfo Current => CurrentKey;
+  public int Current => CurrentData;
 
   public int CurrentData { get; }
 

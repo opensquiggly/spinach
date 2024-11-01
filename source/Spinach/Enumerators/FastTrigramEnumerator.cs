@@ -50,7 +50,7 @@ public class FastTrigramEnumerator : IFastEnumerator<TrigramMatchPositionKey, ul
 
   object IEnumerator.Current => Current;
 
-  public TrigramMatchPositionKey Current => CurrentKey;
+  public ulong Current => CurrentData;
 
   public ulong CurrentData => CurrentKey.Offset;
 

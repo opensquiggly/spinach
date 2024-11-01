@@ -1,15 +1,17 @@
 namespace Spinach.Enumerators;
 
-public class FastLiteralEnumerable : IFastEnumerable<IFastEnumerator<ulong, long>, ulong, long>
+using Misc;
+
+public class FastLiteralEnumerable2 : IFastEnumerable<IFastEnumerator<TrigramMatchPositionKey, TextSearchMatchData>, TrigramMatchPositionKey, TextSearchMatchData>
 {
   // /////////////////////////////////////////////////////////////////////////////////////////////
   // Constructors
   // /////////////////////////////////////////////////////////////////////////////////////////////
 
-  public FastLiteralEnumerable(TextSearchIndex textSearchIndex, string literal)
+  public FastLiteralEnumerable2(string literal, ITextSearchEnumeratorContext context)
   {
-    TextSearchIndex = textSearchIndex;
     Literal = literal;
+    Context = context;
   }
 
   // /////////////////////////////////////////////////////////////////////////////////////////////
@@ -18,7 +20,7 @@ public class FastLiteralEnumerable : IFastEnumerable<IFastEnumerator<ulong, long
 
   private string Literal { get; }
 
-  private TextSearchIndex TextSearchIndex { get; }
+  private ITextSearchEnumeratorContext Context { get; }
 
   // /////////////////////////////////////////////////////////////////////////////////////////////
   // Public Methods
@@ -26,9 +28,9 @@ public class FastLiteralEnumerable : IFastEnumerable<IFastEnumerator<ulong, long
 
   IEnumerator IEnumerable.GetEnumerator() => GetFastEnumerator();
 
-  public IEnumerator<long> GetEnumerator() => GetFastEnumerator();
+  public IEnumerator<TextSearchMatchData> GetEnumerator() => GetFastEnumerator();
 
-  public IFastEnumerator<ulong, long> GetFastEnumerator() =>
+  public IFastEnumerator<TrigramMatchPositionKey, TextSearchMatchData> GetFastEnumerator() =>
     // ReSharper disable once ArrangeMethodOrOperatorBody
-    new FastLiteralEnumerator(TextSearchIndex, Literal);
+    new FastLiteralEnumerator2(Literal, Context);
 }

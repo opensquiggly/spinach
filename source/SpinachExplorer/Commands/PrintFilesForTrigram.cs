@@ -17,10 +17,15 @@ internal static partial class Program
     while (enumerator.MoveNext())
     {
       matches++;
-      Console.Write($"@{enumerator.CurrentData} ");
-      Console.Write($"User: {enumerator.CurrentUser.Name}, ");
-      Console.Write($"Repo: {enumerator.CurrentRepository.Name}, ");
-      Console.WriteLine($"{enumerator.CurrentDocument.ExternalIdOrPath}");
+      Console.Write($"@{enumerator.CurrentData.MatchPosition} ");
+      Console.Write($"User: {enumerator.CurrentData.User.Name}, ");
+      Console.Write($"Repo: {enumerator.CurrentData.Repository.Name}, ");
+      Console.WriteLine($"{enumerator.CurrentData.Document.ExternalIdOrPath}");
+      if (enumerator.CurrentData.Document.Length <= 10000)
+      {
+        FileUtils.PrintFile(enumerator.CurrentData.Document.ExternalIdOrPath,
+          (int)enumerator.CurrentData.MatchPosition + 1, 3);
+      }
     }
 
     Console.WriteLine($"Total matches: {matches}");

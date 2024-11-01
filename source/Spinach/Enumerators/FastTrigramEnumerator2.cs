@@ -1,8 +1,9 @@
 namespace Spinach.Enumerators;
 
+using Misc;
 using TrackingObjects;
 
-public class FastTrigramEnumerator2 : IFastEnumerator<TrigramMatchPositionKey, ulong>
+public class FastTrigramEnumerator2 : IFastEnumerator<TrigramMatchPositionKey, TextSearchMatchData>
 {
   // /////////////////////////////////////////////////////////////////////////////////////////////
   // Constructors
@@ -18,6 +19,14 @@ public class FastTrigramEnumerator2 : IFastEnumerator<TrigramMatchPositionKey, u
     TrigramKey = char.ToLower(trigram[0]) * 128 * 128 + char.ToLower(trigram[1]) * 128 + char.ToLower(trigram[2]);
     Context = context;
     CurrentKey = new TrigramMatchPositionKey();
+    CurrentData = new TextSearchMatchData();
+    CurrentData.IsUserValid = false;
+    CurrentData.IsRepositoryValid = false;
+    CurrentData.IsDocumentValid = false;
+    CurrentData.User = new User();
+    CurrentData.Repository = new Repository();
+    CurrentData.Document = new Document();
+    CurrentData.MatchPosition = 0;
 
     Reset();
   }
@@ -46,17 +55,17 @@ public class FastTrigramEnumerator2 : IFastEnumerator<TrigramMatchPositionKey, u
 
   object IEnumerator.Current => Current;
 
-  public TrigramMatchPositionKey Current => CurrentKey;
+  public TextSearchMatchData Current => CurrentData;
 
-  public ulong CurrentData
-  {
-    get
-    {
-      if (CurrentPostingsListCursor == null || CurrentDocument == null) return 0;
-
-      return CurrentPostingsListCursor.CurrentKey - CurrentDocument.StartingOffset;
-    }
-  }
+  public TextSearchMatchData CurrentData { get; private set; }
+  // {
+  //   get
+  //   {
+  //     if (CurrentPostingsListCursor == null || CurrentDocument == null) return 0;
+  //
+  //     return CurrentPostingsListCursor.CurrentKey - CurrentDocument.StartingOffset;
+  //   }
+  // }
 
   public TrigramMatchPositionKey CurrentKey { get; private set; }
 
@@ -81,43 +90,28 @@ public class FastTrigramEnumerator2 : IFastEnumerator<TrigramMatchPositionKey, u
       return;
     }
 
-    CurrentKey.UserType = TrigramMatchesCursor.CurrentKey.UserType;
-    CurrentKey.UserId = TrigramMatchesCursor.CurrentKey.UserId;
+    CurrentData.User.Type = TrigramMatchesCursor.CurrentKey.UserType;
+    CurrentData.User.Id = TrigramMatchesCursor.CurrentKey.UserId;
 
     var userCompoundKey = new UserIdCompoundKeyBlock()
     {
-      UserType = CurrentKey.UserType,
-      UserId = CurrentKey.UserId
+      UserType = CurrentData.User.Type,
+      UserId = CurrentData.User.Id
     };
 
     bool found = Context.UserTree.TryFind(userCompoundKey, out UserInfoBlock data, out _, out _);
     if (!found)
     {
-      CurrentUser = new User()
-      {
-        IsValid = false,
-        Type = CurrentKey.UserType,
-        Id = CurrentKey.UserId,
-        NameAddress = 0,
-        Name = "User Not Found",
-        ExternalIdAddress = 0,
-        ExternalId = null,
-        LastRepoId = 0
-      };
+      CurrentData.IsUserValid = false;
     }
     else
     {
-      CurrentUser = new User()
-      {
-        IsValid = true,
-        Type = CurrentKey.UserType,
-        Id = CurrentKey.UserId,
-        NameAddress = data.NameAddress,
-        Name = Context.LoadString(data.NameAddress),
-        ExternalIdAddress = data.ExternalIdAddress,
-        ExternalId = Context.LoadString(data.ExternalIdAddress),
-        LastRepoId = data.LastRepoId
-      };
+      CurrentData.IsUserValid = true;
+      CurrentData.User.NameAddress = data.NameAddress;
+      CurrentData.User.Name = Context.LoadString(data.NameAddress);
+      CurrentData.User.ExternalIdAddress = data.ExternalIdAddress;
+      CurrentData.User.ExternalId = Context.LoadString(data.ExternalIdAddress);
+      CurrentData.User.LastRepoId = data.LastRepoId;
     }
   }
 
@@ -134,46 +128,59 @@ public class FastTrigramEnumerator2 : IFastEnumerator<TrigramMatchPositionKey, u
       return;
     }
 
-    CurrentKey.RepoType = TrigramMatchesCursor.CurrentKey.RepoType;
-    CurrentKey.RepoId = TrigramMatchesCursor.CurrentKey.RepoId;
+    CurrentData.Repository.UserType = TrigramMatchesCursor.CurrentKey.UserType;
+    CurrentData.Repository.UserId = TrigramMatchesCursor.CurrentKey.UserId;
+    CurrentData.Repository.Type = TrigramMatchesCursor.CurrentKey.RepoType;
+    CurrentData.Repository.Id = TrigramMatchesCursor.CurrentKey.RepoId;
 
     var repoCompoundKey = new RepoIdCompoundKeyBlock()
     {
-      UserType = CurrentKey.UserType,
-      UserId = CurrentKey.UserId,
-      RepoType = CurrentKey.RepoType,
-      RepoId = CurrentKey.RepoId
+      UserType = CurrentData.Repository.UserType,
+      UserId = CurrentData.Repository.UserId,
+      RepoType = CurrentData.Repository.Type,
+      RepoId = CurrentData.Repository.Id
     };
 
     bool found = Context.RepoTree.TryFind(repoCompoundKey, out RepoInfoBlock data, out _, out _);
     if (!found)
     {
-      CurrentRepository = null;
+      CurrentData.IsRepositoryValid = false;
       return;
     }
 
-    CurrentRepository = new Repository()
-    {
-      Type = CurrentKey.RepoType,
-      Id = CurrentKey.RepoId,
-      NameAddress = data.NameAddress,
-      Name = Context.LoadString(data.NameAddress),
-      ExternalIdAddress = data.ExternalIdAddress,
-      ExternalId = Context.LoadString(data.ExternalIdAddress),
-      RootFolderPathAddress = data.RootFolderPathAddress,
-      RootFolderPath = Context.LoadString(data.RootFolderPathAddress),
-      LastDocId = data.LastDocId
-    };
+    CurrentData.IsRepositoryValid = true;
+    CurrentData.Repository.NameAddress = data.NameAddress;
+    CurrentData.Repository.Name = Context.LoadString(data.NameAddress);
+    CurrentData.Repository.ExternalIdAddress = data.ExternalIdAddress;
+    CurrentData.Repository.ExternalId = Context.LoadString(data.ExternalIdAddress);
+    CurrentData.Repository.RootFolderPathAddress = data.RootFolderPathAddress;
+    CurrentData.Repository.RootFolderPath = Context.LoadString(data.RootFolderPathAddress);
+    CurrentData.Repository.LastDocId = data.LastDocId;
   }
 
   private void SetCurrentDocument()
   {
+    if (CurrentKey.UserType == TrigramMatchesCursor.CurrentKey.UserType &&
+        CurrentKey.UserId == TrigramMatchesCursor.CurrentKey.UserId &&
+        CurrentKey.RepoType == TrigramMatchesCursor.CurrentKey.RepoType &&
+        CurrentKey.RepoId == TrigramMatchesCursor.CurrentKey.RepoId &&
+        CurrentKey.Offset == CurrentPostingsListCursor.CurrentKey)
+    {
+      // Nothing changed since last time
+      return;
+    }
+
+    CurrentData.Document.UserType = TrigramMatchesCursor.CurrentKey.UserType;
+    CurrentData.Document.UserId = TrigramMatchesCursor.CurrentKey.UserId;
+    CurrentData.Document.RepoType = TrigramMatchesCursor.CurrentKey.RepoType;
+    CurrentData.Document.RepoId = TrigramMatchesCursor.CurrentKey.RepoId;
+
     var docOffsetKey = new DocOffsetCompoundKeyBlock()
     {
-      UserType = CurrentKey.UserType,
-      UserId = CurrentKey.UserId,
-      RepoType = CurrentKey.RepoType,
-      RepoId = CurrentKey.RepoId,
+      UserType = CurrentData.Document.UserType,
+      UserId = CurrentData.Document.UserId,
+      RepoType = CurrentData.Document.RepoType,
+      RepoId = CurrentData.Document.RepoId,
       StartingOffset = CurrentPostingsListCursor.CurrentKey
     };
 
@@ -195,23 +202,27 @@ public class FastTrigramEnumerator2 : IFastEnumerator<TrigramMatchPositionKey, u
     bool found = Context.DocTree.TryFind(docIdCompoundKey, out DocInfoBlock docInfoBlock, out _, out _);
     if (!found)
     {
-      CurrentDocument = null;
+      CurrentData.IsDocumentValid = false;
       return;
     }
 
-    CurrentDocument = new Document()
-    {
-      UserType = DocTreeByOffsetCursor.CurrentKey.UserType,
-      UserId = DocTreeByOffsetCursor.CurrentKey.UserId,
-      RepoType = DocTreeByOffsetCursor.CurrentKey.RepoType,
-      RepoId = DocTreeByOffsetCursor.CurrentKey.RepoId,
-      DocId = DocTreeByOffsetCursor.CurrentData,
-      StartingOffset = docInfoBlock.StartingOffset,
-      NameAddress = docInfoBlock.NameAddress,
-      Name = Context.LoadString(docInfoBlock.NameAddress),
-      ExternalIdOrPathAddress = docInfoBlock.ExternalIdOrPathAddress,
-      ExternalIdOrPath = Context.LoadString(docInfoBlock.ExternalIdOrPathAddress)
-    };
+    CurrentData.Document.DocId = DocTreeByOffsetCursor.CurrentData;
+    CurrentData.Document.Length = docInfoBlock.Length;
+    CurrentData.Document.StartingOffset = docInfoBlock.StartingOffset;
+    CurrentData.Document.NameAddress = docInfoBlock.NameAddress;
+    CurrentData.Document.Name = Context.LoadString(docInfoBlock.NameAddress);
+    CurrentData.Document.ExternalIdOrPathAddress = docInfoBlock.ExternalIdOrPathAddress;
+    CurrentData.Document.ExternalIdOrPath = Context.LoadString(docInfoBlock.ExternalIdOrPathAddress);
+    CurrentData.MatchPosition = CurrentPostingsListCursor.CurrentKey - docInfoBlock.StartingOffset;
+  }
+
+  private void SetCurrentKey()
+  {
+    CurrentKey.UserType = TrigramMatchesCursor.CurrentKey.UserType;
+    CurrentKey.UserId = TrigramMatchesCursor.CurrentKey.UserId;
+    CurrentKey.RepoType = TrigramMatchesCursor.CurrentKey.RepoType;
+    CurrentKey.RepoId = TrigramMatchesCursor.CurrentKey.RepoId;
+    CurrentKey.Offset = CurrentPostingsListCursor.CurrentKey;
   }
 
   // /////////////////////////////////////////////////////////////////////////////////////////////
@@ -231,6 +242,7 @@ public class FastTrigramEnumerator2 : IFastEnumerator<TrigramMatchPositionKey, u
     if (CurrentPostingsListCursor.MoveNext())
     {
       SetCurrentDocument();
+      SetCurrentKey();
       return true;
     }
 
@@ -248,12 +260,15 @@ public class FastTrigramEnumerator2 : IFastEnumerator<TrigramMatchPositionKey, u
       if (!CurrentPostingsListCursor.MoveNext()) continue;
 
       SetCurrentDocument();
+      SetCurrentKey();
       return true;
     }
   }
 
   public bool MoveUntilGreaterThanOrEqual(TrigramMatchPositionKey target)
   {
+    uint nextRepoId = target.RepoId;
+
     if (CurrentKey.UserType == target.UserType &&
         CurrentKey.UserId == target.UserId &&
         CurrentKey.RepoType == target.RepoType &&
@@ -261,12 +276,15 @@ public class FastTrigramEnumerator2 : IFastEnumerator<TrigramMatchPositionKey, u
     {
       if (CurrentPostingsListCursor.MoveUntilGreaterThanOrEqual(target.Offset))
       {
-        CurrentKey.Offset = CurrentPostingsListCursor.CurrentKey;
+        SetCurrentDocument();
+        SetCurrentKey();
         return true;
       }
+
+      nextRepoId++;
     }
 
-    var nextMatchKey = new TrigramMatchKey(target.UserType, target.UserId, target.RepoType, target.RepoId + 1);
+    var nextMatchKey = new TrigramMatchKey(target.UserType, target.UserId, target.RepoType, nextRepoId);
     if (!TrigramMatchesCursor.MoveUntilGreaterThanOrEqual(nextMatchKey)) return false;
 
     while (true)
@@ -289,6 +307,7 @@ public class FastTrigramEnumerator2 : IFastEnumerator<TrigramMatchPositionKey, u
       }
 
       SetCurrentDocument();
+      SetCurrentKey();
       return true;
     }
   }

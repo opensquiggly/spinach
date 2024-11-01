@@ -41,7 +41,7 @@ public class FastTrigramEnumerable : IFastEnumerable<IFastEnumerator<TrigramMatc
 
   IEnumerator IEnumerable.GetEnumerator() => GetFastEnumerator();
 
-  public IEnumerator<TrigramMatchPositionKey> GetEnumerator() => GetFastEnumerator();
+  public IEnumerator<ulong> GetEnumerator() => GetFastEnumerator();
 
   public IFastEnumerator<TrigramMatchPositionKey, ulong> GetFastEnumerator()
   {
