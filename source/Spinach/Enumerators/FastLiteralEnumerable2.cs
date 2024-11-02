@@ -2,7 +2,7 @@ namespace Spinach.Enumerators;
 
 using Misc;
 
-public class FastLiteralEnumerable2 : IFastEnumerable<IFastEnumerator<TrigramMatchPositionKey, TextSearchMatchData>, TrigramMatchPositionKey, TextSearchMatchData>
+public class FastLiteralEnumerable2 : IFastEnumerable<IFastEnumerator<MatchWithRepoOffsetKey, MatchData>, MatchWithRepoOffsetKey, MatchData>
 {
   // /////////////////////////////////////////////////////////////////////////////////////////////
   // Constructors
@@ -28,9 +28,9 @@ public class FastLiteralEnumerable2 : IFastEnumerable<IFastEnumerator<TrigramMat
 
   IEnumerator IEnumerable.GetEnumerator() => GetFastEnumerator();
 
-  public IEnumerator<TextSearchMatchData> GetEnumerator() => GetFastEnumerator();
+  public IEnumerator<MatchData> GetEnumerator() => GetFastEnumerator();
 
-  public IFastEnumerator<TrigramMatchPositionKey, TextSearchMatchData> GetFastEnumerator() =>
+  public IFastEnumerator<MatchWithRepoOffsetKey, MatchData> GetFastEnumerator() =>
     // ReSharper disable once ArrangeMethodOrOperatorBody
     new FastLiteralEnumerator2(Literal, Context);
 }

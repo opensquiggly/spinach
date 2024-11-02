@@ -2,15 +2,16 @@ namespace Spinach.Enumerators;
 
 using Misc;
 
-public class FastTrigramEnumerable2 : IFastEnumerable<IFastEnumerator<TrigramMatchPositionKey, TextSearchMatchData>, TrigramMatchPositionKey, TextSearchMatchData>
+public class FastTrigramEnumerable2 : IFastEnumerable<IFastEnumerator<MatchWithRepoOffsetKey, MatchData>, MatchWithRepoOffsetKey, MatchData>
 {
   // /////////////////////////////////////////////////////////////////////////////////////////////
   // Constructors
   // /////////////////////////////////////////////////////////////////////////////////////////////
 
-  public FastTrigramEnumerable2(string trigram, ITextSearchEnumeratorContext context)
+  public FastTrigramEnumerable2(string trigram, ITextSearchEnumeratorContext context, int adjustedOffset = 0)
   {
     Trigram = trigram;
+    AdjustedOffset = adjustedOffset;
     Context = context;
   }
 
@@ -20,6 +21,8 @@ public class FastTrigramEnumerable2 : IFastEnumerable<IFastEnumerator<TrigramMat
 
   private string Trigram { get; }
 
+  private int AdjustedOffset { get; }
+
   private ITextSearchEnumeratorContext Context { get; }
 
   // /////////////////////////////////////////////////////////////////////////////////////////////
@@ -28,11 +31,11 @@ public class FastTrigramEnumerable2 : IFastEnumerable<IFastEnumerator<TrigramMat
 
   IEnumerator IEnumerable.GetEnumerator() => GetFastEnumerator();
 
-  public IEnumerator<TextSearchMatchData> GetEnumerator() => GetFastEnumerator();
+  public IEnumerator<MatchData> GetEnumerator() => GetFastEnumerator();
 
-  public IFastEnumerator<TrigramMatchPositionKey, TextSearchMatchData> GetFastEnumerator()
+  public IFastEnumerator<MatchWithRepoOffsetKey, MatchData> GetFastEnumerator()
   {
     // ReSharper disable once ArrangeMethodOrOperatorBody
-    return new FastTrigramEnumerator2(Trigram, Context);
+    return new FastTrigramEnumerator2(Trigram, Context, AdjustedOffset);
   }
 }

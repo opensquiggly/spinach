@@ -28,9 +28,9 @@ public class FastLiteralEnumerator : IFastEnumerator<ulong, long>
 
   private FastTrigramEnumerable Enumerable2 { get; }
 
-  private IFastEnumerator<TrigramMatchPositionKey, ulong> Enumerator1 { get; }
+  private IFastEnumerator<MatchWithRepoOffsetKey, ulong> Enumerator1 { get; }
 
-  private IFastEnumerator<TrigramMatchPositionKey , ulong> Enumerator2 { get; }
+  private IFastEnumerator<MatchWithRepoOffsetKey , ulong> Enumerator2 { get; }
 
   private string Literal { get; }
 

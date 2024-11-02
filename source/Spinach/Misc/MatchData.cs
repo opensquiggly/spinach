@@ -1,8 +1,8 @@
 namespace Spinach.Misc;
 
-public class TextSearchMatchData
+public class MatchData
 {
-  public TextSearchMatchData()
+  public MatchData()
   {
   }
 
@@ -13,5 +13,5 @@ public class TextSearchMatchData
   public IUser User { get; set; }
   public IRepository Repository { get; set; }
   public IDocument Document { get; set; }
-  public ulong MatchPosition { get; set; }
+  public long MatchPosition { get; set; }
 }

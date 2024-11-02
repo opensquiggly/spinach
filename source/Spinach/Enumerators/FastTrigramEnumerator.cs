@@ -1,6 +1,6 @@
 namespace Spinach.Enumerators;
 
-public class FastTrigramEnumerator : IFastEnumerator<TrigramMatchPositionKey, ulong>
+public class FastTrigramEnumerator : IFastEnumerator<MatchWithRepoOffsetKey, ulong>
 {
   // /////////////////////////////////////////////////////////////////////////////////////////////
   // Constructors
@@ -19,7 +19,7 @@ public class FastTrigramEnumerator : IFastEnumerator<TrigramMatchPositionKey, ul
     SortedVarIntListFactory = sortedVarIntListFactory;
     TrigramMatchesFactory = trigramMatchesFactory;
     TrigramKey = trigramKey;
-    CurrentKey = new TrigramMatchPositionKey();
+    CurrentKey = new MatchWithRepoOffsetKey();
 
     Reset();
   }
@@ -52,9 +52,9 @@ public class FastTrigramEnumerator : IFastEnumerator<TrigramMatchPositionKey, ul
 
   public ulong Current => CurrentData;
 
-  public ulong CurrentData => CurrentKey.Offset;
+  public ulong CurrentData => (ulong) CurrentKey.Offset;
 
-  public TrigramMatchPositionKey CurrentKey { get; private set; }
+  public MatchWithRepoOffsetKey CurrentKey { get; private set; }
 
   // /////////////////////////////////////////////////////////////////////////////////////////////
   // Public Methods
@@ -68,7 +68,7 @@ public class FastTrigramEnumerator : IFastEnumerator<TrigramMatchPositionKey, ul
   {
     if (PostingsListCursor.MoveNext())
     {
-      CurrentKey.Offset = (ulong) PostingsListCursor.CurrentData;
+      CurrentKey.Offset = PostingsListCursor.CurrentData;
       return true;
     }
 
@@ -83,20 +83,20 @@ public class FastTrigramEnumerator : IFastEnumerator<TrigramMatchPositionKey, ul
     PostingsListCursor.Reset();
 
     bool result = PostingsListCursor.MoveNext();
-    CurrentKey.Offset = PostingsListCursor.CurrentKey;
+    CurrentKey.Offset = (int) PostingsListCursor.CurrentKey;
 
     return result;
   }
 
-  public bool MoveUntilGreaterThanOrEqual(TrigramMatchPositionKey target)
+  public bool MoveUntilGreaterThanOrEqual(MatchWithRepoOffsetKey target)
   {
     if (CurrentKey.UserType == target.UserType &&
         CurrentKey.UserId == target.UserId &&
         CurrentKey.RepoId == target.RepoId)
     {
-      if (PostingsListCursor.MoveUntilGreaterThanOrEqual(target.Offset))
+      if (PostingsListCursor.MoveUntilGreaterThanOrEqual((ulong) target.Offset))
       {
-        CurrentKey.Offset = PostingsListCursor.CurrentKey;
+        CurrentKey.Offset = (long) PostingsListCursor.CurrentKey;
         return true;
       }
     }

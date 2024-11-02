@@ -66,11 +66,11 @@ public class FastTrigramFileEnumerator : IFastEnumerator<TrigramFileInfo, int>
     if (hasValue)
     {
       (_, InternalFileInfoTable.InternalFileInfo internalFileInfo) =
-        InternalFileInfoTable.FindLastWithOffsetLessThanOrEqual(0L, FastTrigramEnumerator.CurrentKey.Offset);
+        InternalFileInfoTable.FindLastWithOffsetLessThanOrEqual(0L, (ulong) FastTrigramEnumerator.CurrentKey.Offset);
 
       CurrentKey = new TrigramFileInfo(
         internalFileInfo.InternalId,
-        (long)(FastTrigramEnumerator.CurrentKey.Offset - internalFileInfo.StartingOffset)
+        (long)( FastTrigramEnumerator.CurrentKey.Offset - (long) internalFileInfo.StartingOffset)
       );
     }
 

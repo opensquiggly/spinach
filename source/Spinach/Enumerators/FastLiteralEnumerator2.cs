@@ -2,7 +2,7 @@ namespace Spinach.Enumerators;
 
 using Misc;
 
-public class FastLiteralEnumerator2 : IFastEnumerator<TrigramMatchPositionKey, TextSearchMatchData>
+public class FastLiteralEnumerator2 : IFastEnumerator<MatchWithRepoOffsetKey, MatchData>
 {
   // /////////////////////////////////////////////////////////////////////////////////////////////
   // Constructors
@@ -12,12 +12,12 @@ public class FastLiteralEnumerator2 : IFastEnumerator<TrigramMatchPositionKey, T
   {
     Literal = literal;
     Context = context;
-    Offset = (ulong)(Literal.Length - 3);
+    Offset = Literal.Length - 3;
     Enumerable1 = new FastTrigramEnumerable2(Literal.Substring(0, 3), context);
-    Enumerable2 = new FastTrigramEnumerable2(Literal.Substring(Literal.Length - 3, 3), context);
+    Enumerable2 = new FastTrigramEnumerable2(Literal.Substring(Literal.Length - 3, 3), context, Offset);
     Enumerator1 = Enumerable1.GetFastEnumerator();
     Enumerator2 = Enumerable2.GetFastEnumerator();
-    CurrentKey = new TrigramMatchPositionKey();
+    CurrentKey = new MatchWithRepoOffsetKey();
     Reset();
   }
 
@@ -31,13 +31,13 @@ public class FastLiteralEnumerator2 : IFastEnumerator<TrigramMatchPositionKey, T
 
   private FastTrigramEnumerable2 Enumerable2 { get; }
 
-  private IFastEnumerator<TrigramMatchPositionKey, TextSearchMatchData> Enumerator1 { get; }
+  private IFastEnumerator<MatchWithRepoOffsetKey, MatchData> Enumerator1 { get; }
 
-  private IFastEnumerator<TrigramMatchPositionKey, TextSearchMatchData> Enumerator2 { get; }
+  private IFastEnumerator<MatchWithRepoOffsetKey, MatchData> Enumerator2 { get; }
 
   private string Literal { get; }
 
-  private ulong Offset { get; }
+  private int Offset { get; }
 
   // /////////////////////////////////////////////////////////////////////////////////////////////
   // Public Properties
@@ -45,11 +45,11 @@ public class FastLiteralEnumerator2 : IFastEnumerator<TrigramMatchPositionKey, T
 
   object IEnumerator.Current => Current;
 
-  public TextSearchMatchData Current => CurrentData;
+  public MatchData Current => CurrentData;
 
-  public TextSearchMatchData CurrentData { get; private set; }
+  public MatchData CurrentData { get; private set; }
 
-  public TrigramMatchPositionKey CurrentKey { get; private set; }
+  public MatchWithRepoOffsetKey CurrentKey { get; private set; }
 
   // /////////////////////////////////////////////////////////////////////////////////////////////
   // Public Methods
@@ -67,13 +67,13 @@ public class FastLiteralEnumerator2 : IFastEnumerator<TrigramMatchPositionKey, T
     while (hasValue1 && hasValue2)
     {
       long adjustedOffset = ((long)Enumerator2.CurrentKey.Offset) - ((long)Offset);
-      var adjustedKey = new TrigramMatchPositionKey()
+      var adjustedKey = new MatchWithRepoOffsetKey()
       {
         UserType = Enumerator2.CurrentKey.UserType,
         UserId = Enumerator2.CurrentKey.UserId,
         RepoType = Enumerator2.CurrentKey.RepoType,
         RepoId = Enumerator2.CurrentKey.RepoId,
-        Offset = (ulong) Math.Max(adjustedOffset, 0)
+        Offset = Math.Max(adjustedOffset, 0)
       };
 
       if (Enumerator1.CurrentKey.CompareTo(adjustedKey) < 0 && adjustedOffset >= 0)
@@ -86,7 +86,7 @@ public class FastLiteralEnumerator2 : IFastEnumerator<TrigramMatchPositionKey, T
         adjustedKey.UserId = Enumerator1.CurrentKey.UserId;
         adjustedKey.RepoType = Enumerator1.CurrentKey.RepoType;
         adjustedKey.RepoId = Enumerator1.CurrentKey.RepoId;
-        adjustedKey.Offset = Enumerator1.CurrentKey.Offset + Offset;
+        adjustedKey.Offset = Enumerator1.CurrentKey.Offset + (long) Offset;
 
         hasValue2 = Enumerator2.MoveUntilGreaterThanOrEqual(adjustedKey);
       }
@@ -101,7 +101,7 @@ public class FastLiteralEnumerator2 : IFastEnumerator<TrigramMatchPositionKey, T
     return false;
   }
 
-  public bool MoveUntilGreaterThanOrEqual(TrigramMatchPositionKey target)
+  public bool MoveUntilGreaterThanOrEqual(MatchWithRepoOffsetKey target)
   {
     bool hasValue1 = Enumerator1.MoveUntilGreaterThanOrEqual(target);
     bool hasValue2 = Enumerator2.MoveUntilGreaterThanOrEqual(target);
@@ -109,13 +109,13 @@ public class FastLiteralEnumerator2 : IFastEnumerator<TrigramMatchPositionKey, T
     while (hasValue1 && hasValue2)
     {
       long adjustedOffset = ((long)Enumerator2.CurrentKey.Offset) - ((long)Offset);
-      var adjustedKey = new TrigramMatchPositionKey()
+      var adjustedKey = new MatchWithRepoOffsetKey()
       {
         UserType = Enumerator2.CurrentKey.UserType,
         UserId = Enumerator2.CurrentKey.UserId,
         RepoType = Enumerator2.CurrentKey.RepoType,
         RepoId = Enumerator2.CurrentKey.RepoId,
-        Offset = (ulong) Math.Max(adjustedOffset, 0)
+        Offset = Math.Max(adjustedOffset, 0)
       };
 
       if (Enumerator1.CurrentKey.CompareTo(adjustedKey) < 0 && adjustedOffset >= 0)
@@ -128,7 +128,7 @@ public class FastLiteralEnumerator2 : IFastEnumerator<TrigramMatchPositionKey, T
         adjustedKey.UserId = Enumerator1.CurrentKey.UserId;
         adjustedKey.RepoType = Enumerator1.CurrentKey.RepoType;
         adjustedKey.RepoId = Enumerator1.CurrentKey.RepoId;
-        adjustedKey.Offset = Enumerator1.CurrentKey.Offset + Offset;
+        adjustedKey.Offset = Enumerator1.CurrentKey.Offset + (long) Offset;
 
         hasValue2 = Enumerator2.MoveUntilGreaterThanOrEqual(adjustedKey);
       }

@@ -1,18 +1,19 @@
 namespace Spinach.Blocks;
 
-public class TrigramMatchPositionKey : IComparable<TrigramMatchPositionKey>, IComparable
+public class MatchWithDocIdKey : IComparable<MatchWithDocIdKey>, IComparable
 {
-  public TrigramMatchPositionKey()
+  public MatchWithDocIdKey()
   {
   }
 
-  public TrigramMatchPositionKey(ushort userType, uint userId, ushort repoType, uint repoId, ulong offset)
+  public MatchWithDocIdKey(ushort userType, uint userId, ushort repoType, uint repoId, uint docId, ulong position)
   {
     UserType = userType;
     UserId = userId;
     RepoType = repoType;
     RepoId = repoId;
-    Offset = offset;
+    DocId = docId;
+    Position = position;
   }
 
   public ushort UserType { get; set; }
@@ -23,9 +24,11 @@ public class TrigramMatchPositionKey : IComparable<TrigramMatchPositionKey>, ICo
 
   public uint RepoId { get; set; }
 
-  public ulong Offset { get; set; }
+  public uint DocId { get; set; }
 
-  public int CompareTo(TrigramMatchPositionKey other)
+  public ulong Position { get; set; }
+
+  public int CompareTo(MatchWithDocIdKey other)
   {
     if (UserType < other.UserType) return -1;
     if (UserType > other.UserType) return 1;
@@ -35,11 +38,13 @@ public class TrigramMatchPositionKey : IComparable<TrigramMatchPositionKey>, ICo
     if (RepoType > other.RepoType) return 1;
     if (RepoId < other.RepoId) return -1;
     if (RepoId > other.RepoId) return 1;
-    if (Offset < other.Offset) return -1;
-    if (Offset > other.Offset) return 1;
+    if (DocId < other.DocId) return -1;
+    if (DocId > other.DocId) return 1;
+    if (Position < other.Position) return -1;
+    if (Position > other.Position) return 1;
 
     return 0;
   }
 
-  public int CompareTo(object obj) => CompareTo((TrigramMatchPositionKey) obj);
+  public int CompareTo(object obj) => CompareTo((MatchWithDocIdKey) obj);
 }

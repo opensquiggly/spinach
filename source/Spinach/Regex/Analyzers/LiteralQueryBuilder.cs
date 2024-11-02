@@ -1,5 +1,7 @@
 namespace Spinach.Regex.Analyzers;
 
+using Misc;
+
 public static class LiteralQueryBuilder
 {
   // /////////////////////////////////////////////////////////////////////////////////////////////
@@ -57,6 +59,73 @@ public static class LiteralQueryBuilder
         FastIntersectEnumerable<TrigramFileInfo, int> intersect = intersectEnumerable1.FastIntersect(intersectEnumerable2);
         var intersectEnumerator = intersect.GetFastEnumerator() as IFastEnumerator<TrigramFileInfo, int>;
         return new FastEnumerableWrapper(intersectEnumerator);
+
+      default:
+        throw new NotImplementedException();
+    }
+  }
+
+  public static int UnionComparer(MatchWithRepoOffsetKey key1, MatchData data1, MatchWithRepoOffsetKey key2,
+    MatchData data2)
+  {
+    if (key1.UserType < key2.UserType) return -1;
+    if (key1.UserType > key2.UserType) return 1;
+    if (key1.UserId < key2.UserId) return -1;
+    if (key1.UserId > key2.UserId) return 1;
+    if (key1.RepoType < key2.RepoType) return -1;
+    if (key1.RepoType > key2.RepoType) return 1;
+    if (key1.RepoId < key2.RepoId) return -1;
+    if (key1.RepoId > key2.RepoId) return 1;
+    if (data1.Document.DocId < data2.Document.DocId) return -1;
+    if (data1.Document.DocId > data2.Document.DocId) return 1;
+
+    return 0;
+  }
+
+  public static int IntersectComparer(MatchWithRepoOffsetKey key1, MatchData data1, MatchWithRepoOffsetKey key2,
+    MatchData data2)
+  {
+    if (key1.UserType < key2.UserType) return -1;
+    if (key1.UserType > key2.UserType) return 1;
+    if (key1.UserId < key2.UserId) return -1;
+    if (key1.UserId > key2.UserId) return 1;
+    if (key1.RepoType < key2.RepoType) return -1;
+    if (key1.RepoType > key2.RepoType) return 1;
+    if (key1.RepoId < key2.RepoId) return -1;
+    if (key1.RepoId > key2.RepoId) return 1;
+    // If we knew both the left and right hand enumerators were literal enumerators,
+    // then we could add an additional constraint here to ensure that the beginning
+    // of literal2 comes after the end of literal1. As is we don't have enough information
+    // to do it.
+    if (data1.Document.DocId < data2.Document.DocId) return -1;
+    if (data1.Document.DocId > data2.Document.DocId) return 1;
+
+    return 0;
+  }
+
+  public static IFastEnumerable<IFastEnumerator<MatchWithRepoOffsetKey, MatchData>, MatchWithRepoOffsetKey, MatchData> BuildEnumerable2(
+    LiteralQueryNode queryNode, ITextSearchEnumeratorContext context)
+  {
+    switch (queryNode.NodeType)
+    {
+      case LiteralQueryNodeTypes.Literal:
+        return new FastLiteralEnumerable2(queryNode.Literal, context);
+
+      case LiteralQueryNodeTypes.Union:
+        IFastEnumerable<IFastEnumerator<MatchWithRepoOffsetKey, MatchData>, MatchWithRepoOffsetKey, MatchData> unionEnumerable1 = BuildEnumerable2(queryNode.Subs[0], context);
+        IFastEnumerable<IFastEnumerator<MatchWithRepoOffsetKey, MatchData>, MatchWithRepoOffsetKey, MatchData> unionEnumerable2 = BuildEnumerable2(queryNode.Subs[1], context);
+        IFastUnionEnumerable<MatchWithRepoOffsetKey, MatchData> union =
+          new FastUnionEnumerable<MatchWithRepoOffsetKey, MatchData>(unionEnumerable1, unionEnumerable2, UnionComparer);
+        var unionEnumerator = union.GetFastEnumerator() as IFastEnumerator<MatchWithRepoOffsetKey, MatchData>;
+        return new FastEnumerableWrapper2(unionEnumerator);
+
+      case LiteralQueryNodeTypes.Intersect:
+        IFastEnumerable<IFastEnumerator<MatchWithRepoOffsetKey, MatchData>, MatchWithRepoOffsetKey, MatchData> intersectEnumerable1 = BuildEnumerable2(queryNode.Subs[0], context);
+        IFastEnumerable<IFastEnumerator<MatchWithRepoOffsetKey, MatchData>, MatchWithRepoOffsetKey, MatchData> intersectEnumerable2 = BuildEnumerable2(queryNode.Subs[1], context);
+        IFastIntersectEnumerable<MatchWithRepoOffsetKey, MatchData> intersect =
+          new FastIntersectEnumerable<MatchWithRepoOffsetKey, MatchData>(intersectEnumerable1, intersectEnumerable2, IntersectComparer);
+        var intersectEnumerator = intersect.GetFastEnumerator() as IFastEnumerator<MatchWithRepoOffsetKey, MatchData>;
+        return new FastEnumerableWrapper2(intersectEnumerator);
 
       default:
         throw new NotImplementedException();
@@ -183,6 +252,23 @@ public static class LiteralQueryBuilder
     public IFastEnumerator<TrigramFileInfo, int> GetFastEnumerator() => _enumerator;
 
     public IEnumerator<int> GetEnumerator() => GetFastEnumerator();
+
+    IEnumerator IEnumerable.GetEnumerator() => GetFastEnumerator();
+  }
+
+  public class FastEnumerableWrapper2 :
+    IFastEnumerable<IFastEnumerator<MatchWithRepoOffsetKey, MatchData>, MatchWithRepoOffsetKey, MatchData>
+  {
+    public FastEnumerableWrapper2(IFastEnumerator<MatchWithRepoOffsetKey, MatchData> enumerator)
+    {
+      _enumerator = enumerator;
+    }
+
+    private readonly IFastEnumerator<MatchWithRepoOffsetKey, MatchData> _enumerator;
+
+    public IFastEnumerator<MatchWithRepoOffsetKey, MatchData> GetFastEnumerator() => _enumerator;
+
+    public IEnumerator<MatchData> GetEnumerator() => GetFastEnumerator();
 
     IEnumerator IEnumerable.GetEnumerator() => GetFastEnumerator();
   }
