@@ -86,7 +86,7 @@ public class FastLiteralEnumerator2 : IFastEnumerator<MatchWithRepoOffsetKey, Ma
         adjustedKey.UserId = Enumerator1.CurrentKey.UserId;
         adjustedKey.RepoType = Enumerator1.CurrentKey.RepoType;
         adjustedKey.RepoId = Enumerator1.CurrentKey.RepoId;
-        adjustedKey.Offset = Enumerator1.CurrentKey.Offset + (long) Offset;
+        adjustedKey.Offset = Enumerator1.CurrentKey.Offset + (long)Offset;
 
         hasValue2 = Enumerator2.MoveUntilGreaterThanOrEqual(adjustedKey);
       }
@@ -128,7 +128,7 @@ public class FastLiteralEnumerator2 : IFastEnumerator<MatchWithRepoOffsetKey, Ma
         adjustedKey.UserId = Enumerator1.CurrentKey.UserId;
         adjustedKey.RepoType = Enumerator1.CurrentKey.RepoType;
         adjustedKey.RepoId = Enumerator1.CurrentKey.RepoId;
-        adjustedKey.Offset = Enumerator1.CurrentKey.Offset + (long) Offset;
+        adjustedKey.Offset = Enumerator1.CurrentKey.Offset + (long)Offset;
 
         hasValue2 = Enumerator2.MoveUntilGreaterThanOrEqual(adjustedKey);
       }

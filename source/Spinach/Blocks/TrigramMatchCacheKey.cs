@@ -24,5 +24,5 @@ public struct TrigramMatchCacheKey : IComparable<TrigramMatchCacheKey>, ICompara
     return 0;
   }
 
-  public int CompareTo(object obj) => CompareTo((TrigramMatchCacheKey) obj);
+  public int CompareTo(object obj) => CompareTo((TrigramMatchCacheKey)obj);
 }

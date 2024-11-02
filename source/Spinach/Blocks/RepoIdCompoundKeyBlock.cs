@@ -37,5 +37,5 @@ public struct RepoIdCompoundKeyBlock : IComparable<RepoIdCompoundKeyBlock>, ICom
     return 0;
   }
 
-  public int CompareTo(object obj) => CompareTo((RepoIdCompoundKeyBlock) obj);
+  public int CompareTo(object obj) => CompareTo((RepoIdCompoundKeyBlock)obj);
 }

@@ -159,7 +159,7 @@ public class TextSearchIndex
 
     if (TrigramTree.TryFind(trigramKey, out long trigramMatchesAddress, out DiskBTreeNode<int, long> node, out int index))
     {
-      var existingTrigramMatches =
+      DiskBTree<TrigramMatchKey, long> existingTrigramMatches =
         TrigramMatchesFactory.LoadExisting(trigramMatchesAddress);
 
       TrigramMatchesCache.Add(trigramKey, existingTrigramMatches);
@@ -179,7 +179,7 @@ public class TextSearchIndex
       return result;
     }
 
-    var trigramMatches = TrigramMatchesFactory.AppendNew(25);
+    DiskBTree<TrigramMatchKey, long> trigramMatches = TrigramMatchesFactory.AppendNew(25);
     TrigramTree.Insert(trigramKey, trigramMatches.Address);
     TrigramMatchesCache.Add(trigramKey, trigramMatches);
     created = true;
@@ -263,8 +263,7 @@ public class TextSearchIndex
     );
   }
 
-  public FastTrigramFileEnumerable GetFastTrigramFileEnumerable(int key)
-  {
+  public FastTrigramFileEnumerable GetFastTrigramFileEnumerable(int key) =>
     // ReSharper disable once ArrangeMethodOrOperatorBody
     // return new FastTrigramFileEnumerable(
     //   InternalFileInfoTable,
@@ -274,7 +273,6 @@ public class TextSearchIndex
     //   key
     // );
     throw new NotImplementedException();
-  }
 
   public FastLiteralEnumerable GetFastLiteralEnumerable(string literal) =>
     // ReSharper disable once ArrangeMethodOrOperatorBody
@@ -535,7 +533,7 @@ public class TextSearchIndex
       Console.WriteLine($"{currentFileId} : {filePath} (Length = {docInfoBlock.Length})");
       InternalFileInfoTree.Insert(fileInfoKey, docInfoBlock);
       currentFileId++;
-      currentOffset += (ulong) docInfoBlock.Length;
+      currentOffset += (ulong)docInfoBlock.Length;
     }
 
     // InternalFileInfoTable = new InternalFileInfoTable(DiskBlockManager, InternalFileInfoTree);

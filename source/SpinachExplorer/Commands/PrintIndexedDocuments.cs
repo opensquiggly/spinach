@@ -27,7 +27,7 @@ internal static partial class Program
     ushort repoType = PromptForUInt16Value("Enter Repo Type of Repository to Index");
     uint repoId = PromptForUInt32Value("Enter Repo Id of Repository to Index");
 
-    foreach (var doc in TextSearchManager.GetDocuments(userType, userId, repoType, repoId))
+    foreach (IDocument doc in TextSearchManager.GetDocuments(userType, userId, repoType, repoId))
     {
       Console.Write($"User Type: {doc.UserType} ");
       Console.Write($"User Id: {doc.UserId} ");

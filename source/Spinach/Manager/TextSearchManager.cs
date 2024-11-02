@@ -162,11 +162,9 @@ public class TextSearchManager : ITextSearchManager, ITextSearchEnumeratorContex
     IsOpen = false;
   }
 
-  public void Flush()
-  {
+  public void Flush() =>
     // ReSharper disable once ArrangeMethodOrOperatorBody
     DiskBlockManager.Flush();
-  }
 
   public string LoadImmutableString(long address)
   {
@@ -180,7 +178,7 @@ public class TextSearchManager : ITextSearchManager, ITextSearchEnumeratorContex
 
   public void AddUser(ushort userType, string userName, string userExternalId)
   {
-    uint nextUserId = (uint) ++_headerBlock.Data1;
+    uint nextUserId = (uint)++_headerBlock.Data1;
     DiskBlockManager.WriteHeaderBlock(ref _headerBlock);
     DiskBlockManager.Flush();
 
@@ -229,12 +227,12 @@ public class TextSearchManager : ITextSearchManager, ITextSearchEnumeratorContex
     bool found = UserTree.TryFind(userIdCompoundKeyBlock, out UserInfoBlock userInfoBlock, out DiskBTreeNode<UserIdCompoundKeyBlock, UserInfoBlock> node, out int nodeIndex);
     if (found)
     {
-      RepoIdCompoundKeyBlock repoIdCompoundKeyBlock = new RepoIdCompoundKeyBlock();
+      var repoIdCompoundKeyBlock = new RepoIdCompoundKeyBlock();
       repoIdCompoundKeyBlock.UserType = userInfoBlock.UserType;
       repoIdCompoundKeyBlock.UserId = userInfoBlock.UserId;
       repoIdCompoundKeyBlock.RepoType = repoType;
 
-      RepoInfoBlock repoInfoBlock = new RepoInfoBlock();
+      var repoInfoBlock = new RepoInfoBlock();
 
       repoInfoBlock.InternalId = ++userInfoBlock.LastRepoId; // TODO - No way to write this back to disk
       repoInfoBlock.LastDocId = 0;
@@ -332,7 +330,10 @@ public class TextSearchManager : ITextSearchManager, ITextSearchEnumeratorContex
 
     var repoIdCompoundKey = new RepoIdCompoundKeyBlock()
     {
-      UserType = userType, UserId = userId, RepoType = repoType, RepoId = repoId
+      UserType = userType,
+      UserId = userId,
+      RepoType = repoType,
+      RepoId = repoId
     };
 
     bool found = RepoTree.TryFind(repoIdCompoundKey, out RepoInfoBlock data, out DiskBTreeNode<RepoIdCompoundKeyBlock, RepoInfoBlock> node, out int nodeIndex);
@@ -385,7 +386,7 @@ public class TextSearchManager : ITextSearchManager, ITextSearchEnumeratorContex
       Console.Write($"Starting Offset = {docInfoBlock.StartingOffset}, ");
       Console.WriteLine($"{filePath}");
 
-      currentOffset += (ulong) docInfoBlock.Length;
+      currentOffset += (ulong)docInfoBlock.Length;
     }
 
     data.LastDocId = currentDocId;
@@ -479,7 +480,10 @@ public class TextSearchManager : ITextSearchManager, ITextSearchEnumeratorContex
   {
     var repoIdCompoundKey = new RepoIdCompoundKeyBlock()
     {
-      UserType = userType, UserId = userId, RepoType = repoType, RepoId = repoId
+      UserType = userType,
+      UserId = userId,
+      RepoType = repoType,
+      RepoId = repoId
     };
 
     bool found = RepoTree.TryFind(repoIdCompoundKey, out RepoInfoBlock data, out _, out _);

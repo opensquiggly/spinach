@@ -53,7 +53,7 @@ public class RepoInternalIdTable
     DiskImmutableString nameString = DiskBlockManager.ImmutableStringFactory.Append(name);
     DiskImmutableString rootFolderString = DiskBlockManager.ImmutableStringFactory.Append(rootFolder);
 
-    repoInfoBlock.InternalId = (uint) internalId;
+    repoInfoBlock.InternalId = (uint)internalId;
     repoInfoBlock.NameAddress = nameString.Address;
     repoInfoBlock.RootFolderPathAddress = rootFolderString.Address;
 

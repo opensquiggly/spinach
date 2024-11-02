@@ -11,7 +11,7 @@ public class FastTrigramEnumerator2 : IFastEnumerator<MatchWithRepoOffsetKey, Ma
 
   public FastTrigramEnumerator2(string trigram, ITextSearchEnumeratorContext context, int adjustedOffset = 0)
   {
-    if (trigram is not {Length: 3})
+    if (trigram is not { Length: 3 })
     {
       throw new ArgumentOutOfRangeException("Trigrams should be 3 letters long");
     }
@@ -167,7 +167,7 @@ public class FastTrigramEnumerator2 : IFastEnumerator<MatchWithRepoOffsetKey, Ma
         CurrentKey.UserId == TrigramMatchesCursor.CurrentKey.UserId &&
         CurrentKey.RepoType == TrigramMatchesCursor.CurrentKey.RepoType &&
         CurrentKey.RepoId == TrigramMatchesCursor.CurrentKey.RepoId &&
-        CurrentKey.Offset == (long) CurrentPostingsListCursor.CurrentKey)
+        CurrentKey.Offset == (long)CurrentPostingsListCursor.CurrentKey)
     {
       // Nothing changed since last time
       return;
@@ -216,7 +216,7 @@ public class FastTrigramEnumerator2 : IFastEnumerator<MatchWithRepoOffsetKey, Ma
     CurrentData.Document.Name = Context.LoadString(docInfoBlock.NameAddress);
     CurrentData.Document.ExternalIdOrPathAddress = docInfoBlock.ExternalIdOrPathAddress;
     CurrentData.Document.ExternalIdOrPath = Context.LoadString(docInfoBlock.ExternalIdOrPathAddress);
-    CurrentData.MatchPosition = (long) CurrentPostingsListCursor.CurrentKey - (long) docInfoBlock.StartingOffset - AdjustedOffset;
+    CurrentData.MatchPosition = (long)CurrentPostingsListCursor.CurrentKey - (long)docInfoBlock.StartingOffset - AdjustedOffset;
   }
 
   private void SetCurrentKey()
@@ -225,7 +225,7 @@ public class FastTrigramEnumerator2 : IFastEnumerator<MatchWithRepoOffsetKey, Ma
     CurrentKey.UserId = TrigramMatchesCursor.CurrentKey.UserId;
     CurrentKey.RepoType = TrigramMatchesCursor.CurrentKey.RepoType;
     CurrentKey.RepoId = TrigramMatchesCursor.CurrentKey.RepoId;
-    CurrentKey.Offset = (long) CurrentPostingsListCursor.CurrentKey;
+    CurrentKey.Offset = (long)CurrentPostingsListCursor.CurrentKey;
   }
 
   // /////////////////////////////////////////////////////////////////////////////////////////////
@@ -277,7 +277,7 @@ public class FastTrigramEnumerator2 : IFastEnumerator<MatchWithRepoOffsetKey, Ma
         CurrentKey.RepoType == target.RepoType &&
         CurrentKey.RepoId == target.RepoId)
     {
-      if (CurrentPostingsListCursor.MoveUntilGreaterThanOrEqual((ulong) target.Offset))
+      if (CurrentPostingsListCursor.MoveUntilGreaterThanOrEqual((ulong)target.Offset))
       {
         SetCurrentDocument();
         SetCurrentKey();

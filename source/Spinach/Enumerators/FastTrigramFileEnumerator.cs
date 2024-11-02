@@ -66,19 +66,18 @@ public class FastTrigramFileEnumerator : IFastEnumerator<TrigramFileInfo, int>
     if (hasValue)
     {
       (_, InternalFileInfoTable.InternalFileInfo internalFileInfo) =
-        InternalFileInfoTable.FindLastWithOffsetLessThanOrEqual(0L, (ulong) FastTrigramEnumerator.CurrentKey.Offset);
+        InternalFileInfoTable.FindLastWithOffsetLessThanOrEqual(0L, (ulong)FastTrigramEnumerator.CurrentKey.Offset);
 
       CurrentKey = new TrigramFileInfo(
         internalFileInfo.InternalId,
-        (long)( FastTrigramEnumerator.CurrentKey.Offset - (long) internalFileInfo.StartingOffset)
+        (long)(FastTrigramEnumerator.CurrentKey.Offset - (long)internalFileInfo.StartingOffset)
       );
     }
 
     return hasValue;
   }
 
-  public bool MoveUntilGreaterThanOrEqual(TrigramFileInfo target)
-  {
+  public bool MoveUntilGreaterThanOrEqual(TrigramFileInfo target) =>
     // InternalFileInfoTable.InternalFileInfo internalFileInfo =
     //   InternalFileInfoTable.FindById((ulong)target.FileId);
     //
@@ -99,10 +98,8 @@ public class FastTrigramFileEnumerator : IFastEnumerator<TrigramFileInfo, int>
     //
     // return hasValue;
     throw new NotImplementedException();
-  }
 
-  public void Reset()
-  {
+  public void Reset() =>
     // ReSharper disable once ArrangeMethodOrOperatorBody
     // FastTrigramEnumerator = new FastTrigramEnumerator(
     //   TrigramTree,
@@ -113,5 +110,4 @@ public class FastTrigramFileEnumerator : IFastEnumerator<TrigramFileInfo, int>
     //
     // FastTrigramEnumerator.Reset();
     throw new NotImplementedException();
-  }
 }

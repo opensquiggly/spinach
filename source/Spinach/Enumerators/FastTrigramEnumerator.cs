@@ -52,7 +52,7 @@ public class FastTrigramEnumerator : IFastEnumerator<MatchWithRepoOffsetKey, ulo
 
   public ulong Current => CurrentData;
 
-  public ulong CurrentData => (ulong) CurrentKey.Offset;
+  public ulong CurrentData => (ulong)CurrentKey.Offset;
 
   public MatchWithRepoOffsetKey CurrentKey { get; private set; }
 
@@ -83,7 +83,7 @@ public class FastTrigramEnumerator : IFastEnumerator<MatchWithRepoOffsetKey, ulo
     PostingsListCursor.Reset();
 
     bool result = PostingsListCursor.MoveNext();
-    CurrentKey.Offset = (int) PostingsListCursor.CurrentKey;
+    CurrentKey.Offset = (int)PostingsListCursor.CurrentKey;
 
     return result;
   }
@@ -94,9 +94,9 @@ public class FastTrigramEnumerator : IFastEnumerator<MatchWithRepoOffsetKey, ulo
         CurrentKey.UserId == target.UserId &&
         CurrentKey.RepoId == target.RepoId)
     {
-      if (PostingsListCursor.MoveUntilGreaterThanOrEqual((ulong) target.Offset))
+      if (PostingsListCursor.MoveUntilGreaterThanOrEqual((ulong)target.Offset))
       {
-        CurrentKey.Offset = (long) PostingsListCursor.CurrentKey;
+        CurrentKey.Offset = (long)PostingsListCursor.CurrentKey;
         return true;
       }
     }

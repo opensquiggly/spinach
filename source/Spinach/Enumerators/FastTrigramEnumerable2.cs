@@ -33,9 +33,7 @@ public class FastTrigramEnumerable2 : IFastEnumerable<IFastEnumerator<MatchWithR
 
   public IEnumerator<MatchData> GetEnumerator() => GetFastEnumerator();
 
-  public IFastEnumerator<MatchWithRepoOffsetKey, MatchData> GetFastEnumerator()
-  {
+  public IFastEnumerator<MatchWithRepoOffsetKey, MatchData> GetFastEnumerator() =>
     // ReSharper disable once ArrangeMethodOrOperatorBody
-    return new FastTrigramEnumerator2(Trigram, Context, AdjustedOffset);
-  }
+    new FastTrigramEnumerator2(Trigram, Context, AdjustedOffset);
 }

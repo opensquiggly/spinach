@@ -46,5 +46,5 @@ public class MatchWithDocIdKey : IComparable<MatchWithDocIdKey>, IComparable
     return 0;
   }
 
-  public int CompareTo(object obj) => CompareTo((MatchWithDocIdKey) obj);
+  public int CompareTo(object obj) => CompareTo((MatchWithDocIdKey)obj);
 }

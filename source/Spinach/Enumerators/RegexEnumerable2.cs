@@ -8,7 +8,7 @@ public class RegexEnumerable2 : IEnumerable<MatchData>
   // Constructors
   // /////////////////////////////////////////////////////////////////////////////////////////////
 
-  public RegexEnumerable2( string regex, ITextSearchEnumeratorContext context)
+  public RegexEnumerable2(string regex, ITextSearchEnumeratorContext context)
   {
     Regex = regex;
     Context = context;

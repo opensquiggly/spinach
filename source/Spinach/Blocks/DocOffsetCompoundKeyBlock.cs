@@ -37,5 +37,5 @@ public struct DocOffsetCompoundKeyBlock : IComparable<DocOffsetCompoundKeyBlock>
     return 0;
   }
 
-  public int CompareTo(object obj) => CompareTo((DocOffsetCompoundKeyBlock) obj);
+  public int CompareTo(object obj) => CompareTo((DocOffsetCompoundKeyBlock)obj);
 }

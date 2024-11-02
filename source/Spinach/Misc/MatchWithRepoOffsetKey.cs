@@ -41,5 +41,5 @@ public class MatchWithRepoOffsetKey : IComparable<MatchWithRepoOffsetKey>, IComp
     return 0;
   }
 
-  public int CompareTo(object obj) => CompareTo((MatchWithRepoOffsetKey) obj);
+  public int CompareTo(object obj) => CompareTo((MatchWithRepoOffsetKey)obj);
 }

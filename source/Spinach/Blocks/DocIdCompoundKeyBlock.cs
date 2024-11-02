@@ -37,5 +37,5 @@ public struct DocIdCompoundKeyBlock : IComparable<DocIdCompoundKeyBlock>, ICompa
     return 0;
   }
 
-  public int CompareTo(object obj) => CompareTo((DocIdCompoundKeyBlock) obj);
+  public int CompareTo(object obj) => CompareTo((DocIdCompoundKeyBlock)obj);
 }

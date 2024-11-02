@@ -29,10 +29,10 @@ internal static partial class Program
     // foreach (RegexEnumerable.MatchingFile matchingFile in TextSearchIndex.RegexEnumerable(regex))
     // {
     //   Console.WriteLine($"{matchingFile.FileName}");
-      // foreach (RegexEnumerable.MatchingPosition matchingPosition in matchingFile.Matches)
-      // {
-      //   Console.WriteLine($"  From {matchingPosition.StartIndex} to {matchingPosition.EndIndex}");
-      // }
+    // foreach (RegexEnumerable.MatchingPosition matchingPosition in matchingFile.Matches)
+    // {
+    //   Console.WriteLine($"  From {matchingPosition.StartIndex} to {matchingPosition.EndIndex}");
+    // }
     // }
 
     // Console.WriteLine();

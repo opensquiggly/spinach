@@ -29,7 +29,7 @@ internal static partial class Program
       Console.Write($"User: {enumerator.CurrentData.User.Name}, ");
       Console.Write($"Repo: {enumerator.CurrentData.Repository.Name}, ");
       Console.WriteLine($"{enumerator.CurrentData.Document.ExternalIdOrPath}");
-      FileUtils.PrintFile(enumerator.CurrentData.Document.ExternalIdOrPath, (int) enumerator.CurrentData.MatchPosition + 1,
+      FileUtils.PrintFile(enumerator.CurrentData.Document.ExternalIdOrPath, (int)enumerator.CurrentData.MatchPosition + 1,
         literal.Length);
     }
 

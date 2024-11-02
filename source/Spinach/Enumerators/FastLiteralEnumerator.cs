@@ -30,7 +30,7 @@ public class FastLiteralEnumerator : IFastEnumerator<ulong, long>
 
   private IFastEnumerator<MatchWithRepoOffsetKey, ulong> Enumerator1 { get; }
 
-  private IFastEnumerator<MatchWithRepoOffsetKey , ulong> Enumerator2 { get; }
+  private IFastEnumerator<MatchWithRepoOffsetKey, ulong> Enumerator2 { get; }
 
   private string Literal { get; }
 
@@ -58,8 +58,7 @@ public class FastLiteralEnumerator : IFastEnumerator<ulong, long>
   {
   }
 
-  public bool MoveNext()
-  {
+  public bool MoveNext() =>
     // bool hasValue1 = Enumerator1.MoveNext();
     // bool hasValue2 = Enumerator2.MoveNext();
     //
@@ -83,10 +82,8 @@ public class FastLiteralEnumerator : IFastEnumerator<ulong, long>
     //
     // return false;
     throw new NotImplementedException();
-  }
 
-  public bool MoveUntilGreaterThanOrEqual(ulong target)
-  {
+  public bool MoveUntilGreaterThanOrEqual(ulong target) =>
     // bool hasValue1 = Enumerator1.MoveUntilGreaterThanOrEqual(target);
     // bool hasValue2 = Enumerator2.MoveUntilGreaterThanOrEqual(target);
     //
@@ -110,7 +107,6 @@ public class FastLiteralEnumerator : IFastEnumerator<ulong, long>
     //
     // return false;
     throw new NotImplementedException();
-  }
 
   public void Reset()
   {
