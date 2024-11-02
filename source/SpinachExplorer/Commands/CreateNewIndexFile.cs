@@ -5,15 +5,13 @@ internal static partial class Program
   private static void CreateNewIndexFile()
   {
     Console.WriteLine();
-    Console.Write("Enter index file name: ");
-    string filename = Console.ReadLine();
+    string filename = PromptForString("Enter index file name");
 
     if (File.Exists(filename))
     {
       Console.WriteLine($"File name '{filename}' already exists.");
-      Console.Write("Do you want to delete and recreate it? (y/n) : ");
-      string response = Console.ReadLine();
-      if (response.ToLower() == "y")
+
+      if (PromptToConfirm("Do you want to delete and recreate it? (y/n)"))
       {
         File.Delete(filename);
       }
@@ -23,7 +21,7 @@ internal static partial class Program
       }
     }
 
-    TextSearchIndex.CreateNewIndexFile(filename);
+    TextSearchManager.CreateNewIndexFile(filename);
 
     Pause();
   }

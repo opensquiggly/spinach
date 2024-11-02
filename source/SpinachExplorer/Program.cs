@@ -1,5 +1,7 @@
 namespace SpinachExplorer;
 
+using Spinach.Manager;
+
 internal static partial class Program
 {
   // /////////////////////////////////////////////////////////////////////////////////////////////
@@ -18,6 +20,7 @@ internal static partial class Program
     // placing all indexing and lookup functionality in the facace class, we can provide
     // a nicely abstracted API to any Spinach consumers.
     TextSearchIndex = new TextSearchIndex();
+    TextSearchManager = new TextSearchManager();
   }
 
   // /////////////////////////////////////////////////////////////////////////////////////////////
@@ -25,6 +28,8 @@ internal static partial class Program
   // /////////////////////////////////////////////////////////////////////////////////////////////
 
   private static TextSearchIndex TextSearchIndex { get; }
+
+  private static TextSearchManager TextSearchManager { get; }
 
   // /////////////////////////////////////////////////////////////////////////////////////////////
   // Private Static Methods

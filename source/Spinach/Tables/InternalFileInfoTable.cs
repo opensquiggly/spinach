@@ -6,7 +6,7 @@ public class InternalFileInfoTable
   // Constructors
   // /////////////////////////////////////////////////////////////////////////////////////////////
 
-  public InternalFileInfoTable(DiskBlockManager diskBlockManager, DiskBTree<long, FileInfoBlock> fileInfoTree)
+  public InternalFileInfoTable(DiskBlockManager diskBlockManager, DiskBTree<DocIdCompoundKeyBlock, DocInfoBlock> fileInfoTree)
   {
     DiskBlockManager = diskBlockManager;
     FileInfoTree = fileInfoTree;
@@ -20,7 +20,7 @@ public class InternalFileInfoTable
 
   private DiskBlockManager DiskBlockManager { get; }
 
-  DiskBTree<long, FileInfoBlock> FileInfoTree { get; }
+  DiskBTree<DocIdCompoundKeyBlock, DocInfoBlock> FileInfoTree { get; }
 
   private SortedDictionary<ulong, InternalFileInfo> ByIdDictionary { get; set; }
 
@@ -49,21 +49,21 @@ public class InternalFileInfoTable
     ByOffsetList = new List<Tuple<ulong, InternalFileInfo>>((int)FileCount);
 
     ulong currentOffset = 0;
-    var cursor = new DiskBTreeCursor<long, FileInfoBlock>(FileInfoTree);
+    var cursor = new DiskBTreeCursor<DocIdCompoundKeyBlock, DocInfoBlock>(FileInfoTree);
 
     while (cursor.MoveNext())
     {
-      FileInfoBlock fileInfoBlock = cursor.CurrentData;
-      DiskImmutableString nameString = DiskBlockManager.ImmutableStringFactory.LoadExisting(fileInfoBlock.NameAddress);
+      DocInfoBlock docInfoBlock = cursor.CurrentData;
+      DiskImmutableString nameString = DiskBlockManager.ImmutableStringFactory.LoadExisting(docInfoBlock.NameAddress);
 
       // InternalFileInfo is similar to FileInfoBlock except it contains
       // the StartingOffset which we can't store on disk, we have to compute
       // it at runtime
       var internalFileInfo = new InternalFileInfo
       {
-        InternalId = fileInfoBlock.InternalId,
+        // InternalId = fileInfoBlock.InternalId,
         Name = nameString.GetValue(),
-        Length = fileInfoBlock.Length,
+        Length = docInfoBlock.Length,
         StartingOffset = currentOffset
       };
 

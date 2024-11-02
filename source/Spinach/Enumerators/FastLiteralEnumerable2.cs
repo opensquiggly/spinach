@@ -1,0 +1,36 @@
+namespace Spinach.Enumerators;
+
+using Misc;
+
+public class FastLiteralEnumerable2 : IFastEnumerable<IFastEnumerator<MatchWithRepoOffsetKey, MatchData>, MatchWithRepoOffsetKey, MatchData>
+{
+  // /////////////////////////////////////////////////////////////////////////////////////////////
+  // Constructors
+  // /////////////////////////////////////////////////////////////////////////////////////////////
+
+  public FastLiteralEnumerable2(string literal, ITextSearchEnumeratorContext context)
+  {
+    Literal = literal;
+    Context = context;
+  }
+
+  // /////////////////////////////////////////////////////////////////////////////////////////////
+  // Private Properties
+  // /////////////////////////////////////////////////////////////////////////////////////////////
+
+  private string Literal { get; }
+
+  private ITextSearchEnumeratorContext Context { get; }
+
+  // /////////////////////////////////////////////////////////////////////////////////////////////
+  // Public Methods
+  // /////////////////////////////////////////////////////////////////////////////////////////////
+
+  IEnumerator IEnumerable.GetEnumerator() => GetFastEnumerator();
+
+  public IEnumerator<MatchData> GetEnumerator() => GetFastEnumerator();
+
+  public IFastEnumerator<MatchWithRepoOffsetKey, MatchData> GetFastEnumerator() =>
+    // ReSharper disable once ArrangeMethodOrOperatorBody
+    new FastLiteralEnumerator2(Literal, Context);
+}

@@ -1,6 +1,5 @@
 namespace SpinachExplorer;
 
-
 internal static partial class Program
 {
   private static void PrintFilesForTrigram()
@@ -9,83 +8,28 @@ internal static partial class Program
     Console.Write("Enter trigram: ");
     string trigram = Console.ReadLine();
 
-    int key = char.ToLower(trigram[0]) * 128 * 128 + char.ToLower(trigram[1]) * 128 + char.ToLower(trigram[2]);
+    if (trigram is not { Length: 3 }) return;
 
-    // Console.WriteLine($"key = {key}");
-    // DiskSortedVarIntList postingsList = TextSearchIndex.LoadOrAddTrigramPostingsList(key, out bool _);
-    //
-    // int count = 0;
-    // int index = 0;
-    // var cursor = new DiskSortedVarIntListCursor(postingsList);
-    //
-    // while (cursor.MoveNext())
-    // {
-    //   InternalFileInfoTable.InternalFileInfo fileInfo;
-    //   ulong startingIndex = 0;
-    //
-    //   ulong fileOffset = (ulong) (cursor.Current ?? 0L);
-    //   (startingIndex, fileInfo) = TextSearchIndex.InternalFileInfoTable.FindWithLastOffsetLessThanOrEqual(startingIndex, fileOffset);
-    //
-    //   if (!fileInfo.Name.EndsWith(".cs") && !fileInfo.Name.EndsWith(".md") && !fileInfo.Name.EndsWith(".js") && !fileInfo.Name.EndsWith(".ps1"))
-    //   {
-    //     count++;
-    //     // index++;
-    //     continue;
-    //   }
-    //
-    //   Console.WriteLine($"Match at position {fileOffset - fileInfo.StartingOffset + 1} in file {fileInfo.Name}");
-    //   Console.WriteLine("------------------------------------");
-    //   if (fileOffset < fileInfo.StartingOffset || fileOffset > fileInfo.StartingOffset + (ulong)fileInfo.Length)
-    //   {
-    //     Console.WriteLine("  ERROR: File offset is outside of file range");
-    //   }
-    //   FileUtils.PrintFile(fileInfo.Name, (int) fileOffset - (int)fileInfo.StartingOffset + 1, 3);
-    //   Console.WriteLine();
-    //
-    //   // Console.WriteLine($"  Name = {fileInfo.Name}");
-    //   // Console.WriteLine($"  InternalId = {fileInfo.InternalId}");
-    //   // Console.WriteLine($"  StartingOffset = {fileInfo.StartingOffset}");
-    //   // Console.WriteLine($"  Length = {fileInfo.Length}");
-    //   count++;
-    //   index++;
-    // }
-    //
-    // Console.WriteLine();
-    // Console.WriteLine($"Total results found = {count}");
+    int matches = 0;
 
-    FastTrigramEnumerable enumerable = TextSearchIndex.GetFastTrigramEnumerable(key);
+    var enumerator = new FastTrigramEnumerator2(trigram, TextSearchManager);
 
-    var stopwatch = Stopwatch.StartNew();
-    int count = enumerable.Count();
-    stopwatch.Stop();
+    while (enumerator.MoveNext())
+    {
+      matches++;
+      Console.Write($"@{enumerator.CurrentData.MatchPosition} ");
+      Console.Write($"User: {enumerator.CurrentData.User.Name}, ");
+      Console.Write($"Repo: {enumerator.CurrentData.Repository.Name}, ");
+      Console.WriteLine($"{enumerator.CurrentData.Document.ExternalIdOrPath}");
+      if (enumerator.CurrentData.Document.Length <= 10000)
+      {
+        FileUtils.PrintFile(enumerator.CurrentData.Document.ExternalIdOrPath,
+          (int)enumerator.CurrentData.MatchPosition + 1, 3);
+      }
+    }
 
-    // foreach (ulong fileOffset in enumerable)
-    // {
-    //   (_, InternalFileInfoTable.InternalFileInfo fileInfo) =
-    //     TextSearchIndex.InternalFileInfoTable.FindWithLastOffsetLessThanOrEqual(0, fileOffset);
-    //
-    //   string header = $"Match at position {fileOffset - fileInfo.StartingOffset + 1} in file {fileInfo.Name}";
-    //   Console.WriteLine(header);
-    //   Console.WriteLine(new string('-', header.Length));
-    //   FileUtils.PrintFile(fileInfo.Name, (int) fileOffset - (int)fileInfo.StartingOffset + 1, 3);
-    //   Console.WriteLine();
-    // }
-
-    Console.WriteLine($"Found {count} matches in {stopwatch.ElapsedMilliseconds} milliseconds");
-
-    // FastTrigramFileEnumerable enumerable = TextSearchIndex.GetFastTrigramFileEnumerable(key);
-    //
-    // foreach (TrigramFileInfo tfi in enumerable)
-    // {
-    //   long nameAddress = TextSearchIndex.InternalFileIdTree.Find(tfi.FileId);
-    //   DiskImmutableString nameString = TextSearchIndex.DiskBlockManager.ImmutableStringFactory.LoadExisting(nameAddress);
-    //   // Console.WriteLine($"FileId = {tfi.FileId}, Position = {tfi.Position} : {nameString.GetValue()}");
-    //
-    //   Console.WriteLine($"Match at position {tfi.Position + 1} in file {nameString}");
-    //   Console.WriteLine("------------------------------------");
-    //   FileUtils.PrintFile(nameString.GetValue(), (int) tfi.Position + 1, 3);
-    // }
-
+    Console.WriteLine($"Total matches: {matches}");
+    Console.WriteLine();
     Pause();
   }
 }

@@ -1,6 +1,6 @@
 namespace Spinach.Enumerators;
 
-public class FastTrigramEnumerator : IFastEnumerator<ulong, long>
+public class FastTrigramEnumerator : IFastEnumerator<MatchWithRepoOffsetKey, ulong>
 {
   // /////////////////////////////////////////////////////////////////////////////////////////////
   // Constructors
@@ -8,15 +8,18 @@ public class FastTrigramEnumerator : IFastEnumerator<ulong, long>
 
   public FastTrigramEnumerator(
     DiskBTree<int, long> trigramTree,
-    LruCache<int, DiskSortedVarIntList> trigramPostingsListCache,
+    LruCache<TrigramMatchCacheKey, DiskSortedVarIntList> postingsListCache,
     DiskSortedVarIntListFactory sortedVarIntListFactory,
+    DiskBTreeFactory<TrigramMatchKey, long> trigramMatchesFactory,
     int trigramKey
   )
   {
     TrigramTree = trigramTree;
-    TrigramPostingsListCache = trigramPostingsListCache;
+    PostingsListCache = postingsListCache;
     SortedVarIntListFactory = sortedVarIntListFactory;
+    TrigramMatchesFactory = trigramMatchesFactory;
     TrigramKey = trigramKey;
+    CurrentKey = new MatchWithRepoOffsetKey();
 
     Reset();
   }
@@ -27,9 +30,13 @@ public class FastTrigramEnumerator : IFastEnumerator<ulong, long>
 
   private DiskSortedVarIntListFactory SortedVarIntListFactory { get; set; }
 
-  private LruCache<int, DiskSortedVarIntList> TrigramPostingsListCache { get; set; }
+  private DiskBTreeFactory<TrigramMatchKey, long> TrigramMatchesFactory { get; set; }
+
+  private LruCache<TrigramMatchCacheKey, DiskSortedVarIntList> PostingsListCache { get; set; }
 
   private DiskSortedVarIntList PostingsList { get; set; }
+
+  private DiskBTreeCursor<TrigramMatchKey, long> TrigramMatchesCursor { get; set; }
 
   private DiskSortedVarIntListCursor PostingsListCursor { get; set; }
 
@@ -43,11 +50,11 @@ public class FastTrigramEnumerator : IFastEnumerator<ulong, long>
 
   object IEnumerator.Current => Current;
 
-  public ulong Current => CurrentKey;
+  public ulong Current => CurrentData;
 
-  public long CurrentData => PostingsListCursor.CurrentData;
+  public ulong CurrentData => (ulong)CurrentKey.Offset;
 
-  public ulong CurrentKey => PostingsListCursor.CurrentKey;
+  public MatchWithRepoOffsetKey CurrentKey { get; private set; }
 
   // /////////////////////////////////////////////////////////////////////////////////////////////
   // Public Methods
@@ -57,27 +64,70 @@ public class FastTrigramEnumerator : IFastEnumerator<ulong, long>
   {
   }
 
-  public bool MoveNext() =>
-    // ReSharper disable once ArrangeMethodOrOperatorBody
-    PostingsListCursor.MoveNext();
-
-  public bool MoveUntilGreaterThanOrEqual(ulong target) =>
-    // ReSharper disable once ArrangeMethodOrOperatorBody
-    PostingsListCursor.MoveUntilGreaterThanOrEqual(target);
-
-  public void Reset()
+  public bool MoveNext()
   {
-    if (!TrigramPostingsListCache.TryGetValue(TrigramKey, out DiskSortedVarIntList postingsList))
+    if (PostingsListCursor.MoveNext())
     {
-      if (TrigramTree.TryFind(TrigramKey, out long postingsListAddress))
+      CurrentKey.Offset = PostingsListCursor.CurrentData;
+      return true;
+    }
+
+    if (!TrigramMatchesCursor.MoveNext()) return false;
+
+    CurrentKey.UserType = TrigramMatchesCursor.CurrentKey.UserType;
+    CurrentKey.UserId = TrigramMatchesCursor.CurrentKey.UserId;
+    CurrentKey.RepoId = TrigramMatchesCursor.CurrentKey.RepoId;
+
+    PostingsList = SortedVarIntListFactory.LoadExisting(TrigramMatchesCursor.CurrentData);
+    PostingsListCursor = new DiskSortedVarIntListCursor(PostingsList);
+    PostingsListCursor.Reset();
+
+    bool result = PostingsListCursor.MoveNext();
+    CurrentKey.Offset = (int)PostingsListCursor.CurrentKey;
+
+    return result;
+  }
+
+  public bool MoveUntilGreaterThanOrEqual(MatchWithRepoOffsetKey target)
+  {
+    if (CurrentKey.UserType == target.UserType &&
+        CurrentKey.UserId == target.UserId &&
+        CurrentKey.RepoId == target.RepoId)
+    {
+      if (PostingsListCursor.MoveUntilGreaterThanOrEqual((ulong)target.Offset))
       {
-        postingsList = SortedVarIntListFactory.LoadExisting(postingsListAddress);
-        TrigramPostingsListCache.Add(TrigramKey, postingsList);
+        CurrentKey.Offset = (long)PostingsListCursor.CurrentKey;
+        return true;
       }
     }
 
-    PostingsList = postingsList;
+    TrigramMatchesCursor.MoveNext();
+    var nextMatchKey = new TrigramMatchKey(target.UserType, target.UserId, target.RepoType, target.RepoId);
+    bool hasNextMatch = TrigramMatchesCursor.MoveUntilGreaterThanOrEqual(nextMatchKey);
+
+    if (!hasNextMatch) return false;
+
+    PostingsList = SortedVarIntListFactory.LoadExisting(TrigramMatchesCursor.CurrentData);
     PostingsListCursor = new DiskSortedVarIntListCursor(PostingsList);
     PostingsListCursor.Reset();
+    PostingsListCursor.MoveNext();
+
+    return true;
+  }
+
+  public void Reset()
+  {
+    // if (!TrigramPostingsListCache.TryGetValue(TrigramKey, out DiskSortedVarIntList postingsList))
+    // {
+    //   if (TrigramTree.TryFind(TrigramKey, out long postingsListAddress))
+    //   {
+    //     postingsList = SortedVarIntListFactory.LoadExisting(postingsListAddress);
+    //     TrigramPostingsListCache.Add(TrigramKey, postingsList);
+    //   }
+    // }
+    //
+    // PostingsList = postingsList;
+    // PostingsListCursor = new DiskSortedVarIntListCursor(PostingsList);
+    // PostingsListCursor.Reset();
   }
 }

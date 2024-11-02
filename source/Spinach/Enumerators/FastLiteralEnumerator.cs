@@ -28,9 +28,9 @@ public class FastLiteralEnumerator : IFastEnumerator<ulong, long>
 
   private FastTrigramEnumerable Enumerable2 { get; }
 
-  private IFastEnumerator<ulong, long> Enumerator1 { get; }
+  private IFastEnumerator<MatchWithRepoOffsetKey, ulong> Enumerator1 { get; }
 
-  private IFastEnumerator<ulong, long> Enumerator2 { get; }
+  private IFastEnumerator<MatchWithRepoOffsetKey, ulong> Enumerator2 { get; }
 
   private string Literal { get; }
 
@@ -44,7 +44,7 @@ public class FastLiteralEnumerator : IFastEnumerator<ulong, long>
 
   object IEnumerator.Current => Current;
 
-  public ulong Current => CurrentKey;
+  public long Current => CurrentData;
 
   public long CurrentData { get; private set; }
 
@@ -58,57 +58,55 @@ public class FastLiteralEnumerator : IFastEnumerator<ulong, long>
   {
   }
 
-  public bool MoveNext()
-  {
-    bool hasValue1 = Enumerator1.MoveNext();
-    bool hasValue2 = Enumerator2.MoveNext();
+  public bool MoveNext() =>
+    // bool hasValue1 = Enumerator1.MoveNext();
+    // bool hasValue2 = Enumerator2.MoveNext();
+    //
+    // while (hasValue1 && hasValue2)
+    // {
+    //   if (Enumerator1.CurrentKey < Enumerator2.CurrentKey - Offset)
+    //   {
+    //     hasValue1 = Enumerator1.MoveUntilGreaterThanOrEqual(Enumerator2.CurrentKey - Offset);
+    //   }
+    //   else if (Enumerator1.CurrentKey > Enumerator2.CurrentKey - Offset)
+    //   {
+    //     hasValue2 = Enumerator2.MoveUntilGreaterThanOrEqual(Enumerator1.CurrentKey + Offset);
+    //   }
+    //   else
+    //   {
+    //     CurrentKey = Enumerator1.CurrentKey;
+    //     CurrentData = Enumerator1.CurrentData;
+    //     return true;
+    //   }
+    // }
+    //
+    // return false;
+    throw new NotImplementedException();
 
-    while (hasValue1 && hasValue2)
-    {
-      if (Enumerator1.CurrentKey < Enumerator2.CurrentKey - Offset)
-      {
-        hasValue1 = Enumerator1.MoveUntilGreaterThanOrEqual(Enumerator2.CurrentKey - Offset);
-      }
-      else if (Enumerator1.CurrentKey > Enumerator2.CurrentKey - Offset)
-      {
-        hasValue2 = Enumerator2.MoveUntilGreaterThanOrEqual(Enumerator1.CurrentKey + Offset);
-      }
-      else
-      {
-        CurrentKey = Enumerator1.CurrentKey;
-        CurrentData = Enumerator1.CurrentData;
-        return true;
-      }
-    }
-
-    return false;
-  }
-
-  public bool MoveUntilGreaterThanOrEqual(ulong target)
-  {
-    bool hasValue1 = Enumerator1.MoveUntilGreaterThanOrEqual(target);
-    bool hasValue2 = Enumerator2.MoveUntilGreaterThanOrEqual(target);
-
-    while (hasValue1 && hasValue2)
-    {
-      if (Enumerator1.CurrentKey < Enumerator2.CurrentKey - Offset)
-      {
-        hasValue1 = Enumerator1.MoveUntilGreaterThanOrEqual(Enumerator2.CurrentKey - Offset);
-      }
-      else if (Enumerator1.CurrentKey > Enumerator2.CurrentKey - Offset)
-      {
-        hasValue2 = Enumerator2.MoveUntilGreaterThanOrEqual(Enumerator1.CurrentKey + Offset);
-      }
-      else
-      {
-        CurrentKey = Enumerator1.CurrentKey;
-        CurrentData = Enumerator1.CurrentData;
-        return true;
-      }
-    }
-
-    return false;
-  }
+  public bool MoveUntilGreaterThanOrEqual(ulong target) =>
+    // bool hasValue1 = Enumerator1.MoveUntilGreaterThanOrEqual(target);
+    // bool hasValue2 = Enumerator2.MoveUntilGreaterThanOrEqual(target);
+    //
+    // while (hasValue1 && hasValue2)
+    // {
+    //   if (Enumerator1.CurrentKey < Enumerator2.CurrentKey - Offset)
+    //   {
+    //     hasValue1 = Enumerator1.MoveUntilGreaterThanOrEqual(Enumerator2.CurrentKey - Offset);
+    //   }
+    //   else if (Enumerator1.CurrentKey > Enumerator2.CurrentKey - Offset)
+    //   {
+    //     hasValue2 = Enumerator2.MoveUntilGreaterThanOrEqual(Enumerator1.CurrentKey + Offset);
+    //   }
+    //   else
+    //   {
+    //     CurrentKey = Enumerator1.CurrentKey;
+    //     CurrentData = Enumerator1.CurrentData;
+    //     return true;
+    //   }
+    // }
+    //
+    // return false;
+    throw new NotImplementedException();
 
   public void Reset()
   {

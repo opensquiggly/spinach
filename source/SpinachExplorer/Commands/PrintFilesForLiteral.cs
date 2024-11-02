@@ -13,36 +13,28 @@ internal static partial class Program
     string literal = Console.ReadLine();
     Console.WriteLine();
 
-    FastLiteralEnumerable enumerable = TextSearchIndex.GetFastLiteralEnumerable(literal);
-
-    var stopwatch = Stopwatch.StartNew();
-    int count = enumerable.Count();
-    stopwatch.Stop();
-
-    // foreach (ulong fileOffset in enumerable)
-    // {
-    //   (_, InternalFileInfoTable.InternalFileInfo fileInfo) =
-    //     TextSearchIndex.InternalFileInfoTable.FindWithLastOffsetLessThanOrEqual(0, fileOffset);
+    // FastLiteralEnumerable enumerable = TextSearchIndex.GetFastLiteralEnumerable(literal);
     //
-    //   string header = $"Match at position {fileOffset - fileInfo.StartingOffset + 1} in file {fileInfo.Name}";
-    //   Console.WriteLine(header);
-    //   Console.WriteLine(new string('-', header.Length));
-    //
-    //   FileUtils.PrintFile(fileInfo.Name, (int) fileOffset - (int)fileInfo.StartingOffset + 1, literal.Length);
-    //
-    //   Console.WriteLine();
-    // }
+    // var stopwatch = Stopwatch.StartNew();
+    // int count = enumerable.Count();
+    // stopwatch.Stop();
 
-    Console.WriteLine($"Found {count} matches in {stopwatch.ElapsedMilliseconds} milliseconds");
+    var enumerator = new FastLiteralEnumerator2(literal, TextSearchManager);
+    int matches = 0;
 
-    // foreach (ulong fileOffset in TextSearchIndex.GetFastLiteralFileEnumerable(literal))
-    // {
-    //   Console.WriteLine(fileOffset);
-    //   long nameAddress = TextSearchIndex.InternalFileIdTree.Find(tfi.FileId);
-    //   DiskImmutableString nameString = TextSearchIndex.DiskBlockManager.ImmutableStringFactory.LoadExisting(nameAddress);
-    //   Console.WriteLine($"FileId = {tfi.FileId}, Position = {tfi.Position} : {nameString.GetValue()}");
-    // }
+    while (enumerator.MoveNext())
+    {
+      matches++;
+      Console.Write($"@{enumerator.CurrentData.MatchPosition} : ");
+      Console.Write($"User: {enumerator.CurrentData.User.Name}, ");
+      Console.Write($"Repo: {enumerator.CurrentData.Repository.Name}, ");
+      Console.WriteLine($"{enumerator.CurrentData.Document.ExternalIdOrPath}");
+      FileUtils.PrintFile(enumerator.CurrentData.Document.ExternalIdOrPath, (int)enumerator.CurrentData.MatchPosition + 1,
+        literal.Length);
+    }
 
+    Console.WriteLine($"Total matches: {matches}");
+    Console.WriteLine();
     Pause();
   }
 }
