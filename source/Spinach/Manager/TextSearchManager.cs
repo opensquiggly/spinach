@@ -176,7 +176,7 @@ public class TextSearchManager : ITextSearchManager, ITextSearchEnumeratorContex
     return DiskBlockManager.ImmutableStringFactory.LoadExisting(address).GetValue();
   }
 
-  public void AddUser(ushort userType, string userName, string userExternalId)
+  public uint AddUser(ushort userType, string userName, string userExternalId)
   {
     uint nextUserId = (uint)++_headerBlock.Data1;
     DiskBlockManager.WriteHeaderBlock(ref _headerBlock);
@@ -213,10 +213,11 @@ public class TextSearchManager : ITextSearchManager, ITextSearchEnumeratorContex
     }
 
     bool result = UserTree.Insert(userIdCompoundKeyBlock, userInfoBlock);
-    Console.WriteLine($"Result = {result}");
+
+    return nextUserId;
   }
 
-  public void AddRepository(ushort userType, uint userId, ushort repoType, string externalId, string name, string rootFolder)
+  public uint AddRepository(ushort userType, uint userId, ushort repoType, string externalId, string name, string rootFolder)
   {
     var userIdCompoundKeyBlock = new UserIdCompoundKeyBlock
     {
@@ -272,7 +273,10 @@ public class TextSearchManager : ITextSearchManager, ITextSearchEnumeratorContex
       }
 
       RepoTree.Insert(repoIdCompoundKeyBlock, repoInfoBlock);
+      return repoInfoBlock.InternalId;
     }
+
+    return 0;
   }
 
   public bool IncludeFileInIndex(string filename)
