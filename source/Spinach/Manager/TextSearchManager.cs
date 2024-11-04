@@ -341,6 +341,8 @@ public class TextSearchManager : ITextSearchManager, ITextSearchEnumeratorContex
     };
 
     bool found = RepoTree.TryFind(repoIdCompoundKey, out RepoInfoBlock data, out DiskBTreeNode<RepoIdCompoundKeyBlock, RepoInfoBlock> node, out int nodeIndex);
+    if (!found) return;
+
     string rootFolderPath = LoadString(data.RootFolderPathAddress);
     uint currentDocId = data.LastDocId;
 
