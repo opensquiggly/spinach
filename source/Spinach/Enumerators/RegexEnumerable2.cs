@@ -37,10 +37,27 @@ public class RegexEnumerable2 : IEnumerable<MatchData>
 
     IFastEnumerable<IFastEnumerator<MatchWithRepoOffsetKey, MatchData>, MatchWithRepoOffsetKey, MatchData> queryEnumerable =
       LiteralQueryBuilder.BuildEnumerable2(queryNode, Context);
+    IFastEnumerator<MatchWithRepoOffsetKey, MatchData> queryEnumerator = queryEnumerable.GetFastEnumerator();
     CompiledRegex = RE2.CompileCaseInsensitive(Regex);
 
-    foreach (MatchData match in queryEnumerable)
+    while(queryEnumerator.MoveNext())
     {
+      MatchData match = queryEnumerator.CurrentData;
+
+      if (match.Document.Length > 100000)
+      {
+        var skipToKey = new MatchWithRepoOffsetKey()
+        {
+          UserType = queryEnumerator.CurrentKey.UserType,
+          UserId = queryEnumerator.CurrentKey.UserId,
+          RepoType = queryEnumerator.CurrentKey.RepoType,
+          RepoId = queryEnumerator.CurrentKey.RepoId,
+          Offset = (long) (queryEnumerator.CurrentData.Document.StartingOffset + (ulong) queryEnumerator.CurrentData.Document.Length)
+        };
+
+        if (!queryEnumerator.MoveUntilGreaterThanOrEqual(skipToKey)) break;;
+      }
+
       // if (!match.IsDocumentValid) continue;
       string contents = File.ReadAllText(match.Document.ExternalIdOrPath);
 
