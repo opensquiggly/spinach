@@ -40,7 +40,7 @@ public class RegexEnumerable2 : IEnumerable<MatchData>
     IFastEnumerator<MatchWithRepoOffsetKey, MatchData> queryEnumerator = queryEnumerable.GetFastEnumerator();
     CompiledRegex = RE2.CompileCaseInsensitive(Regex);
 
-    while(queryEnumerator.MoveNext())
+    while (queryEnumerator.MoveNext())
     {
       MatchData match = queryEnumerator.CurrentData;
 
@@ -52,10 +52,10 @@ public class RegexEnumerable2 : IEnumerable<MatchData>
           UserId = queryEnumerator.CurrentKey.UserId,
           RepoType = queryEnumerator.CurrentKey.RepoType,
           RepoId = queryEnumerator.CurrentKey.RepoId,
-          Offset = (long) (queryEnumerator.CurrentData.Document.StartingOffset + (ulong) queryEnumerator.CurrentData.Document.Length)
+          Offset = (long)(queryEnumerator.CurrentData.Document.StartingOffset + (ulong)queryEnumerator.CurrentData.Document.Length)
         };
 
-        if (!queryEnumerator.MoveUntilGreaterThanOrEqual(skipToKey)) break;;
+        if (!queryEnumerator.MoveUntilGreaterThanOrEqual(skipToKey)) break; ;
       }
 
       // if (!match.IsDocumentValid) continue;
