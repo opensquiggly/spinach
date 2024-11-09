@@ -17,10 +17,11 @@ public class Document : IDocument
       NameAddress = 0,
       Name = "Invalid Document",
       ExternalIdOrPathAddress = 0,
-      ExternalIdOrPath = "invalid-external-id-or-path",
-      Content = String.Empty
+      ExternalIdOrPath = "invalid-external-id-or-path"
     };
   }
+
+  private string _content = null;
 
   public bool IsValid { get; set; }
   public ushort UserType { get; set; }
@@ -34,7 +35,20 @@ public class Document : IDocument
   public string Name { get; set; }
   public long ExternalIdOrPathAddress { get; set; }
   public string ExternalIdOrPath { get; set; }
-  public string Content { get; set; }
+
+  public string Content
+  {
+    get
+    {
+      if (!IsValid) return "Invalid Document - Content not available";
+      if (_content == null)
+      {
+        _content = File.ReadAllText(ExternalIdOrPath);
+      }
+
+      return _content;
+    }
+  }
 
   public static IDocument InvalidDocument { get; }
 }

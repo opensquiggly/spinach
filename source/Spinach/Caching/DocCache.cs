@@ -59,8 +59,7 @@ public class DocCache : LruCache<
       NameAddress = docInfoBlock.NameAddress,
       Name = TextSearchManager.LoadString(docInfoBlock.NameAddress),
       ExternalIdOrPathAddress = docInfoBlock.ExternalIdOrPathAddress,
-      ExternalIdOrPath = externalIdOrPath,
-      Content = File.ReadAllText(externalIdOrPath)
+      ExternalIdOrPath = externalIdOrPath
     };
 
     var cachedItem = new Tuple<DocInfoBlock, DiskBTreeNode<DocIdCompoundKeyBlock, DocInfoBlock>, int, IDocument>(

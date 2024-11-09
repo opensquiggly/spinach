@@ -1,5 +1,6 @@
 namespace Spinach.Manager;
 
+using Misc;
 using TrackingObjects;
 
 public class TextSearchManager : ITextSearchManager, ITextSearchEnumeratorContext
@@ -58,6 +59,8 @@ public class TextSearchManager : ITextSearchManager, ITextSearchEnumeratorContex
         DiskBlockManager.IntBlockType
       );
   }
+
+  public ITextSearchOptions Options { get; } = TextSearchOptions.Default;
 
   protected short DocInfoBlockType { get; set; }
 
