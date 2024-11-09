@@ -16,6 +16,7 @@ public interface ITextSearchEnumeratorContext
   DiskBTreeFactory<DocIdCompoundKeyBlock, DocInfoBlock> DocTreeFactory { get; }
   DiskBTreeFactory<DocOffsetCompoundKeyBlock, uint> DocTreeByOffsetFactory { get; }
   LruCache<TrigramMatchCacheKey, DiskSortedVarIntList> PostingsListCache { get; }
+  ITextSearchOptions Options { get; }
 
   // Methods
   string LoadString(long address);

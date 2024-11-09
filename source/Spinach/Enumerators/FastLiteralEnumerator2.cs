@@ -90,6 +90,11 @@ public class FastLiteralEnumerator2 : IFastEnumerator<MatchWithRepoOffsetKey, Ma
 
         hasValue2 = Enumerator2.MoveUntilGreaterThanOrEqual(adjustedKey);
       }
+      else if (!string.Equals(Enumerator1.CurrentData.Document.Content.Substring((int)Enumerator1.CurrentData.MatchPosition, Literal.Length), Literal, StringComparison.CurrentCultureIgnoreCase))
+      {
+        hasValue1 = Enumerator1.MoveNext();
+        hasValue2 = Enumerator2.MoveNext();
+      }
       else
       {
         CurrentKey = Enumerator1.CurrentKey;

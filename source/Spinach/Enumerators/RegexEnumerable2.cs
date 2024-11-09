@@ -44,7 +44,7 @@ public class RegexEnumerable2 : IEnumerable<MatchData>
     {
       MatchData match = queryEnumerator.CurrentData;
 
-      if (match.Document.Length > 100000)
+      if (match.Document.Length > Context.Options.MaxDocSize)
       {
         var skipToKey = new MatchWithRepoOffsetKey()
         {

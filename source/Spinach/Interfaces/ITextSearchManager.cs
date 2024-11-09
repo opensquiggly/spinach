@@ -2,5 +2,7 @@ namespace Spinach.Interfaces;
 
 public interface ITextSearchManager
 {
-  public string LoadString(long address);
+  string LoadString(long address);
+
+  ITextSearchOptions Options { get; }
 }
