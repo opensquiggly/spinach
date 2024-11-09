@@ -44,6 +44,8 @@ public class DocCache : LruCache<
       return false;
     }
 
+    string externalIdOrPath = TextSearchManager.LoadString(docInfoBlock.ExternalIdOrPathAddress);
+
     doc = new Document()
     {
       IsValid = true,
@@ -57,7 +59,8 @@ public class DocCache : LruCache<
       NameAddress = docInfoBlock.NameAddress,
       Name = TextSearchManager.LoadString(docInfoBlock.NameAddress),
       ExternalIdOrPathAddress = docInfoBlock.ExternalIdOrPathAddress,
-      ExternalIdOrPath = TextSearchManager.LoadString(docInfoBlock.ExternalIdOrPathAddress)
+      ExternalIdOrPath = externalIdOrPath,
+      Content = File.ReadAllText(externalIdOrPath)
     };
 
     var cachedItem = new Tuple<DocInfoBlock, DiskBTreeNode<DocIdCompoundKeyBlock, DocInfoBlock>, int, IDocument>(

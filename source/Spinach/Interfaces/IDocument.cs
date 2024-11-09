@@ -14,4 +14,5 @@ public interface IDocument
   string Name { get; set; }
   long ExternalIdOrPathAddress { get; set; }
   string ExternalIdOrPath { get; set; }
+  string Content { get; set; }
 }

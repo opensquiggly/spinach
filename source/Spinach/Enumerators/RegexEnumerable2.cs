@@ -60,9 +60,7 @@ public class RegexEnumerable2 : IEnumerable<MatchData>
 
       if (!match.Document.IsValid) continue;
 
-      string contents = File.ReadAllText(match.Document.ExternalIdOrPath);
-
-      if (CompiledRegex.Match(contents))
+      if (CompiledRegex.Match(match.Document.Content))
       {
         yield return match;
       }

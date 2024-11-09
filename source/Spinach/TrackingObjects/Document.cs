@@ -17,7 +17,8 @@ public class Document : IDocument
       NameAddress = 0,
       Name = "Invalid Document",
       ExternalIdOrPathAddress = 0,
-      ExternalIdOrPath = "invalid-external-id-or-path"
+      ExternalIdOrPath = "invalid-external-id-or-path",
+      Content = String.Empty
     };
   }
 
@@ -33,6 +34,7 @@ public class Document : IDocument
   public string Name { get; set; }
   public long ExternalIdOrPathAddress { get; set; }
   public string ExternalIdOrPath { get; set; }
+  public string Content { get; set; }
 
   public static IDocument InvalidDocument { get; }
 }
