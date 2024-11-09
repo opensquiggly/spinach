@@ -2,6 +2,26 @@ namespace Spinach.TrackingObjects;
 
 public class Document : IDocument
 {
+  static Document()
+  {
+    InvalidDocument = new Document()
+    {
+      IsValid = false,
+      UserType = 0,
+      UserId = 0,
+      RepoType = 0,
+      RepoId = 0,
+      DocId = 0,
+      Length = 0,
+      StartingOffset = 0,
+      NameAddress = 0,
+      Name = "Invalid Document",
+      ExternalIdOrPathAddress = 0,
+      ExternalIdOrPath = "invalid-external-id-or-path"
+    };
+  }
+
+  public bool IsValid { get; set; }
   public ushort UserType { get; set; }
   public uint UserId { get; set; }
   public ushort RepoType { get; set; }
@@ -13,4 +33,6 @@ public class Document : IDocument
   public string Name { get; set; }
   public long ExternalIdOrPathAddress { get; set; }
   public string ExternalIdOrPath { get; set; }
+
+  public static IDocument InvalidDocument { get; }
 }

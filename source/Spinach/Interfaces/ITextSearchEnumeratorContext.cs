@@ -7,7 +7,7 @@ public interface ITextSearchEnumeratorContext
   DiskBTree<int, long> TrigramTree { get; }
   UserCache UserCache { get; }
   RepoCache RepoCache { get; }
-  DiskBTree<DocIdCompoundKeyBlock, DocInfoBlock> DocTree { get; }
+  DocCache DocCache { get; }
   DiskBTree<DocOffsetCompoundKeyBlock, uint> DocTreeByOffset { get; }
   DiskBTreeFactory<int, long> TrigramTreeFactory { get; }
   DiskBTreeFactory<TrigramMatchKey, long> TrigramMatchesFactory { get; }

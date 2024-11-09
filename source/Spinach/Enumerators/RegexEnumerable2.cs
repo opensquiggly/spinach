@@ -58,7 +58,8 @@ public class RegexEnumerable2 : IEnumerable<MatchData>
         if (!queryEnumerator.MoveUntilGreaterThanOrEqual(skipToKey)) break; ;
       }
 
-      // if (!match.IsDocumentValid) continue;
+      if (!match.Document.IsValid) continue;
+
       string contents = File.ReadAllText(match.Document.ExternalIdOrPath);
 
       if (CompiledRegex.Match(contents))

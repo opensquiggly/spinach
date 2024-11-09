@@ -93,6 +93,8 @@ public class TextSearchManager : ITextSearchManager, ITextSearchEnumeratorContex
 
   public DiskBTree<RepoIdCompoundKeyBlock, RepoInfoBlock> RepoTree { get; private set; }
 
+  public DocCache DocCache { get; set; }
+
   public DiskBTree<DocIdCompoundKeyBlock, DocInfoBlock> DocTree { get; private set; }
 
   public DiskBTree<DocOffsetCompoundKeyBlock, uint> DocTreeByOffset { get; private set; }
@@ -121,6 +123,7 @@ public class TextSearchManager : ITextSearchManager, ITextSearchEnumeratorContex
     RepoTree = RepoTreeFactory.AppendNew(25);
     RepoCache = new RepoCache(this, RepoTree, 10000);
     DocTree = DocTreeFactory.AppendNew(25);
+    DocCache = new DocCache(this, DocTree, 10000);
     DocTreeByOffset = DocTreeByOffsetFactory.AppendNew(25);
     TrigramTree = TrigramTreeFactory.AppendNew(25);
 
@@ -150,6 +153,7 @@ public class TextSearchManager : ITextSearchManager, ITextSearchEnumeratorContex
     RepoTree = RepoTreeFactory.LoadExisting(_headerBlock.Address2);
     RepoCache = new RepoCache(this, RepoTree, 10000);
     DocTree = DocTreeFactory.LoadExisting(_headerBlock.Address3);
+    DocCache = new DocCache(this, DocTree, 10000);
     DocTreeByOffset = DocTreeByOffsetFactory.LoadExisting(_headerBlock.Address4);
     TrigramTree = TrigramTreeFactory.LoadExisting(_headerBlock.Address5);
 

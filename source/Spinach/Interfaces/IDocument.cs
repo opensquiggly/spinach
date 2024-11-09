@@ -2,6 +2,7 @@ namespace Spinach.Interfaces;
 
 public interface IDocument
 {
+  bool IsValid { get; set; }
   ushort UserType { get; set; }
   uint UserId { get; set; }
   ushort RepoType { get; set; }
