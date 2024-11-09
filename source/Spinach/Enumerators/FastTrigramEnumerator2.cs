@@ -60,17 +60,9 @@ public class FastTrigramEnumerator2 : IFastEnumerator<MatchWithRepoOffsetKey, Ma
 
   public MatchData Current => CurrentData;
 
-  public MatchData CurrentData { get; private set; }
-  // {
-  //   get
-  //   {
-  //     if (CurrentPostingsListCursor == null || CurrentDocument == null) return 0;
-  //
-  //     return CurrentPostingsListCursor.CurrentKey - CurrentDocument.StartingOffset;
-  //   }
-  // }
+  public MatchData CurrentData { get; }
 
-  public MatchWithRepoOffsetKey CurrentKey { get; private set; }
+  public MatchWithRepoOffsetKey CurrentKey { get; }
 
   public IUser CurrentUser { get; private set; }
 
@@ -132,21 +124,8 @@ public class FastTrigramEnumerator2 : IFastEnumerator<MatchWithRepoOffsetKey, Ma
       RepoId = CurrentData.Repository.Id
     };
 
-    bool found = Context.RepoTree.TryFind(repoCompoundKey, out RepoInfoBlock data, out _, out _);
-    if (!found)
-    {
-      CurrentData.IsRepositoryValid = false;
-      return;
-    }
-
-    CurrentData.IsRepositoryValid = true;
-    CurrentData.Repository.NameAddress = data.NameAddress;
-    CurrentData.Repository.Name = Context.LoadString(data.NameAddress);
-    CurrentData.Repository.ExternalIdAddress = data.ExternalIdAddress;
-    CurrentData.Repository.ExternalId = Context.LoadString(data.ExternalIdAddress);
-    CurrentData.Repository.RootFolderPathAddress = data.RootFolderPathAddress;
-    CurrentData.Repository.RootFolderPath = Context.LoadString(data.RootFolderPathAddress);
-    CurrentData.Repository.LastDocId = data.LastDocId;
+    Context.RepoCache.TryFind(repoCompoundKey, out RepoInfoBlock data, out _, out _, out IRepository repo);
+    CurrentData.Repository = repo;
   }
 
   private void SetCurrentDocument()
