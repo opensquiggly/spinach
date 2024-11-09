@@ -7,7 +7,7 @@ public class DocCache : LruCache<
   Tuple<DocInfoBlock, DiskBTreeNode<DocIdCompoundKeyBlock, DocInfoBlock>, int, IDocument>
 >
 {
-  public DocCache (
+  public DocCache(
     ITextSearchManager textSearchManager,
     DiskBTree<DocIdCompoundKeyBlock, DocInfoBlock> docTree, int capacity
   ) : base(capacity)
@@ -20,7 +20,7 @@ public class DocCache : LruCache<
 
   public DiskBTree<DocIdCompoundKeyBlock, DocInfoBlock> DocTree { get; private set; }
 
-  public bool TryFind (
+  public bool TryFind(
     DocIdCompoundKeyBlock key,
     out DocInfoBlock docInfoBlock,
     out DiskBTreeNode<DocIdCompoundKeyBlock, DocInfoBlock> node,
