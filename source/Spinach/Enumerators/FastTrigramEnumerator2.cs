@@ -102,20 +102,8 @@ public class FastTrigramEnumerator2 : IFastEnumerator<MatchWithRepoOffsetKey, Ma
       UserId = CurrentData.User.Id
     };
 
-    bool found = Context.UserTree.TryFind(userCompoundKey, out UserInfoBlock data, out _, out _);
-    if (!found)
-    {
-      CurrentData.IsUserValid = false;
-    }
-    else
-    {
-      CurrentData.IsUserValid = true;
-      CurrentData.User.NameAddress = data.NameAddress;
-      CurrentData.User.Name = Context.LoadString(data.NameAddress);
-      CurrentData.User.ExternalIdAddress = data.ExternalIdAddress;
-      CurrentData.User.ExternalId = Context.LoadString(data.ExternalIdAddress);
-      CurrentData.User.LastRepoId = data.LastRepoId;
-    }
+    Context.UserCache.TryFind(userCompoundKey, out UserInfoBlock data, out _, out _, out IUser user);
+    CurrentData.User = user;
   }
 
   private void SetCurrentRepository()

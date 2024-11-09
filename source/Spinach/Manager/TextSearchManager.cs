@@ -85,6 +85,8 @@ public class TextSearchManager : ITextSearchManager, ITextSearchEnumeratorContex
 
   public DiskBTree<int, long> TrigramTree { get; set; }
 
+  public UserCache UserCache { get; set; }
+
   public DiskBTree<UserIdCompoundKeyBlock, UserInfoBlock> UserTree { get; private set; }
 
   public DiskBTree<RepoIdCompoundKeyBlock, RepoInfoBlock> RepoTree { get; private set; }
@@ -113,6 +115,7 @@ public class TextSearchManager : ITextSearchManager, ITextSearchEnumeratorContex
     _headerBlock = DiskBlockManager.GetHeaderBlock();
 
     UserTree = UserTreeFactory.AppendNew(25);
+    UserCache = new UserCache(this, UserTree, 10000);
     RepoTree = RepoTreeFactory.AppendNew(25);
     DocTree = DocTreeFactory.AppendNew(25);
     DocTreeByOffset = DocTreeByOffsetFactory.AppendNew(25);
@@ -140,6 +143,7 @@ public class TextSearchManager : ITextSearchManager, ITextSearchEnumeratorContex
     _headerBlock = DiskBlockManager.GetHeaderBlock();
 
     UserTree = UserTreeFactory.LoadExisting(_headerBlock.Address1);
+    UserCache = new UserCache(this, UserTree, 10000);
     RepoTree = RepoTreeFactory.LoadExisting(_headerBlock.Address2);
     DocTree = DocTreeFactory.LoadExisting(_headerBlock.Address3);
     DocTreeByOffset = DocTreeByOffsetFactory.LoadExisting(_headerBlock.Address4);
@@ -225,7 +229,7 @@ public class TextSearchManager : ITextSearchManager, ITextSearchEnumeratorContex
       UserId = userId
     };
 
-    bool found = UserTree.TryFind(userIdCompoundKeyBlock, out UserInfoBlock userInfoBlock, out DiskBTreeNode<UserIdCompoundKeyBlock, UserInfoBlock> node, out int nodeIndex);
+    bool found = UserCache.TryFind(userIdCompoundKeyBlock, out UserInfoBlock userInfoBlock, out DiskBTreeNode<UserIdCompoundKeyBlock, UserInfoBlock> node, out int nodeIndex, out _);
     if (found)
     {
       var repoIdCompoundKeyBlock = new RepoIdCompoundKeyBlock();
