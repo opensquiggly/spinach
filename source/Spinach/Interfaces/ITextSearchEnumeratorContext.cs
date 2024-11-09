@@ -5,9 +5,9 @@ public interface ITextSearchEnumeratorContext
   // Properties
   DiskBlockManager DiskBlockManager { get; }
   DiskBTree<int, long> TrigramTree { get; }
-  DiskBTree<UserIdCompoundKeyBlock, UserInfoBlock> UserTree { get; }
-  DiskBTree<RepoIdCompoundKeyBlock, RepoInfoBlock> RepoTree { get; }
-  DiskBTree<DocIdCompoundKeyBlock, DocInfoBlock> DocTree { get; }
+  UserCache UserCache { get; }
+  RepoCache RepoCache { get; }
+  DocCache DocCache { get; }
   DiskBTree<DocOffsetCompoundKeyBlock, uint> DocTreeByOffset { get; }
   DiskBTreeFactory<int, long> TrigramTreeFactory { get; }
   DiskBTreeFactory<TrigramMatchKey, long> TrigramMatchesFactory { get; }
