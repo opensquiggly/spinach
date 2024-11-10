@@ -65,11 +65,9 @@ public class MatchWithRepoOffsetKey : IComparable<MatchWithRepoOffsetKey>, IComp
     return this.CompareTo(obj) == 0;
   }
 
-  public override int GetHashCode()
-  {
+  public override int GetHashCode() =>
     // ReSharper disable once ArrangeMethodOrOperatorBody
-    return HashCode.Combine(UserType, UserId, RepoType, RepoId, Offset + AdjustedOffset);
-  }
+    HashCode.Combine(UserType, UserId, RepoType, RepoId, Offset + AdjustedOffset);
 
   // /////////////////////////////////////////////////////////////////////////////////////////////
   // IComparable Implementation
@@ -147,57 +145,39 @@ public class MatchWithRepoOffsetKey : IComparable<MatchWithRepoOffsetKey>, IComp
     AdjustedOffset = other.AdjustedOffset;
   }
 
-  public MatchWithRepoOffsetKey Dup()
-  {
+  public MatchWithRepoOffsetKey Dup() =>
     // ReSharper disable once ArrangeMethodOrOperatorBody
-    return new MatchWithRepoOffsetKey(UserType, UserId, RepoType, RepoId, Offset, AdjustedOffset);
-  }
+    new MatchWithRepoOffsetKey(UserType, UserId, RepoType, RepoId, Offset, AdjustedOffset);
 
-  public MatchWithRepoOffsetKey CreateForNextRepo()
-  {
+  public MatchWithRepoOffsetKey CreateForNextRepo() =>
     // ReSharper disable once ArrangeMethodOrOperatorBody
-    return new MatchWithRepoOffsetKey(UserType, UserId, RepoType, RepoId + 1, 0, AdjustedOffset);
-  }
+    new MatchWithRepoOffsetKey(UserType, UserId, RepoType, RepoId + 1, 0, AdjustedOffset);
 
-  public MatchWithRepoOffsetKey CreateForNextUser()
-  {
+  public MatchWithRepoOffsetKey CreateForNextUser() =>
     // ReSharper disable once ArrangeMethodOrOperatorBody
-    return new MatchWithRepoOffsetKey(UserType, UserId + 1, 0, 0, 0, AdjustedOffset);
-  }
+    new MatchWithRepoOffsetKey(UserType, UserId + 1, 0, 0, 0, AdjustedOffset);
 
-  public MatchWithRepoOffsetKey ToZeroAdjustedOffset()
-  {
+  public MatchWithRepoOffsetKey ToZeroAdjustedOffset() =>
     // ReSharper disable once ArrangeMethodOrOperatorBody
-    return new MatchWithRepoOffsetKey(UserType, UserId, RepoType, RepoId, Offset, 0);
-  }
+    new MatchWithRepoOffsetKey(UserType, UserId, RepoType, RepoId, Offset, 0);
 
-  public MatchWithRepoOffsetKey WithAdjustedOffset(long adjustedOffset)
-  {
+  public MatchWithRepoOffsetKey WithAdjustedOffset(long adjustedOffset) =>
     // ReSharper disable once ArrangeMethodOrOperatorBody
-    return new MatchWithRepoOffsetKey(UserType, UserId, RepoType, RepoId, Offset, adjustedOffset);
-  }
+    new MatchWithRepoOffsetKey(UserType, UserId, RepoType, RepoId, Offset, adjustedOffset);
 
-  public static bool IsSameUser(MatchWithRepoOffsetKey left, MatchWithRepoOffsetKey right)
-  {
+  public static bool IsSameUser(MatchWithRepoOffsetKey left, MatchWithRepoOffsetKey right) =>
     // ReSharper disable once ArrangeMethodOrOperatorBody
-    return left.UserType == right.UserType && left.UserId == right.UserId;
-  }
+    left.UserType == right.UserType && left.UserId == right.UserId;
 
-  public static bool IsSameUser(MatchWithRepoOffsetKey left, TrigramMatchKey right)
-  {
+  public static bool IsSameUser(MatchWithRepoOffsetKey left, TrigramMatchKey right) =>
     // ReSharper disable once ArrangeMethodOrOperatorBody
-    return left.UserType == right.UserType && left.UserId == right.UserId;
-  }
+    left.UserType == right.UserType && left.UserId == right.UserId;
 
-  public static bool IsSameRepo(MatchWithRepoOffsetKey left, MatchWithRepoOffsetKey right)
-  {
+  public static bool IsSameRepo(MatchWithRepoOffsetKey left, MatchWithRepoOffsetKey right) =>
     // ReSharper disable once ArrangeMethodOrOperatorBody
-    return left.UserType == right.UserType && left.UserId == right.UserId && left.RepoType == right.RepoType && left.RepoId == right.RepoId;
-  }
+    left.UserType == right.UserType && left.UserId == right.UserId && left.RepoType == right.RepoType && left.RepoId == right.RepoId;
 
-  public static bool IsSameRepo(MatchWithRepoOffsetKey left, TrigramMatchKey right)
-  {
+  public static bool IsSameRepo(MatchWithRepoOffsetKey left, TrigramMatchKey right) =>
     // ReSharper disable once ArrangeMethodOrOperatorBody
-    return left.UserType == right.UserType && left.UserId == right.UserId && left.RepoType == right.RepoType && left.RepoId == right.RepoId;
-  }
+    left.UserType == right.UserType && left.UserId == right.UserId && left.RepoType == right.RepoType && left.RepoId == right.RepoId;
 }

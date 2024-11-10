@@ -49,35 +49,17 @@ public class MatchWithDocIdAndOffsetKey : IComparable<MatchWithDocIdAndOffsetKey
   public int CompareTo(object obj) => CompareTo((MatchWithDocIdAndOffsetKey)obj);
 
   // All operator overloads
-  public static bool operator <(MatchWithDocIdAndOffsetKey left, MatchWithDocIdAndOffsetKey right)
-  {
-    return left.CompareTo(right) < 0;
-  }
+  public static bool operator <(MatchWithDocIdAndOffsetKey left, MatchWithDocIdAndOffsetKey right) => left.CompareTo(right) < 0;
 
-  public static bool operator >(MatchWithDocIdAndOffsetKey left, MatchWithDocIdAndOffsetKey right)
-  {
-    return left.CompareTo(right) > 0;
-  }
+  public static bool operator >(MatchWithDocIdAndOffsetKey left, MatchWithDocIdAndOffsetKey right) => left.CompareTo(right) > 0;
 
-  public static bool operator <=(MatchWithDocIdAndOffsetKey left, MatchWithDocIdAndOffsetKey right)
-  {
-    return left.CompareTo(right) <= 0;
-  }
+  public static bool operator <=(MatchWithDocIdAndOffsetKey left, MatchWithDocIdAndOffsetKey right) => left.CompareTo(right) <= 0;
 
-  public static bool operator >=(MatchWithDocIdAndOffsetKey left, MatchWithDocIdAndOffsetKey right)
-  {
-    return left.CompareTo(right) >= 0;
-  }
+  public static bool operator >=(MatchWithDocIdAndOffsetKey left, MatchWithDocIdAndOffsetKey right) => left.CompareTo(right) >= 0;
 
-  public static bool operator ==(MatchWithDocIdAndOffsetKey left, MatchWithDocIdAndOffsetKey right)
-  {
-    return left.CompareTo(right) == 0;
-  }
+  public static bool operator ==(MatchWithDocIdAndOffsetKey left, MatchWithDocIdAndOffsetKey right) => left.CompareTo(right) == 0;
 
-  public static bool operator !=(MatchWithDocIdAndOffsetKey left, MatchWithDocIdAndOffsetKey right)
-  {
-    return left.CompareTo(right) != 0;
-  }
+  public static bool operator !=(MatchWithDocIdAndOffsetKey left, MatchWithDocIdAndOffsetKey right) => left.CompareTo(right) != 0;
 
   public override bool Equals(object obj)
   {
@@ -89,15 +71,9 @@ public class MatchWithDocIdAndOffsetKey : IComparable<MatchWithDocIdAndOffsetKey
     return this.CompareTo(obj) == 0;
   }
 
-  public override int GetHashCode()
-  {
-    return HashCode.Combine(UserType, UserId, RepoType, RepoId, DocId, Position);
-  }
+  public override int GetHashCode() => HashCode.Combine(UserType, UserId, RepoType, RepoId, DocId, Position);
 
-  public MatchWithDocIdAndOffsetKey Dup()
-  {
-    return new(UserType, UserId, RepoType, RepoId, DocId, Position);
-  }
+  public MatchWithDocIdAndOffsetKey Dup() => new(UserType, UserId, RepoType, RepoId, DocId, Position);
 
   public void Copy(MatchWithDocIdAndOffsetKey other)
   {
@@ -109,23 +85,11 @@ public class MatchWithDocIdAndOffsetKey : IComparable<MatchWithDocIdAndOffsetKey
     Position = other.Position;
   }
 
-  public MatchWithDocIdAndOffsetKey CreateForNextRepo()
-  {
-    return new MatchWithDocIdAndOffsetKey(UserType, UserId, RepoType, RepoId + 1, 0, 0);
-  }
+  public MatchWithDocIdAndOffsetKey CreateForNextRepo() => new MatchWithDocIdAndOffsetKey(UserType, UserId, RepoType, RepoId + 1, 0, 0);
 
-  public MatchWithDocIdAndOffsetKey CreateForNextUser()
-  {
-    return new MatchWithDocIdAndOffsetKey(UserType, UserId + 1, RepoType, 0, 0, 0);
-  }
+  public MatchWithDocIdAndOffsetKey CreateForNextUser() => new MatchWithDocIdAndOffsetKey(UserType, UserId + 1, RepoType, 0, 0, 0);
 
-  public MatchWithDocIdAndOffsetKey CreateForNextDoc()
-  {
-    return new MatchWithDocIdAndOffsetKey(UserType, UserId, RepoType, RepoId, DocId + 1, 0);
-  }
+  public MatchWithDocIdAndOffsetKey CreateForNextDoc() => new MatchWithDocIdAndOffsetKey(UserType, UserId, RepoType, RepoId, DocId + 1, 0);
 
-  public MatchWithDocIdKey ToMatchWithDocIdKey()
-  {
-    return new(UserType, UserId, RepoType, RepoId, DocId);
-  }
+  public MatchWithDocIdKey ToMatchWithDocIdKey() => new(UserType, UserId, RepoType, RepoId, DocId);
 }

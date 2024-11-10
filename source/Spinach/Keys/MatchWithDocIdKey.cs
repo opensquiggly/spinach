@@ -86,18 +86,9 @@ public class MatchWithDocIdKey : IComparable<MatchWithDocIdKey>, IComparable
     DocId = other.DocId;
   }
 
-  public MatchWithDocIdKey CreateForNextRepo()
-  {
-    return new MatchWithDocIdKey(UserType, UserId, RepoType, RepoId + 1, 0);
-  }
+  public MatchWithDocIdKey CreateForNextRepo() => new MatchWithDocIdKey(UserType, UserId, RepoType, RepoId + 1, 0);
 
-  public MatchWithDocIdKey CreateForNextUser()
-  {
-    return new MatchWithDocIdKey(UserType, UserId + 1, 0, 0, 0);
-  }
+  public MatchWithDocIdKey CreateForNextUser() => new MatchWithDocIdKey(UserType, UserId + 1, 0, 0, 0);
 
-  public MatchWithDocIdKey CreateForNextDoc()
-  {
-    return new MatchWithDocIdKey(UserType, UserId, RepoType, RepoId, DocId + 1);
-  }
+  public MatchWithDocIdKey CreateForNextDoc() => new MatchWithDocIdKey(UserType, UserId, RepoType, RepoId, DocId + 1);
 }
