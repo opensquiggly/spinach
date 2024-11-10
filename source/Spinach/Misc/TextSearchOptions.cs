@@ -15,5 +15,7 @@ public class TextSearchOptions : ITextSearchOptions
 
   public DocMatchType DocMatchType { get; set; }
 
+  public bool MatchCase { get; set; }
+
   public static ITextSearchOptions Default { get; }
 }
