@@ -1,9 +1,14 @@
 namespace Spinach.Enumerators;
 
-using Misc;
-
 public class FastLiteralEnumerator2 : IFastEnumerator<MatchWithRepoOffsetKey, MatchData>
 {
+  // /////////////////////////////////////////////////////////////////////////////////////////////
+  // Private Member Variables
+  // /////////////////////////////////////////////////////////////////////////////////////////////
+
+  private MatchWithRepoOffsetKey _tempKey;
+  private MatchWithRepoOffsetKey _lastKey;
+
   // /////////////////////////////////////////////////////////////////////////////////////////////
   // Constructors
   // /////////////////////////////////////////////////////////////////////////////////////////////
@@ -18,6 +23,7 @@ public class FastLiteralEnumerator2 : IFastEnumerator<MatchWithRepoOffsetKey, Ma
     Enumerator1 = Enumerable1.GetFastEnumerator();
     Enumerator2 = Enumerable2.GetFastEnumerator();
     CurrentKey = new MatchWithRepoOffsetKey();
+    _tempKey = new MatchWithRepoOffsetKey();
     Reset();
   }
 
@@ -39,6 +45,14 @@ public class FastLiteralEnumerator2 : IFastEnumerator<MatchWithRepoOffsetKey, Ma
 
   private int AdjustedOffset { get; }
 
+  private bool LastDocIsValid { get; set; }
+
+  private uint LastDocId { get; set; }
+
+  private long LastDocStartingOffset { get; set; }
+
+  private long LastDocLength { get; set; }
+
   // /////////////////////////////////////////////////////////////////////////////////////////////
   // Public Properties
   // /////////////////////////////////////////////////////////////////////////////////////////////
@@ -52,6 +66,147 @@ public class FastLiteralEnumerator2 : IFastEnumerator<MatchWithRepoOffsetKey, Ma
   public MatchWithRepoOffsetKey CurrentKey { get; private set; }
 
   // /////////////////////////////////////////////////////////////////////////////////////////////
+  // Private Methods
+  // /////////////////////////////////////////////////////////////////////////////////////////////
+
+  private bool IsSameDocumentAsLast()
+  {
+    // ReSharper disable once ArrangeMethodOrOperatorBody
+    return
+      MatchWithRepoOffsetKey.IsSameRepo(Enumerator1.CurrentKey, _lastKey) &&
+      Enumerator1.CurrentData.Document.IsValid &&
+      LastDocIsValid &&
+      Enumerator1.CurrentData.Document.DocId == LastDocId;
+  }
+
+  private void SaveLastKeyAndData()
+  {
+    _lastKey.Copy(Enumerator1.CurrentKey);
+    LastDocIsValid = Enumerator1.CurrentData.Document.IsValid;
+    LastDocId = Enumerator1.CurrentData.Document.DocId;
+    LastDocStartingOffset = (long)Enumerator1.CurrentData.Document.StartingOffset;
+    LastDocLength = Enumerator1.CurrentData.Document.Length;
+  }
+
+  private bool ConfirmLiteralMatch()
+  {
+    string targetLiteral = Enumerator1.CurrentData.Document.Content.Substring(
+    (int)Enumerator1.CurrentData.MatchPosition,
+      Literal.Length
+    );
+
+    return string.Equals(targetLiteral, Literal, Context.Options.MatchCase ?
+      StringComparison.CurrentCulture :
+      StringComparison.CurrentCultureIgnoreCase);
+  }
+
+  private bool Intersect(bool hasValue1, bool hasValue2)
+  {
+    while (hasValue1 && hasValue2)
+    {
+      if (Enumerator1.CurrentKey < Enumerator2.CurrentKey)
+      {
+        hasValue1 = Enumerator1.MoveUntilGreaterThanOrEqual(Enumerator2.CurrentKey.WithAdjustedOffset(0, ref _tempKey));
+      }
+      else if (Enumerator1.CurrentKey > Enumerator2.CurrentKey)
+      {
+        hasValue2 = Enumerator2.MoveUntilGreaterThanOrEqual(Enumerator1.CurrentKey.WithAdjustedOffset(AdjustedOffset, ref _tempKey));
+      }
+      else if (!ConfirmLiteralMatch())
+      {
+        hasValue1 = Enumerator1.MoveNext();
+        hasValue2 = Enumerator2.MoveNext();
+      }
+      else
+      {
+        CurrentKey = Enumerator1.CurrentKey;
+        CurrentData = Enumerator1.CurrentData;
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  private bool MoveNextInternal()
+  {
+    bool hasValue1 = Enumerator1.MoveNext();
+    bool hasValue2 = Enumerator2.MoveNext();
+
+    return Intersect(hasValue1, hasValue2);
+  }
+
+  private bool MoveNext_FirstMatchOnly()
+  {
+    bool hasValue = MoveNextInternal();
+
+    if (!hasValue) return false;
+    if (!IsSameDocumentAsLast())
+    {
+      SaveLastKeyAndData();
+      return true;
+    }
+
+    var nextKey = new MatchWithRepoOffsetKey()
+    {
+      UserType = _lastKey.UserType,
+      UserId = _lastKey.UserId,
+      RepoType = _lastKey.RepoType,
+      RepoId = _lastKey.RepoId,
+      Offset = LastDocStartingOffset + LastDocLength,
+      AdjustedOffset = _lastKey.AdjustedOffset
+    };
+
+    bool result = MoveUntilGreaterThanOrEqualInternal(nextKey);
+    SaveLastKeyAndData();
+
+    return result;
+  }
+
+  private bool MoveNext_AllMatches() =>
+    // ReSharper disable once ArrangeMethodOrOperatorBody
+    MoveNextInternal();
+
+  private bool MoveUntilGreaterThanOrEqualInternal(MatchWithRepoOffsetKey target)
+  {
+    bool hasValue1 = Enumerator1.MoveUntilGreaterThanOrEqual(target);
+    bool hasValue2 = Enumerator2.MoveUntilGreaterThanOrEqual(target);
+
+    return Intersect(hasValue1, hasValue2);
+  }
+
+  private bool MoveUntilGreaterThanOrEqual_FirstMatchOnly(MatchWithRepoOffsetKey target)
+  {
+    bool hasValue = MoveUntilGreaterThanOrEqualInternal(target);
+
+    if (!hasValue) return false;
+    if (!IsSameDocumentAsLast())
+    {
+      SaveLastKeyAndData();
+      return true;
+    }
+
+    var nextKey = new MatchWithRepoOffsetKey()
+    {
+      UserType = _lastKey.UserType,
+      UserId = _lastKey.UserId,
+      RepoType = _lastKey.RepoType,
+      RepoId = _lastKey.RepoId,
+      Offset = LastDocStartingOffset + LastDocLength,
+      AdjustedOffset = _lastKey.AdjustedOffset
+    };
+
+    bool result = MoveUntilGreaterThanOrEqualInternal(nextKey);
+    SaveLastKeyAndData();
+
+    return result;
+  }
+
+  private bool MoveUntilGreaterThanOrEqual_AllMatches(MatchWithRepoOffsetKey target) =>
+    // ReSharper disable once ArrangeMethodOrOperatorBody
+    MoveUntilGreaterThanOrEqualInternal(target);
+
+  // /////////////////////////////////////////////////////////////////////////////////////////////
   // Public Methods
   // /////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -61,109 +216,34 @@ public class FastLiteralEnumerator2 : IFastEnumerator<MatchWithRepoOffsetKey, Ma
 
   public bool MoveNext()
   {
-    MatchWithRepoOffsetKey lastKey = Enumerator1.CurrentKey.Dup();
-
-    var lastData = new MatchData()
+    // ReSharper disable once ArrangeMethodOrOperatorBody
+    return Context.Options.DocMatchType switch
     {
-      Document = Enumerator1.CurrentData.Document,
-      MatchPosition = Enumerator1.CurrentData.MatchPosition
+      DocMatchType.FirstMatchOnly => MoveNext_FirstMatchOnly(),
+      DocMatchType.AllMatchesInDocument => MoveNext_AllMatches(),
+      _ => throw new ArgumentOutOfRangeException("Select FirstMatchOnly or AllMatchesInDocument")
     };
-
-    bool hasValue1 = Enumerator1.MoveNext();
-    bool hasValue2 = Enumerator2.MoveNext();
-
-    while (hasValue1 && hasValue2)
-    {
-      if (Enumerator1.CurrentKey < Enumerator2.CurrentKey)
-      {
-        hasValue1 = Enumerator1.MoveUntilGreaterThanOrEqual(Enumerator2.CurrentKey.ToZeroAdjustedOffset());
-      }
-      else if (Enumerator1.CurrentKey > Enumerator2.CurrentKey)
-      {
-        hasValue2 = Enumerator2.MoveUntilGreaterThanOrEqual(Enumerator1.CurrentKey.WithAdjustedOffset(AdjustedOffset));
-      }
-      else if (!string.Equals(Enumerator1.CurrentData.Document.Content.Substring((int)Enumerator1.CurrentData.MatchPosition, Literal.Length), Literal, StringComparison.CurrentCultureIgnoreCase))
-      {
-        hasValue1 = Enumerator1.MoveNext();
-        hasValue2 = Enumerator2.MoveNext();
-      }
-      else if (Context.Options.DocMatchType == DocMatchType.FirstMatchOnly && lastKey.CompareTo(Enumerator1.CurrentKey) == 0 && lastData.MatchPosition == Enumerator1.CurrentData.MatchPosition)
-      {
-        // Move to next greater than or equal to last key + 1
-        hasValue1 = Enumerator1.MoveUntilGreaterThanOrEqual(new MatchWithRepoOffsetKey()
-        {
-          UserType = lastKey.UserType,
-          UserId = lastKey.UserId,
-          RepoType = lastKey.RepoType,
-          RepoId = lastKey.RepoId,
-          Offset = lastKey.Offset + 1
-        });
-
-        hasValue1 = Enumerator1.MoveNext();
-        hasValue2 = Enumerator2.MoveNext();
-      }
-      else
-      {
-        CurrentKey = Enumerator1.CurrentKey;
-        CurrentData = Enumerator1.CurrentData;
-        return true;
-      }
-    }
-
-    return false;
   }
 
   public bool MoveUntilGreaterThanOrEqual(MatchWithRepoOffsetKey target)
   {
-    MatchWithRepoOffsetKey lastKey = Enumerator1.CurrentKey.Dup();
-
-    var lastData = new MatchData()
+    // ReSharper disable once ArrangeMethodOrOperatorBody
+    return Context.Options.DocMatchType switch
     {
-      Document = Enumerator1.CurrentData.Document,
-      MatchPosition = Enumerator1.CurrentData.MatchPosition
+      DocMatchType.FirstMatchOnly => MoveUntilGreaterThanOrEqual_FirstMatchOnly(target),
+      DocMatchType.AllMatchesInDocument => MoveUntilGreaterThanOrEqual_AllMatches(target),
+      _ => throw new ArgumentOutOfRangeException("Select FirstMatchOnly or AllMatchesInDocument")
     };
-
-    bool hasValue1 = Enumerator1.MoveUntilGreaterThanOrEqual(target);
-    bool hasValue2 = Enumerator2.MoveUntilGreaterThanOrEqual(target);
-
-    while (hasValue1 && hasValue2)
-    {
-      if (Enumerator1.CurrentKey < Enumerator2.CurrentKey)
-      {
-        hasValue1 = Enumerator1.MoveUntilGreaterThanOrEqual(Enumerator2.CurrentKey.ToZeroAdjustedOffset());
-      }
-      else if (Enumerator1.CurrentKey > Enumerator2.CurrentKey)
-      {
-        hasValue2 = Enumerator2.MoveUntilGreaterThanOrEqual(Enumerator1.CurrentKey.WithAdjustedOffset(AdjustedOffset));
-      }
-      else if (Context.Options.DocMatchType == DocMatchType.FirstMatchOnly && lastKey.CompareTo(Enumerator1.CurrentKey) == 0 && lastData.MatchPosition == Enumerator1.CurrentData.MatchPosition)
-      {
-        // Move to next greater than or equal to last key + 1
-        hasValue1 = Enumerator1.MoveUntilGreaterThanOrEqual(new MatchWithRepoOffsetKey()
-        {
-          UserType = lastKey.UserType,
-          UserId = lastKey.UserId,
-          RepoType = lastKey.RepoType,
-          RepoId = lastKey.RepoId,
-          Offset = lastKey.Offset + 1
-        });
-
-        hasValue1 = Enumerator1.MoveNext();
-        hasValue2 = Enumerator2.MoveNext();
-      }
-      else
-      {
-        CurrentKey = Enumerator1.CurrentKey;
-        CurrentData = Enumerator1.CurrentData;
-        return true;
-      }
-    }
-
-    return false;
   }
 
   public void Reset()
   {
+    _lastKey = new MatchWithRepoOffsetKey();
+    LastDocIsValid = false;
+    LastDocId = 0;
+    LastDocStartingOffset = 0;
+    LastDocLength = 0;
+
     Enumerator1.Reset();
     Enumerator2.Reset();
   }

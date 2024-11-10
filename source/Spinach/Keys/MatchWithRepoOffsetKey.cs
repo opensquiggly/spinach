@@ -157,13 +157,17 @@ public class MatchWithRepoOffsetKey : IComparable<MatchWithRepoOffsetKey>, IComp
     // ReSharper disable once ArrangeMethodOrOperatorBody
     new MatchWithRepoOffsetKey(UserType, UserId + 1, 0, 0, 0, AdjustedOffset);
 
-  public MatchWithRepoOffsetKey ToZeroAdjustedOffset() =>
-    // ReSharper disable once ArrangeMethodOrOperatorBody
-    new MatchWithRepoOffsetKey(UserType, UserId, RepoType, RepoId, Offset, 0);
+  public MatchWithRepoOffsetKey WithAdjustedOffset(long adjustedOffset, ref MatchWithRepoOffsetKey destination)
+  {
+    destination.UserType = UserType;
+    destination.UserId = UserId;
+    destination.RepoType = RepoType;
+    destination.RepoId = RepoId;
+    destination.Offset = Offset;
+    destination.AdjustedOffset = adjustedOffset;
 
-  public MatchWithRepoOffsetKey WithAdjustedOffset(long adjustedOffset) =>
-    // ReSharper disable once ArrangeMethodOrOperatorBody
-    new MatchWithRepoOffsetKey(UserType, UserId, RepoType, RepoId, Offset, adjustedOffset);
+    return destination;
+  }
 
   public static bool IsSameUser(MatchWithRepoOffsetKey left, MatchWithRepoOffsetKey right) =>
     // ReSharper disable once ArrangeMethodOrOperatorBody
