@@ -78,10 +78,8 @@ public class FastTrigramEnumerator2 : IFastEnumerator<MatchWithRepoOffsetKey, Ma
   {
     if (TrigramMatchesCursor == null) return;
 
-    if (CurrentKey.UserType == TrigramMatchesCursor.CurrentKey.UserType &&
-        CurrentKey.UserId == TrigramMatchesCursor.CurrentKey.UserId)
+    if (MatchWithRepoOffsetKey.IsSameUser(CurrentKey, TrigramMatchesCursor.CurrentKey))
     {
-      // Nothing changed since last time
       return;
     }
 
@@ -102,12 +100,8 @@ public class FastTrigramEnumerator2 : IFastEnumerator<MatchWithRepoOffsetKey, Ma
   {
     if (TrigramMatchesCursor == null) return;
 
-    if (CurrentKey.UserType == TrigramMatchesCursor.CurrentKey.UserType &&
-        CurrentKey.UserId == TrigramMatchesCursor.CurrentKey.UserId &&
-        CurrentKey.RepoType == TrigramMatchesCursor.CurrentKey.RepoType &&
-        CurrentKey.RepoId == TrigramMatchesCursor.CurrentKey.RepoId)
+    if (MatchWithRepoOffsetKey.IsSameRepo(CurrentKey, TrigramMatchesCursor.CurrentKey))
     {
-      // Nothing changed since last time
       return;
     }
 
@@ -130,10 +124,7 @@ public class FastTrigramEnumerator2 : IFastEnumerator<MatchWithRepoOffsetKey, Ma
 
   private void SetCurrentDocument()
   {
-    if (CurrentKey.UserType == TrigramMatchesCursor.CurrentKey.UserType &&
-        CurrentKey.UserId == TrigramMatchesCursor.CurrentKey.UserId &&
-        CurrentKey.RepoType == TrigramMatchesCursor.CurrentKey.RepoType &&
-        CurrentKey.RepoId == TrigramMatchesCursor.CurrentKey.RepoId &&
+    if (MatchWithRepoOffsetKey.IsSameRepo(CurrentKey, TrigramMatchesCursor.CurrentKey) &&
         CurrentKey.Offset == (long)CurrentPostingsListCursor.CurrentKey)
     {
       // Nothing changed since last time
@@ -311,6 +302,7 @@ public class FastTrigramEnumerator2 : IFastEnumerator<MatchWithRepoOffsetKey, Ma
     CurrentKey.UserId = 0;
     CurrentKey.RepoType = 0;
     CurrentKey.RepoId = 0;
+    CurrentKey.AdjustedOffset = AdjustedOffset;
     CurrentUser = null;
     CurrentRepository = null;
     CurrentDocument = null;
