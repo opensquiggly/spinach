@@ -12,9 +12,9 @@ public class FastLiteralEnumerator2 : IFastEnumerator<MatchWithRepoOffsetKey, Ma
   {
     Literal = literal;
     Context = context;
-    Offset = Literal.Length - 3;
+    AdjustedOffset = 3 - Literal.Length;
     Enumerable1 = new FastTrigramEnumerable2(Literal.Substring(0, 3), context);
-    Enumerable2 = new FastTrigramEnumerable2(Literal.Substring(Literal.Length - 3, 3), context, Offset);
+    Enumerable2 = new FastTrigramEnumerable2(Literal.Substring(Literal.Length - 3, 3), context, AdjustedOffset);
     Enumerator1 = Enumerable1.GetFastEnumerator();
     Enumerator2 = Enumerable2.GetFastEnumerator();
     CurrentKey = new MatchWithRepoOffsetKey();
@@ -37,7 +37,7 @@ public class FastLiteralEnumerator2 : IFastEnumerator<MatchWithRepoOffsetKey, Ma
 
   private string Literal { get; }
 
-  private int Offset { get; }
+  private int AdjustedOffset { get; }
 
   // /////////////////////////////////////////////////////////////////////////////////////////////
   // Public Properties
@@ -61,37 +61,44 @@ public class FastLiteralEnumerator2 : IFastEnumerator<MatchWithRepoOffsetKey, Ma
 
   public bool MoveNext()
   {
+    MatchWithRepoOffsetKey lastKey = Enumerator1.CurrentKey.Dup();
+
+    var lastData = new MatchData()
+    {
+      Document = Enumerator1.CurrentData.Document,
+      MatchPosition = Enumerator1.CurrentData.MatchPosition
+    };
+
     bool hasValue1 = Enumerator1.MoveNext();
     bool hasValue2 = Enumerator2.MoveNext();
 
     while (hasValue1 && hasValue2)
     {
-      long adjustedOffset = ((long)Enumerator2.CurrentKey.Offset) - ((long)Offset);
-      var adjustedKey = new MatchWithRepoOffsetKey()
+      if (Enumerator1.CurrentKey < Enumerator2.CurrentKey)
       {
-        UserType = Enumerator2.CurrentKey.UserType,
-        UserId = Enumerator2.CurrentKey.UserId,
-        RepoType = Enumerator2.CurrentKey.RepoType,
-        RepoId = Enumerator2.CurrentKey.RepoId,
-        Offset = Math.Max(adjustedOffset, 0)
-      };
-
-      if (Enumerator1.CurrentKey.CompareTo(adjustedKey) < 0 && adjustedOffset >= 0)
-      {
-        hasValue1 = Enumerator1.MoveUntilGreaterThanOrEqual(adjustedKey);
+        hasValue1 = Enumerator1.MoveUntilGreaterThanOrEqual(Enumerator2.CurrentKey.ToZeroAdjustedOffset());
       }
-      else if (Enumerator1.CurrentKey.CompareTo(adjustedKey) > 0 || adjustedOffset < 0)
+      else if (Enumerator1.CurrentKey > Enumerator2.CurrentKey)
       {
-        adjustedKey.UserType = Enumerator1.CurrentKey.UserType;
-        adjustedKey.UserId = Enumerator1.CurrentKey.UserId;
-        adjustedKey.RepoType = Enumerator1.CurrentKey.RepoType;
-        adjustedKey.RepoId = Enumerator1.CurrentKey.RepoId;
-        adjustedKey.Offset = Enumerator1.CurrentKey.Offset + (long)Offset;
-
-        hasValue2 = Enumerator2.MoveUntilGreaterThanOrEqual(adjustedKey);
+        hasValue2 = Enumerator2.MoveUntilGreaterThanOrEqual(Enumerator1.CurrentKey.WithAdjustedOffset(AdjustedOffset));
       }
       else if (!string.Equals(Enumerator1.CurrentData.Document.Content.Substring((int)Enumerator1.CurrentData.MatchPosition, Literal.Length), Literal, StringComparison.CurrentCultureIgnoreCase))
       {
+        hasValue1 = Enumerator1.MoveNext();
+        hasValue2 = Enumerator2.MoveNext();
+      }
+      else if (Context.Options.DocMatchType == DocMatchType.FirstMatchOnly && lastKey.CompareTo(Enumerator1.CurrentKey) == 0 && lastData.MatchPosition == Enumerator1.CurrentData.MatchPosition)
+      {
+        // Move to next greater than or equal to last key + 1
+        hasValue1 = Enumerator1.MoveUntilGreaterThanOrEqual(new MatchWithRepoOffsetKey()
+        {
+          UserType = lastKey.UserType,
+          UserId = lastKey.UserId,
+          RepoType = lastKey.RepoType,
+          RepoId = lastKey.RepoId,
+          Offset = lastKey.Offset + 1
+        });
+
         hasValue1 = Enumerator1.MoveNext();
         hasValue2 = Enumerator2.MoveNext();
       }
@@ -108,34 +115,41 @@ public class FastLiteralEnumerator2 : IFastEnumerator<MatchWithRepoOffsetKey, Ma
 
   public bool MoveUntilGreaterThanOrEqual(MatchWithRepoOffsetKey target)
   {
+    MatchWithRepoOffsetKey lastKey = Enumerator1.CurrentKey.Dup();
+
+    var lastData = new MatchData()
+    {
+      Document = Enumerator1.CurrentData.Document,
+      MatchPosition = Enumerator1.CurrentData.MatchPosition
+    };
+
     bool hasValue1 = Enumerator1.MoveUntilGreaterThanOrEqual(target);
     bool hasValue2 = Enumerator2.MoveUntilGreaterThanOrEqual(target);
 
     while (hasValue1 && hasValue2)
     {
-      long adjustedOffset = ((long)Enumerator2.CurrentKey.Offset) - ((long)Offset);
-      var adjustedKey = new MatchWithRepoOffsetKey()
+      if (Enumerator1.CurrentKey < Enumerator2.CurrentKey)
       {
-        UserType = Enumerator2.CurrentKey.UserType,
-        UserId = Enumerator2.CurrentKey.UserId,
-        RepoType = Enumerator2.CurrentKey.RepoType,
-        RepoId = Enumerator2.CurrentKey.RepoId,
-        Offset = Math.Max(adjustedOffset, 0)
-      };
-
-      if (Enumerator1.CurrentKey.CompareTo(adjustedKey) < 0 && adjustedOffset >= 0)
-      {
-        hasValue1 = Enumerator1.MoveUntilGreaterThanOrEqual(adjustedKey);
+        hasValue1 = Enumerator1.MoveUntilGreaterThanOrEqual(Enumerator2.CurrentKey.ToZeroAdjustedOffset());
       }
-      else if (Enumerator1.CurrentKey.CompareTo(adjustedKey) > 0 || adjustedOffset < 0)
+      else if (Enumerator1.CurrentKey > Enumerator2.CurrentKey)
       {
-        adjustedKey.UserType = Enumerator1.CurrentKey.UserType;
-        adjustedKey.UserId = Enumerator1.CurrentKey.UserId;
-        adjustedKey.RepoType = Enumerator1.CurrentKey.RepoType;
-        adjustedKey.RepoId = Enumerator1.CurrentKey.RepoId;
-        adjustedKey.Offset = Enumerator1.CurrentKey.Offset + (long)Offset;
+        hasValue2 = Enumerator2.MoveUntilGreaterThanOrEqual(Enumerator1.CurrentKey.WithAdjustedOffset(AdjustedOffset));
+      }
+      else if (Context.Options.DocMatchType == DocMatchType.FirstMatchOnly && lastKey.CompareTo(Enumerator1.CurrentKey) == 0 && lastData.MatchPosition == Enumerator1.CurrentData.MatchPosition)
+      {
+        // Move to next greater than or equal to last key + 1
+        hasValue1 = Enumerator1.MoveUntilGreaterThanOrEqual(new MatchWithRepoOffsetKey()
+        {
+          UserType = lastKey.UserType,
+          UserId = lastKey.UserId,
+          RepoType = lastKey.RepoType,
+          RepoId = lastKey.RepoId,
+          Offset = lastKey.Offset + 1
+        });
 
-        hasValue2 = Enumerator2.MoveUntilGreaterThanOrEqual(adjustedKey);
+        hasValue1 = Enumerator1.MoveNext();
+        hasValue2 = Enumerator2.MoveNext();
       }
       else
       {

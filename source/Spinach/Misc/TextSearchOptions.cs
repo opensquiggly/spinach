@@ -6,11 +6,14 @@ public class TextSearchOptions : ITextSearchOptions
   {
     Default = new TextSearchOptions()
     {
-      MaxDocSize = 1000000
+      MaxDocSize = 1000000,
+      DocMatchType = DocMatchType.FirstMatchOnly
     };
   }
 
   public int MaxDocSize { get; set; }
+
+  public DocMatchType DocMatchType { get; set; }
 
   public static ITextSearchOptions Default { get; }
 }
