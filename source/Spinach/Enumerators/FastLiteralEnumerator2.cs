@@ -88,16 +88,48 @@ public class FastLiteralEnumerator2 : IFastEnumerator<MatchWithRepoOffsetKey, Ma
     LastDocLength = Enumerator1.CurrentData.Document.Length;
   }
 
+  private string ReadSubstringFromFile(string filePath, long offset, int charCount)
+  {
+    using var fs = new FileStream(filePath, FileMode.Open, FileAccess.Read);
+    using var reader = new StreamReader(fs, Encoding.UTF8);
+    for (int i = 0; i < offset; i++)
+    {
+      if (reader.Read() == -1)
+      {
+        throw new ArgumentOutOfRangeException(nameof(offset), "Offset is out of the range of the file content.");
+      }
+    }
+
+    char[] buffer = new char[charCount];
+    int charsRead = reader.Read(buffer, 0, charCount);
+
+    return new string(buffer, 0, charsRead);
+  }
+
   private bool ConfirmLiteralMatch()
   {
+    // Method 1: Read the whole file and extract the substring
+    // By reading the whole file, we can store it in the LRU cache
+    // and reuse it in the future.
     string targetLiteral = Enumerator1.CurrentData.Document.Content.Substring(
     (int)Enumerator1.CurrentData.MatchPosition,
       Literal.Length
     );
 
-    return string.Equals(targetLiteral, Literal, Context.Options.MatchCase ?
+    // Method 2: Read the specified substring directly from the file
+    // This method is theoretically faster but in practice I did not
+    // notice much of a difference between the two methods.
+    // string targetLiteral = ReadSubstringFromFile(
+    //   Enumerator1.CurrentData.Document.ExternalIdOrPath,
+    //   Enumerator1.CurrentData.MatchPosition,
+    //   Literal.Length
+    // );
+
+    StringComparison stringComparer = Context.Options.MatchCase ?
       StringComparison.CurrentCulture :
-      StringComparison.CurrentCultureIgnoreCase);
+      StringComparison.CurrentCultureIgnoreCase;
+
+    return string.Equals(targetLiteral, Literal, stringComparer);
   }
 
   private bool Intersect(bool hasValue1, bool hasValue2)
@@ -106,11 +138,13 @@ public class FastLiteralEnumerator2 : IFastEnumerator<MatchWithRepoOffsetKey, Ma
     {
       if (Enumerator1.CurrentKey < Enumerator2.CurrentKey)
       {
-        hasValue1 = Enumerator1.MoveUntilGreaterThanOrEqual(Enumerator2.CurrentKey.WithAdjustedOffset(0, ref _tempKey));
+        hasValue1 = Enumerator1.MoveNext();
+        hasValue1 = hasValue1 && Enumerator1.MoveUntilGreaterThanOrEqual(Enumerator2.CurrentKey.WithAdjustedOffset(0, ref _tempKey));
       }
       else if (Enumerator1.CurrentKey > Enumerator2.CurrentKey)
       {
-        hasValue2 = Enumerator2.MoveUntilGreaterThanOrEqual(Enumerator1.CurrentKey.WithAdjustedOffset(AdjustedOffset, ref _tempKey));
+        hasValue2 = Enumerator2.MoveNext();
+        hasValue2 = hasValue2 && Enumerator2.MoveUntilGreaterThanOrEqual(Enumerator1.CurrentKey.WithAdjustedOffset(AdjustedOffset, ref _tempKey));
       }
       else if (!ConfirmLiteralMatch())
       {
