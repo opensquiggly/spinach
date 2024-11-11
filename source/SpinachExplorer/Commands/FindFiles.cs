@@ -17,7 +17,7 @@ internal static partial class Program
     // stopwatch.Stop();
 
     var matches = new RegexEnumerable2(regex, TextSearchManager);
-    var totalMatches = 0;
+    int totalMatches = 0;
 
     foreach (MatchData match in matches)
     {
