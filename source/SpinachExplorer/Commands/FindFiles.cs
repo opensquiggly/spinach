@@ -17,6 +17,7 @@ internal static partial class Program
     // stopwatch.Stop();
 
     var matches = new RegexEnumerable2(regex, TextSearchManager);
+    var totalMatches = 0;
 
     foreach (MatchData match in matches)
     {
@@ -24,6 +25,7 @@ internal static partial class Program
       Console.Write($"User: {match.User.Name}, ");
       Console.Write($"Repo: {match.Repository.Name}, ");
       Console.WriteLine($"{match.Document.ExternalIdOrPath}");
+      totalMatches++;
     }
 
     // foreach (RegexEnumerable.MatchingFile matchingFile in TextSearchIndex.RegexEnumerable(regex))
@@ -51,6 +53,8 @@ internal static partial class Program
     //   });
     // });
 
+    Console.WriteLine($"Total matches: {totalMatches}");
+    Console.WriteLine();
     Pause();
   }
 }

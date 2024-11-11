@@ -242,6 +242,21 @@ public class FastTrigramEnumerator2 : IFastEnumerator<MatchWithRepoOffsetKey, Ma
       {
         SetCurrentDocument();
         SetCurrentKey();
+
+        if (!Current.Document.IsValid || Current.Document.Length > Context.Options.MaxDocSize)
+        {
+          var skipToKey = new MatchWithRepoOffsetKey()
+          {
+            UserType = CurrentKey.UserType,
+            UserId = CurrentKey.UserId,
+            RepoType = CurrentKey.RepoType,
+            RepoId = CurrentKey.RepoId,
+            Offset = (long)(Current.Document.StartingOffset + (ulong)Current.Document.Length)
+          };
+
+          return MoveUntilGreaterThanOrEqual(skipToKey);
+        }
+
         return true;
       }
 
