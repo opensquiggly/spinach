@@ -169,6 +169,16 @@ public class MatchWithRepoOffsetKey : IComparable<MatchWithRepoOffsetKey>, IComp
     return destination;
   }
 
+  public MatchWithRepoOffsetKey AddOffset(long increaseBy, ref MatchWithRepoOffsetKey destination)
+  {
+    destination.Offset += increaseBy;
+    return destination;
+  }
+
+  public MatchWithRepoOffsetKey WithZeroOffsets() =>
+    // ReSharper disable once ArrangeMethodOrOperatorBody
+    new MatchWithRepoOffsetKey(UserType, UserId, RepoType, RepoId, 0, 0);
+
   public static bool IsSameUser(MatchWithRepoOffsetKey left, MatchWithRepoOffsetKey right) =>
     // ReSharper disable once ArrangeMethodOrOperatorBody
     left.UserType == right.UserType && left.UserId == right.UserId;

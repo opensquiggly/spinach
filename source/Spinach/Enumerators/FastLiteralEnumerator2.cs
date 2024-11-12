@@ -139,12 +139,17 @@ public class FastLiteralEnumerator2 : IFastEnumerator<MatchWithRepoOffsetKey, Ma
       if (Enumerator1.CurrentKey < Enumerator2.CurrentKey)
       {
         hasValue1 = Enumerator1.MoveNext();
-        hasValue1 = hasValue1 && Enumerator1.MoveUntilGreaterThanOrEqual(Enumerator2.CurrentKey.WithAdjustedOffset(0, ref _tempKey));
+        if (!hasValue1) break;
+        Enumerator2.CurrentKey.WithAdjustedOffset(0, ref _tempKey);
+        hasValue1 = Enumerator1.MoveUntilGreaterThanOrEqual(_tempKey);
       }
       else if (Enumerator1.CurrentKey > Enumerator2.CurrentKey)
       {
         hasValue2 = Enumerator2.MoveNext();
-        hasValue2 = hasValue2 && Enumerator2.MoveUntilGreaterThanOrEqual(Enumerator1.CurrentKey.WithAdjustedOffset(AdjustedOffset, ref _tempKey));
+        if (!hasValue2) break;
+        Enumerator1.CurrentKey.WithAdjustedOffset(AdjustedOffset, ref _tempKey);
+        _tempKey.AddOffset(-AdjustedOffset, ref _tempKey);
+        hasValue2 = Enumerator2.MoveUntilGreaterThanOrEqual(_tempKey);
       }
       else if (!ConfirmLiteralMatch())
       {

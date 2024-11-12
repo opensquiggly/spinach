@@ -233,10 +233,7 @@ public class FastTrigramEnumerator2 : IFastEnumerator<MatchWithRepoOffsetKey, Ma
   {
     uint nextRepoId = target.RepoId;
 
-    if (CurrentKey.UserType == target.UserType &&
-        CurrentKey.UserId == target.UserId &&
-        CurrentKey.RepoType == target.RepoType &&
-        CurrentKey.RepoId == target.RepoId)
+    if (MatchWithRepoOffsetKey.IsSameRepo(CurrentKey, target))
     {
       if (CurrentPostingsListCursor.MoveUntilGreaterThanOrEqual((ulong)target.Offset))
       {
@@ -261,6 +258,10 @@ public class FastTrigramEnumerator2 : IFastEnumerator<MatchWithRepoOffsetKey, Ma
       }
 
       nextRepoId++;
+    }
+    else if (target.WithZeroOffsets() < CurrentKey.WithZeroOffsets())
+    {
+      nextRepoId = CurrentKey.RepoId;
     }
 
     var nextMatchKey = new TrigramMatchKey(target.UserType, target.UserId, target.RepoType, nextRepoId);
@@ -296,7 +297,7 @@ public class FastTrigramEnumerator2 : IFastEnumerator<MatchWithRepoOffsetKey, Ma
           UserId = CurrentKey.UserId,
           RepoType = CurrentKey.RepoType,
           RepoId = CurrentKey.RepoId,
-          Offset = (long)(Current.Document.StartingOffset + (ulong)Current.Document.Length)
+          Offset = (long)(Current.Document.StartingOffset + (ulong)Current.Document.Length - (ulong)AdjustedOffset)
         };
 
         return MoveUntilGreaterThanOrEqual(skipToKey);
