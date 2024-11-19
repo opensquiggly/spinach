@@ -1,10 +1,11 @@
 namespace SpinachExplorer;
 
 using Spinach.Interfaces;
+using Spinach.Misc;
 
 internal static partial class Program
 {
-  private static void PrintIndexedDocuments()
+  private static void AddSingleFile()
   {
     Console.WriteLine();
     Console.WriteLine("Current Repositories");
@@ -26,21 +27,17 @@ internal static partial class Program
     uint userId = PromptForUInt32Value("Enter User Id Of Repository to Index");
     ushort repoType = PromptForUInt16Value("Enter Repo Type of Repository to Index");
     uint repoId = PromptForUInt32Value("Enter Repo Id of Repository to Index");
+    string filePath = PromptForString("Enter relative path of the file to add");
 
-    foreach (IDocument doc in TextSearchManager.GetDocuments(userType, userId, repoType, repoId))
+    bool success = TextSearchManager.AddSingleFileToIndex(userType, userId, repoType, repoId, filePath);
+
+    if (success)
     {
-      Console.Write($"User Type: {doc.UserType} ");
-      Console.Write($"User Id: {doc.UserId} ");
-      Console.Write($"Repo Type: {doc.RepoType} ");
-      Console.Write($"Repo Id: {doc.RepoId} ");
-      Console.Write($"Doc Id: {doc.DocId} ");
-      Console.Write($"Status: {doc.Status} ");
-      Console.Write($"IsIndexed: {doc.IsIndexed}");
-      Console.Write($"Starting Offset: {doc.StartingOffset} ");
-      Console.Write($"Length: {doc.OriginalLength} ");
-      Console.WriteLine();
-      Console.WriteLine($"{doc.ExternalIdOrPath}");
-      Console.WriteLine();
+      Console.WriteLine("Success");
+    }
+    else
+    {
+      Console.WriteLine("File not added");
     }
 
     Pause();

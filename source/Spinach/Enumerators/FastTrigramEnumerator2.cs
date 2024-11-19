@@ -64,11 +64,11 @@ public class FastTrigramEnumerator2 : IFastEnumerator<MatchWithRepoOffsetKey, Ma
 
   public MatchWithRepoOffsetKey CurrentKey { get; }
 
-  public IUser CurrentUser { get; private set; }
-
-  public IRepository CurrentRepository { get; private set; }
-
-  public IDocument CurrentDocument { get; private set; }
+  // public IUser CurrentUser { get; private set; }
+  //
+  // public IRepository CurrentRepository { get; private set; }
+  //
+  // public IDocument CurrentDocument { get; private set; }
 
   // /////////////////////////////////////////////////////////////////////////////////////////////
   // Private Methods
@@ -146,7 +146,12 @@ public class FastTrigramEnumerator2 : IFastEnumerator<MatchWithRepoOffsetKey, Ma
     };
 
     DocTreeByOffsetCursor.MoveUntilGreaterThanOrEqual(docOffsetKey);
-    if (DocTreeByOffsetCursor.IsPastEnd || DocTreeByOffsetCursor.CurrentKey.CompareTo(docOffsetKey) > 0)
+    if (DocTreeByOffsetCursor.IsPastEnd)
+    {
+      DocTreeByOffsetCursor.ResetToEnd();
+      DocTreeByOffsetCursor.MovePrevious();
+    }
+    else if (DocTreeByOffsetCursor.CurrentKey.CompareTo(docOffsetKey) > 0)
     {
       DocTreeByOffsetCursor.MovePrevious();
     }
@@ -160,9 +165,12 @@ public class FastTrigramEnumerator2 : IFastEnumerator<MatchWithRepoOffsetKey, Ma
       Id = DocTreeByOffsetCursor.CurrentData
     };
 
-    Context.DocCache.TryFind(docIdCompoundKey, out _, out _, out _, out IDocument doc);
-    CurrentData.Document = doc;
-    CurrentData.MatchPosition = (long)CurrentPostingsListCursor.CurrentKey - (long)doc.StartingOffset - AdjustedOffset;
+    bool docFound = Context.DocCache.TryFind(docIdCompoundKey, out _, out _, out _, out IDocument doc);
+    if (docFound)
+    {
+      CurrentData.Document = doc;
+      CurrentData.MatchPosition = (long)CurrentPostingsListCursor.CurrentKey - (long)doc.StartingOffset - AdjustedOffset;
+    }
   }
 
   private void SetCurrentKey()
@@ -172,6 +180,47 @@ public class FastTrigramEnumerator2 : IFastEnumerator<MatchWithRepoOffsetKey, Ma
     CurrentKey.RepoType = TrigramMatchesCursor.CurrentKey.RepoType;
     CurrentKey.RepoId = TrigramMatchesCursor.CurrentKey.RepoId;
     CurrentKey.Offset = (long)CurrentPostingsListCursor.CurrentKey;
+  }
+
+  private bool SkipDocument()
+  {
+    if (!CurrentData!.Document.IsValid) return true;
+    if (CurrentData.Document.CurrentLength > Context.Options.MaxDocSize) return true;
+    if (CurrentData.Document.Status != DocStatus.Normal) return true;
+
+    return false;
+  }
+
+  private bool MoveUntilGteInCurrentPostingsList(ulong targetOffset)
+  {
+    while (true)
+    {
+      if (!CurrentPostingsListCursor.MoveUntilGreaterThanOrEqual(targetOffset)) return false;
+
+      SetCurrentDocument();
+      SetCurrentKey();
+
+      if (!SkipDocument()) break;
+
+      targetOffset = CurrentData.Document.StartingOffset + (ulong)CurrentData.Document.CurrentLength;
+    }
+
+    return true;
+  }
+
+  private void PrintCurrent()
+  {
+    // Used for debugging
+    Console.WriteLine($"User Type: {CurrentData.User.Type}");
+    Console.WriteLine($"User Id: {CurrentData.User.Id}");
+    Console.WriteLine($"Repo Type: {CurrentData.Repository.Type}");
+    Console.WriteLine($"Repo Id: {CurrentData.Repository.Id}");
+    Console.WriteLine($"Document Id: {CurrentData.Document.DocId}");
+    Console.WriteLine($"Document Path: {CurrentData.Document.ExternalIdOrPath}");
+    Console.WriteLine($"Starting Offset: {CurrentData.Document.StartingOffset}");
+    Console.WriteLine($"Current Length: {CurrentData.Document.CurrentLength}");
+    Console.WriteLine($"Postings List Key: {CurrentPostingsListCursor.CurrentKey}");
+    Console.WriteLine($"Match Position: {CurrentData.MatchPosition}");
   }
 
   // /////////////////////////////////////////////////////////////////////////////////////////////
@@ -192,6 +241,7 @@ public class FastTrigramEnumerator2 : IFastEnumerator<MatchWithRepoOffsetKey, Ma
     {
       SetCurrentDocument();
       SetCurrentKey();
+
       return true;
     }
 
@@ -209,8 +259,9 @@ public class FastTrigramEnumerator2 : IFastEnumerator<MatchWithRepoOffsetKey, Ma
       if (!CurrentPostingsListCursor.MoveNext()) continue;
 
       SetCurrentDocument();
+      SetCurrentKey();
 
-      if (!Current.Document.IsValid || Current.Document.Length > Context.Options.MaxDocSize)
+      if (SkipDocument())
       {
         var skipToKey = new MatchWithRepoOffsetKey()
         {
@@ -218,13 +269,12 @@ public class FastTrigramEnumerator2 : IFastEnumerator<MatchWithRepoOffsetKey, Ma
           UserId = CurrentKey.UserId,
           RepoType = CurrentKey.RepoType,
           RepoId = CurrentKey.RepoId,
-          Offset = (long)(Current.Document.StartingOffset + (ulong)Current.Document.Length)
+          Offset = (long)(CurrentData.Document.StartingOffset + (ulong)CurrentData.Document.CurrentLength)
         };
 
-        if (!MoveUntilGreaterThanOrEqual(skipToKey)) return false;
+        return MoveUntilGreaterThanOrEqual(skipToKey);
       }
 
-      SetCurrentKey();
       return true;
     }
   }
@@ -235,27 +285,7 @@ public class FastTrigramEnumerator2 : IFastEnumerator<MatchWithRepoOffsetKey, Ma
 
     if (MatchWithRepoOffsetKey.IsSameRepo(CurrentKey, target))
     {
-      if (CurrentPostingsListCursor.MoveUntilGreaterThanOrEqual((ulong)target.Offset))
-      {
-        SetCurrentDocument();
-        SetCurrentKey();
-
-        if (!Current.Document.IsValid || Current.Document.Length > Context.Options.MaxDocSize)
-        {
-          var skipToKey = new MatchWithRepoOffsetKey()
-          {
-            UserType = CurrentKey.UserType,
-            UserId = CurrentKey.UserId,
-            RepoType = CurrentKey.RepoType,
-            RepoId = CurrentKey.RepoId,
-            Offset = (long)(Current.Document.StartingOffset + (ulong)Current.Document.Length)
-          };
-
-          return MoveUntilGreaterThanOrEqual(skipToKey);
-        }
-
-        return true;
-      }
+      if (MoveUntilGteInCurrentPostingsList((ulong)target.Offset)) return true;
 
       nextRepoId++;
     }
@@ -289,7 +319,7 @@ public class FastTrigramEnumerator2 : IFastEnumerator<MatchWithRepoOffsetKey, Ma
       SetCurrentDocument();
       SetCurrentKey();
 
-      if (!Current.Document.IsValid || Current.Document.Length > Context.Options.MaxDocSize)
+      if (SkipDocument())
       {
         var skipToKey = new MatchWithRepoOffsetKey()
         {
@@ -297,7 +327,7 @@ public class FastTrigramEnumerator2 : IFastEnumerator<MatchWithRepoOffsetKey, Ma
           UserId = CurrentKey.UserId,
           RepoType = CurrentKey.RepoType,
           RepoId = CurrentKey.RepoId,
-          Offset = (long)(Current.Document.StartingOffset + (ulong)Current.Document.Length - (ulong)AdjustedOffset)
+          Offset = (long)(CurrentData.Document.StartingOffset + (ulong)CurrentData.Document.CurrentLength - (ulong)AdjustedOffset)
         };
 
         return MoveUntilGreaterThanOrEqual(skipToKey);
@@ -319,9 +349,6 @@ public class FastTrigramEnumerator2 : IFastEnumerator<MatchWithRepoOffsetKey, Ma
     CurrentKey.RepoType = 0;
     CurrentKey.RepoId = 0;
     CurrentKey.AdjustedOffset = AdjustedOffset;
-    CurrentUser = null;
-    CurrentRepository = null;
-    CurrentDocument = null;
 
     bool trigramFound = Context.TrigramTree.TryFind(TrigramKey, out long trigramMatchesAddress, out _, out _);
     if (!trigramFound) return;

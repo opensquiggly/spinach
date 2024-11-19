@@ -4,7 +4,7 @@ using Spinach.Interfaces;
 
 internal static partial class Program
 {
-  private static void PrintIndexedDocuments()
+  private static void LookupFileByName()
   {
     Console.WriteLine();
     Console.WriteLine("Current Repositories");
@@ -26,21 +26,19 @@ internal static partial class Program
     uint userId = PromptForUInt32Value("Enter User Id Of Repository to Index");
     ushort repoType = PromptForUInt16Value("Enter Repo Type of Repository to Index");
     uint repoId = PromptForUInt32Value("Enter Repo Id of Repository to Index");
+    string name = PromptForString("Enter the name of the file to look up");
 
-    foreach (IDocument doc in TextSearchManager.GetDocuments(userType, userId, repoType, repoId))
+    ulong docId;
+    var docInfoBlock = new DocInfoBlock();
+    bool found = TextSearchManager.TryFindDocument(userType, userId, repoType, repoId, name, out docId, out docInfoBlock, out _, out _);
+
+    if (found)
     {
-      Console.Write($"User Type: {doc.UserType} ");
-      Console.Write($"User Id: {doc.UserId} ");
-      Console.Write($"Repo Type: {doc.RepoType} ");
-      Console.Write($"Repo Id: {doc.RepoId} ");
-      Console.Write($"Doc Id: {doc.DocId} ");
-      Console.Write($"Status: {doc.Status} ");
-      Console.Write($"IsIndexed: {doc.IsIndexed}");
-      Console.Write($"Starting Offset: {doc.StartingOffset} ");
-      Console.Write($"Length: {doc.OriginalLength} ");
-      Console.WriteLine();
-      Console.WriteLine($"{doc.ExternalIdOrPath}");
-      Console.WriteLine();
+      Console.WriteLine($"Doc Id = {docId}");
+    }
+    else
+    {
+      Console.WriteLine($"File '{name}' not found in repository.");
     }
 
     Pause();

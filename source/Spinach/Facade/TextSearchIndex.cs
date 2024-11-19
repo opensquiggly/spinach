@@ -494,7 +494,7 @@ public class TextSearchIndex
       }
 
       Console.WriteLine($" {count} trigrams");
-      totalOffset += (ulong)docInfoBlock.Length;
+      totalOffset += (ulong)docInfoBlock.OriginalLength;
     }
   }
 
@@ -528,12 +528,12 @@ public class TextSearchIndex
       DocInfoBlock docInfoBlock = default;
       // fileInfoBlock.InternalId = (ulong)currentFileId;
       docInfoBlock.NameAddress = nameString.Address;
-      docInfoBlock.Length = GetFileLength(filePath);
+      docInfoBlock.OriginalLength = GetFileLength(filePath);
       docInfoBlock.StartingOffset = currentOffset;
-      Console.WriteLine($"{currentFileId} : {filePath} (Length = {docInfoBlock.Length})");
+      Console.WriteLine($"{currentFileId} : {filePath} (Length = {docInfoBlock.OriginalLength})");
       InternalFileInfoTree.Insert(fileInfoKey, docInfoBlock);
       currentFileId++;
-      currentOffset += (ulong)docInfoBlock.Length;
+      currentOffset += (ulong)docInfoBlock.OriginalLength;
     }
 
     // InternalFileInfoTable = new InternalFileInfoTable(DiskBlockManager, InternalFileInfoTree);

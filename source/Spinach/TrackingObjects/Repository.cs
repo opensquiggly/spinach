@@ -17,7 +17,9 @@ public class Repository : IRepository
       ExternalId = "invalid-external-id",
       RootFolderPathAddress = 0,
       RootFolderPath = "invalid-root-folder-path",
-      LastDocId = 0
+      LastDocId = 0,
+      LastDocLength = 0,
+      LastDocStartingOffset = 0
     };
   }
 
@@ -33,6 +35,8 @@ public class Repository : IRepository
   public long RootFolderPathAddress { get; set; }
   public string RootFolderPath { get; set; }
   public uint LastDocId { get; set; }
+  public long LastDocLength { get; set; }
+  public ulong LastDocStartingOffset { get; set; }
 
   public static IRepository InvalidRepository { get; }
 }

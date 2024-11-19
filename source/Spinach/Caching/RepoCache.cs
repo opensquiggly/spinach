@@ -53,6 +53,8 @@ public class RepoCache : LruCache<
       NameAddress = repoInfoBlock.NameAddress,
       Name = TextSearchManager.LoadString(repoInfoBlock.NameAddress),
       LastDocId = repoInfoBlock.LastDocId,
+      LastDocLength = repoInfoBlock.LastDocLength,
+      LastDocStartingOffset = repoInfoBlock.LastDocStartingOffset,
       ExternalIdAddress = repoInfoBlock.ExternalIdAddress,
       ExternalId = TextSearchManager.LoadString(repoInfoBlock.ExternalIdAddress),
       RootFolderPathAddress = repoInfoBlock.RootFolderPathAddress,
