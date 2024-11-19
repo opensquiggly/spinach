@@ -13,4 +13,6 @@ public interface IRepository
   long RootFolderPathAddress { get; set; }
   string RootFolderPath { get; set; }
   uint LastDocId { get; set; }
+  long LastDocLength { get; set; }
+  ulong LastDocStartingOffset { get; set; }
 }

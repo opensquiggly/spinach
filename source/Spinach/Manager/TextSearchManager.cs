@@ -126,7 +126,7 @@ public class TextSearchManager : ITextSearchManager, ITextSearchEnumeratorContex
     RepoTree = RepoTreeFactory.AppendNew(25);
     RepoCache = new RepoCache(this, RepoTree, 10000);
     DocTree = DocTreeFactory.AppendNew(25);
-    DocCache = new DocCache(this, DocTree, 10000);
+    DocCache = new DocCache(this, RepoCache, DocTree, 10000);
     DocTreeByOffset = DocTreeByOffsetFactory.AppendNew(25);
     TrigramTree = TrigramTreeFactory.AppendNew(25);
 
@@ -156,7 +156,7 @@ public class TextSearchManager : ITextSearchManager, ITextSearchEnumeratorContex
     RepoTree = RepoTreeFactory.LoadExisting(_headerBlock.Address2);
     RepoCache = new RepoCache(this, RepoTree, 10000);
     DocTree = DocTreeFactory.LoadExisting(_headerBlock.Address3);
-    DocCache = new DocCache(this, DocTree, 10000);
+    DocCache = new DocCache(this, RepoCache, DocTree, 10000);
     DocTreeByOffset = DocTreeByOffsetFactory.LoadExisting(_headerBlock.Address4);
     TrigramTree = TrigramTreeFactory.LoadExisting(_headerBlock.Address5);
 
@@ -250,12 +250,14 @@ public class TextSearchManager : ITextSearchManager, ITextSearchEnumeratorContex
 
       var repoInfoBlock = new RepoInfoBlock();
 
-      repoInfoBlock.InternalId = ++userInfoBlock.LastRepoId; // TODO - No way to write this back to disk
+      userInfoBlock.LastRepoId++;
+      repoInfoBlock.InternalId = userInfoBlock.LastRepoId;
       repoInfoBlock.LastDocId = 0;
       Console.WriteLine($"Repo Id = {repoInfoBlock.InternalId}");
       repoIdCompoundKeyBlock.RepoId = repoInfoBlock.InternalId;
 
       node.ReplaceDataAtIndex(userInfoBlock, nodeIndex);
+      UserCache.Clear();
 
       if (externalId != null)
       {
@@ -341,11 +343,93 @@ public class TextSearchManager : ITextSearchManager, ITextSearchEnumeratorContex
 
     return characterCount;
   }
+  public static string GetRelativePath(string basePath, string filePath)
+  {
+    if (!basePath.EndsWith(Path.DirectorySeparatorChar.ToString()))
+    {
+      basePath += Path.DirectorySeparatorChar;
+    }
+
+    string relativePath = filePath.Substring(basePath.Length);
+
+    if (relativePath.StartsWith(Path.DirectorySeparatorChar.ToString()))
+    {
+      relativePath = relativePath.Substring(1);
+    }
+
+    return relativePath;
+  }
+
+  public bool AddSingleFileToIndex(ushort userType, uint userId, ushort repoType, uint repoId, string relativePath)
+  {
+    var repoIdCompoundKey = new RepoIdCompoundKeyBlock()
+    {
+      UserType = userType,
+      UserId = userId,
+      RepoType = repoType,
+      RepoId = repoId
+    };
+
+    bool found = RepoTree.TryFind(repoIdCompoundKey, out RepoInfoBlock data,
+      out DiskBTreeNode<RepoIdCompoundKeyBlock, RepoInfoBlock> node, out int nodeIndex);
+    if (!found) return false;
+
+    string rootFolderPath = LoadString(data.RootFolderPathAddress);
+    string fullPath = Path.Combine(rootFolderPath, relativePath);
+
+    if (!IncludeFileInIndex(fullPath)) return false;
+
+    long externalIdOrPathAddress = DiskBlockManager.ImmutableStringFactory.Append(relativePath).Address;
+
+    var docIdCompoundKey = new DocIdCompoundKeyBlock()
+    {
+      UserType = userType,
+      UserId = userId,
+      RepoType = repoType,
+      RepoId = repoId,
+      Id = data.LastDocId + 1
+    };
+
+    var docOffsetCompoundKey = new DocOffsetCompoundKeyBlock()
+    {
+      UserType = userType,
+      UserId = userId,
+      RepoType = repoType,
+      RepoId = repoId,
+      StartingOffset = data.LastDocStartingOffset + (ulong)data.LastDocLength
+    };
+
+    long length = GetFileLength(fullPath);
+
+    var docInfoBlock = new DocInfoBlock()
+    {
+      NameAddress = 0,
+      ExternalIdOrPathAddress = externalIdOrPathAddress,
+      Status = DocStatus.Normal,
+      IsIndexed = false,
+      OriginalLength = length,
+      CurrentLength = length,
+      StartingOffset = data.LastDocStartingOffset + (ulong)data.LastDocLength
+    };
+
+    DocTree.Insert(docIdCompoundKey, docInfoBlock);
+    DocTreeByOffset.Insert(docOffsetCompoundKey, docIdCompoundKey.Id);
+
+    data.LastDocId++;
+    data.LastDocStartingOffset += (ulong)data.LastDocLength;
+    data.LastDocLength = length;
+    node.ReplaceDataAtIndex(data, nodeIndex);
+    RepoCache.Clear();
+
+    return true;
+  }
 
   public void IndexLocalFiles(ushort userType, uint userId, ushort repoType, uint repoId)
   {
     uint currentFileId = 1;
     ulong currentOffset = 0;
+    ulong lastOffset = 0;
+    long lastLength = 0;
 
     var repoIdCompoundKey = new RepoIdCompoundKeyBlock()
     {
@@ -368,7 +452,8 @@ public class TextSearchManager : ITextSearchManager, ITextSearchEnumeratorContex
         continue;
       }
 
-      long externalIdOrPathAddress = DiskBlockManager.ImmutableStringFactory.Append(filePath).Address;
+      string relativePath = GetRelativePath(rootFolderPath, filePath);
+      long externalIdOrPathAddress = DiskBlockManager.ImmutableStringFactory.Append(relativePath).Address;
 
       var docIdCompoundKey = new DocIdCompoundKeyBlock()
       {
@@ -388,30 +473,40 @@ public class TextSearchManager : ITextSearchManager, ITextSearchEnumeratorContex
         StartingOffset = currentOffset
       };
 
+      long length = GetFileLength(filePath);
+
       var docInfoBlock = new DocInfoBlock()
       {
         NameAddress = 0,
         ExternalIdOrPathAddress = externalIdOrPathAddress,
-        Length = GetFileLength(filePath),
+        Status = DocStatus.Normal,
+        IsIndexed = false,
+        OriginalLength = length,
+        CurrentLength = length,
         StartingOffset = currentOffset
       };
 
       DocTree.Insert(docIdCompoundKey, docInfoBlock);
       DocTreeByOffset.Insert(docOffsetCompoundKey, docIdCompoundKey.Id);
 
-      Console.Write($"Adding file ... Id = {docIdCompoundKey.Id}, ");
-      Console.Write($"UserType = {docIdCompoundKey.UserType}, ");
-      Console.Write($"UserId = {docIdCompoundKey.UserId}, ");
-      Console.Write($"RepoType = {docIdCompoundKey.RepoType}, ");
-      Console.Write($"RepoId = {docIdCompoundKey.RepoId}, ");
-      Console.Write($"Starting Offset = {docInfoBlock.StartingOffset}, ");
-      Console.WriteLine($"{filePath}");
+      // Console.Write($"Adding file ... Id = {docIdCompoundKey.Id}, ");
+      // Console.Write($"UserType = {docIdCompoundKey.UserType}, ");
+      // Console.Write($"UserId = {docIdCompoundKey.UserId}, ");
+      // Console.Write($"RepoType = {docIdCompoundKey.RepoType}, ");
+      // Console.Write($"RepoId = {docIdCompoundKey.RepoId}, ");
+      // Console.Write($"Starting Offset = {docInfoBlock.StartingOffset}, ");
+      // Console.WriteLine($"{filePath}");
 
-      currentOffset += (ulong)docInfoBlock.Length;
+      lastOffset = currentOffset;
+      lastLength = length;
+      currentOffset += (ulong)docInfoBlock.OriginalLength;
     }
 
     data.LastDocId = currentDocId;
+    data.LastDocStartingOffset = lastOffset;
+    data.LastDocLength = lastLength;
     node.ReplaceDataAtIndex(data, nodeIndex);
+    RepoCache.Clear();
   }
 
   public DiskSortedVarIntList LoadOrAddTrigramPostingsList(TrigramMatchCacheKey key)
@@ -465,11 +560,25 @@ public class TextSearchManager : ITextSearchManager, ITextSearchEnumeratorContex
     while (cursor.MoveNext())
     {
       DocInfoBlock docInfoBlock = cursor.CurrentData;
+
+      if (docInfoBlock.IsIndexed) continue;
+
       DiskImmutableString nameString = DiskBlockManager.ImmutableStringFactory.LoadExisting(docInfoBlock.ExternalIdOrPathAddress);
       string name = nameString.GetValue();
       Console.Write($"Indexing: {name}");
 
-      string content = File.ReadAllText(name);
+      var repoIdCompoundKey = new RepoIdCompoundKeyBlock()
+      {
+        UserType = cursor.CurrentKey.UserType,
+        UserId = cursor.CurrentKey.UserId,
+        RepoType = cursor.CurrentKey.RepoType,
+        RepoId = cursor.CurrentKey.RepoId
+      };
+      bool found = RepoCache.TryFind(repoIdCompoundKey, out RepoInfoBlock repoInfoBlock, out _, out _, out _);
+      if (!found) continue;
+      string rootFolderPath = LoadString(repoInfoBlock.RootFolderPathAddress);
+      string fullPath = Path.Combine(rootFolderPath, name);
+      string content = File.ReadAllText(fullPath);
 
       var trigramExtractor = new TrigramExtractor(content);
       int count = 0;
@@ -494,6 +603,10 @@ public class TextSearchManager : ITextSearchManager, ITextSearchEnumeratorContex
       }
 
       Console.WriteLine($" {count} trigrams");
+
+      docInfoBlock.IsIndexed = true;
+      cursor.CurrentNode.ReplaceDataAtIndex(docInfoBlock, cursor.CurrentIndex);
+      DocCache.Clear(); // Not the best way to do this
     }
   }
 
@@ -523,6 +636,77 @@ public class TextSearchManager : ITextSearchManager, ITextSearchEnumeratorContex
         Console.WriteLine($"{filePath}");
       }
     }
+  }
+
+  public bool TryFindDocument(
+    ushort userType,
+    uint userId,
+    ushort repoType,
+    uint repoId,
+    string name,
+    out ulong docId,
+    out DocInfoBlock docInfoBlock,
+    out DiskBTreeNode<DocIdCompoundKeyBlock, DocInfoBlock> node,
+    out int nodeIndex
+  )
+  {
+    var cursor = new DiskBTreeCursor<DocIdCompoundKeyBlock, DocInfoBlock>(DocTree);
+
+    var firstKey = new DocIdCompoundKeyBlock()
+    {
+      UserType = userType,
+      UserId = userId,
+      RepoType = repoType,
+      RepoId = repoId,
+      Id = 0
+    };
+
+    bool hasData = cursor.MoveUntilGreaterThanOrEqual(firstKey);
+    while (hasData && cursor.CurrentKey.UserType == userType && cursor.CurrentKey.UserId == userId && cursor.CurrentKey.RepoType == repoType && cursor.CurrentKey.RepoId == repoId)
+    {
+      DiskImmutableString nameString = DiskBlockManager.ImmutableStringFactory.LoadExisting(cursor.CurrentData.ExternalIdOrPathAddress);
+      string currentName = nameString.GetValue();
+      if (currentName == name)
+      {
+        docId = cursor.CurrentKey.Id;
+        docInfoBlock = cursor.CurrentData;
+        node = cursor.CurrentNode;
+        nodeIndex = cursor.CurrentIndex;
+        return true;
+      }
+
+      hasData = cursor.MoveNext();
+    }
+
+    docId = 0;
+    docInfoBlock = default;
+    node = default;
+    nodeIndex = -1;
+
+    return false;
+  }
+
+  public bool SetDocStatus(
+    ushort userType,
+    uint userId,
+    ushort repoType,
+    uint repoId,
+    string name,
+    DocStatus status,
+    out ulong docId,
+    out DocInfoBlock docInfoBlock,
+    out DiskBTreeNode<DocIdCompoundKeyBlock, DocInfoBlock> node,
+    out int nodeIndex
+  )
+  {
+    bool found = TryFindDocument(userType, userId, repoType, repoId, name, out docId, out docInfoBlock, out node, out nodeIndex);
+    if (!found) return false;
+
+    docInfoBlock.Status = status;
+    node.ReplaceDataAtIndex(docInfoBlock, nodeIndex);
+    DocCache.Clear();
+
+    return true;
   }
 
   public IEnumerable<UserInfoBlock> GetUserBlocks()
@@ -586,7 +770,9 @@ public class TextSearchManager : ITextSearchManager, ITextSearchEnumeratorContex
         ExternalId = LoadString(cursor.CurrentData.ExternalIdAddress),
         RootFolderPathAddress = cursor.CurrentData.RootFolderPathAddress,
         RootFolderPath = LoadString(cursor.CurrentData.RootFolderPathAddress),
-        LastDocId = cursor.CurrentData.LastDocId
+        LastDocId = cursor.CurrentData.LastDocId,
+        LastDocLength = cursor.CurrentData.LastDocLength,
+        LastDocStartingOffset = cursor.CurrentData.LastDocStartingOffset
       };
 
       yield return repo;
@@ -626,7 +812,11 @@ public class TextSearchManager : ITextSearchManager, ITextSearchEnumeratorContex
         RepoType = cursor.CurrentKey.RepoType,
         RepoId = cursor.CurrentKey.RepoId,
         DocId = cursor.CurrentKey.Id,
+        Status = cursor.CurrentData.Status,
+        IsIndexed = cursor.CurrentData.IsIndexed,
         StartingOffset = cursor.CurrentData.StartingOffset,
+        OriginalLength = cursor.CurrentData.OriginalLength,
+        CurrentLength = cursor.CurrentData.CurrentLength,
         NameAddress = cursor.CurrentData.NameAddress,
         Name = LoadString(cursor.CurrentData.NameAddress),
         ExternalIdOrPathAddress = cursor.CurrentData.ExternalIdOrPathAddress,

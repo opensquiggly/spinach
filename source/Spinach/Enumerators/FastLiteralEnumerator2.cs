@@ -85,7 +85,7 @@ public class FastLiteralEnumerator2 : IFastEnumerator<MatchWithRepoOffsetKey, Ma
     LastDocIsValid = Enumerator1.CurrentData.Document.IsValid;
     LastDocId = Enumerator1.CurrentData.Document.DocId;
     LastDocStartingOffset = (long)Enumerator1.CurrentData.Document.StartingOffset;
-    LastDocLength = Enumerator1.CurrentData.Document.Length;
+    LastDocLength = Enumerator1.CurrentData.Document.CurrentLength;
   }
 
   private string ReadSubstringFromFile(string filePath, long offset, int charCount)
@@ -111,10 +111,19 @@ public class FastLiteralEnumerator2 : IFastEnumerator<MatchWithRepoOffsetKey, Ma
     // Method 1: Read the whole file and extract the substring
     // By reading the whole file, we can store it in the LRU cache
     // and reuse it in the future.
+    int startIndex = (int)Enumerator1.CurrentData.MatchPosition;
+    if (startIndex > Enumerator1.CurrentData.Document.Content.Length)
+    {
+      Console.WriteLine("Offset is out of the range of the file content.");
+      Console.WriteLine($"startIndex = {startIndex}");
+      return false;
+    }
+
     string targetLiteral = Enumerator1.CurrentData.Document.Content.Substring(
-    (int)Enumerator1.CurrentData.MatchPosition,
+      startIndex,
       Literal.Length
     );
+
 
     // Method 2: Read the specified substring directly from the file
     // This method is theoretically faster but in practice I did not
@@ -136,31 +145,39 @@ public class FastLiteralEnumerator2 : IFastEnumerator<MatchWithRepoOffsetKey, Ma
   {
     while (hasValue1 && hasValue2)
     {
-      if (Enumerator1.CurrentKey < Enumerator2.CurrentKey)
+      try
       {
-        hasValue1 = Enumerator1.MoveNext();
-        if (!hasValue1) break;
-        Enumerator2.CurrentKey.WithAdjustedOffset(0, ref _tempKey);
-        hasValue1 = Enumerator1.MoveUntilGreaterThanOrEqual(_tempKey);
+        if (Enumerator1.CurrentKey < Enumerator2.CurrentKey)
+        {
+          hasValue1 = Enumerator1.MoveNext();
+          if (!hasValue1) break;
+          Enumerator2.CurrentKey.WithAdjustedOffset(0, ref _tempKey);
+          hasValue1 = Enumerator1.MoveUntilGreaterThanOrEqual(_tempKey);
+        }
+        else if (Enumerator1.CurrentKey > Enumerator2.CurrentKey)
+        {
+          hasValue2 = Enumerator2.MoveNext();
+          if (!hasValue2) break;
+          Enumerator1.CurrentKey.WithAdjustedOffset(AdjustedOffset, ref _tempKey);
+          _tempKey.AddOffset(-AdjustedOffset, ref _tempKey);
+          hasValue2 = Enumerator2.MoveUntilGreaterThanOrEqual(_tempKey);
+        }
+        else if (!ConfirmLiteralMatch())
+        {
+          hasValue1 = Enumerator1.MoveNext();
+          hasValue2 = Enumerator2.MoveNext();
+        }
+        else
+        {
+          CurrentKey = Enumerator1.CurrentKey;
+          CurrentData = Enumerator1.CurrentData;
+          return true;
+        }
       }
-      else if (Enumerator1.CurrentKey > Enumerator2.CurrentKey)
+      catch (Exception e)
       {
-        hasValue2 = Enumerator2.MoveNext();
-        if (!hasValue2) break;
-        Enumerator1.CurrentKey.WithAdjustedOffset(AdjustedOffset, ref _tempKey);
-        _tempKey.AddOffset(-AdjustedOffset, ref _tempKey);
-        hasValue2 = Enumerator2.MoveUntilGreaterThanOrEqual(_tempKey);
-      }
-      else if (!ConfirmLiteralMatch())
-      {
-        hasValue1 = Enumerator1.MoveNext();
-        hasValue2 = Enumerator2.MoveNext();
-      }
-      else
-      {
-        CurrentKey = Enumerator1.CurrentKey;
-        CurrentData = Enumerator1.CurrentData;
-        return true;
+        Console.WriteLine(e);
+        throw;
       }
     }
 

@@ -7,4 +7,6 @@ public struct RepoInfoBlock
   public long NameAddress { get; set; }
   public long RootFolderPathAddress { get; set; }
   public uint LastDocId { get; set; }
+  public long LastDocLength { get; set; }
+  public ulong LastDocStartingOffset { get; set; }
 }

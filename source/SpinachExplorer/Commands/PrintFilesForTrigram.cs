@@ -21,7 +21,7 @@ internal static partial class Program
       Console.Write($"User: {enumerator.CurrentData.User.Name}, ");
       Console.Write($"Repo: {enumerator.CurrentData.Repository.Name}, ");
       Console.WriteLine($"{enumerator.CurrentData.Document.ExternalIdOrPath}");
-      if (enumerator.CurrentData.Document.Length <= 10000)
+      if (enumerator.CurrentData.Document.CurrentLength <= 10000)
       {
         FileUtils.PrintFile(enumerator.CurrentData.Document.ExternalIdOrPath,
           (int)enumerator.CurrentData.MatchPosition + 1, 3);

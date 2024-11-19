@@ -44,7 +44,7 @@ public class RegexEnumerable2 : IEnumerable<MatchData>
     {
       MatchData match = queryEnumerator.CurrentData;
 
-      if (match.Document.Length > Context.Options.MaxDocSize)
+      if (match.Document.CurrentLength > Context.Options.MaxDocSize)
       {
         var skipToKey = new MatchWithRepoOffsetKey()
         {
@@ -52,7 +52,7 @@ public class RegexEnumerable2 : IEnumerable<MatchData>
           UserId = queryEnumerator.CurrentKey.UserId,
           RepoType = queryEnumerator.CurrentKey.RepoType,
           RepoId = queryEnumerator.CurrentKey.RepoId,
-          Offset = (long)(queryEnumerator.CurrentData.Document.StartingOffset + (ulong)queryEnumerator.CurrentData.Document.Length)
+          Offset = (long)(queryEnumerator.CurrentData.Document.StartingOffset + (ulong)queryEnumerator.CurrentData.Document.CurrentLength)
         };
 
         if (!queryEnumerator.MoveUntilGreaterThanOrEqual(skipToKey)) break; ;

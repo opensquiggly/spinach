@@ -9,14 +9,18 @@ public class DocCache : LruCache<
 {
   public DocCache(
     ITextSearchManager textSearchManager,
+    RepoCache repoCache,
     DiskBTree<DocIdCompoundKeyBlock, DocInfoBlock> docTree, int capacity
   ) : base(capacity)
   {
     TextSearchManager = textSearchManager;
+    RepoCache = repoCache;
     DocTree = docTree;
   }
 
   public ITextSearchManager TextSearchManager { get; private set; }
+
+  public RepoCache RepoCache { get; private set; }
 
   public DiskBTree<DocIdCompoundKeyBlock, DocInfoBlock> DocTree { get; private set; }
 
@@ -46,6 +50,20 @@ public class DocCache : LruCache<
 
     string externalIdOrPath = TextSearchManager.LoadString(docInfoBlock.ExternalIdOrPathAddress);
 
+    var repoKey = new RepoIdCompoundKeyBlock()
+    {
+      UserType = key.UserType,
+      UserId = key.UserId,
+      RepoType = key.RepoType,
+      RepoId = key.RepoId
+    };
+
+    if (!RepoCache.TryFind(repoKey, out RepoInfoBlock repoInfoBlock, out _, out _, out IRepository repo))
+    {
+      doc = Document.InvalidDocument;
+      return false;
+    }
+
     doc = new Document()
     {
       IsValid = true,
@@ -54,12 +72,16 @@ public class DocCache : LruCache<
       RepoType = key.RepoType,
       RepoId = key.RepoId,
       DocId = key.Id,
-      Length = docInfoBlock.Length,
+      OriginalLength = docInfoBlock.OriginalLength,
+      CurrentLength = docInfoBlock.CurrentLength,
       StartingOffset = docInfoBlock.StartingOffset,
+      Status = docInfoBlock.Status,
+      IsIndexed = docInfoBlock.IsIndexed,
       NameAddress = docInfoBlock.NameAddress,
       Name = TextSearchManager.LoadString(docInfoBlock.NameAddress),
       ExternalIdOrPathAddress = docInfoBlock.ExternalIdOrPathAddress,
-      ExternalIdOrPath = externalIdOrPath
+      ExternalIdOrPath = externalIdOrPath,
+      FullPath = Path.Combine(repo.RootFolderPath, externalIdOrPath)
     };
 
     var cachedItem = new Tuple<DocInfoBlock, DiskBTreeNode<DocIdCompoundKeyBlock, DocInfoBlock>, int, IDocument>(

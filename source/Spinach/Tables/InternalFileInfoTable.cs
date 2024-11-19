@@ -63,7 +63,7 @@ public class InternalFileInfoTable
       {
         // InternalId = fileInfoBlock.InternalId,
         Name = nameString.GetValue(),
-        Length = docInfoBlock.Length,
+        Length = docInfoBlock.OriginalLength,
         StartingOffset = currentOffset
       };
 

@@ -11,7 +11,17 @@ internal static partial class Program
     Console.WriteLine("--------------------");
     foreach (IRepository repo in TextSearchManager.GetRepositories())
     {
-      Console.WriteLine($"User Type: {repo.UserType}, User Id: {repo.UserId}, Type: {repo.Type}, Id: {repo.Id}, Name: {repo.Name}, External Id: {repo.ExternalId}, Last Doc Id: {repo.LastDocId}, Root Folder Path: {repo.RootFolderPath}");
+      Console.Write($"User Type: {repo.UserType} ");
+      Console.Write($"User Id: {repo.UserId} ");
+      Console.Write($"Type: {repo.Type} ");
+      Console.Write($"Id: {repo.Id} ");
+      Console.Write($"Name: {repo.Name} ");
+      Console.Write($"External Id: {repo.ExternalId} ");
+      Console.Write($"Last Doc Id: {repo.LastDocId} ");
+      Console.Write($"Last Doc Length: {repo.LastDocLength} ");
+      Console.Write($"Last Doc Starting Offset: {repo.LastDocStartingOffset} ");
+      Console.Write($"Root Folder Path: {repo.RootFolderPath}");
+      Console.WriteLine();
     }
 
     Pause();

@@ -93,16 +93,19 @@ internal static partial class Program
       Console.WriteLine(" 7. Print repositories");
       Console.WriteLine(" 8. View files in a local folder");
       Console.WriteLine(" 9. Add repository file names to the index");
-      Console.WriteLine("10. Print indexed documents (file names)");
-      Console.WriteLine("11. Lookup file id");
-      Console.WriteLine("12. Test trigram extractor");
-      Console.WriteLine("13. Index files");
-      Console.WriteLine("14. Print Files for Trigram");
-      Console.WriteLine("15. Print Files for Literal");
-      Console.WriteLine("16. Print Files for Intersection of Two Trigrams");
-      Console.WriteLine("17. Print Files for Intersection of Two Literals");
-      Console.WriteLine("18. Analyze Regex");
-      Console.WriteLine("19. Find Files");
+      Console.WriteLine("10. Add single file to the index");
+      Console.WriteLine("11. Print indexed documents (file names)");
+      Console.WriteLine("12. Lookup file id");
+      Console.WriteLine("13. Lookup file by name");
+      Console.WriteLine("14. Delete/undelete a file from index");
+      Console.WriteLine("15. Test trigram extractor");
+      Console.WriteLine("16. Index files");
+      Console.WriteLine("17. Print Files for Trigram");
+      Console.WriteLine("18. Print Files for Literal");
+      Console.WriteLine("19. Print Files for Intersection of Two Trigrams");
+      Console.WriteLine("20. Print Files for Intersection of Two Literals");
+      Console.WriteLine("21. Analyze Regex");
+      Console.WriteLine("22. Find Files");
       Console.WriteLine("X. Exit program");
       Console.WriteLine();
       Console.Write("Enter selection: ");
@@ -150,42 +153,54 @@ internal static partial class Program
             break;
 
           case "10":
-            PrintIndexedDocuments();
+            AddSingleFile();
             break;
 
           case "11":
-            LookupFileId();
+            PrintIndexedDocuments();
             break;
 
           case "12":
-            TestTrigramExtractor();
+            LookupFileId();
             break;
 
           case "13":
-            IndexFiles();
+            LookupFileByName();
             break;
 
           case "14":
-            PrintFilesForTrigram();
+            DeleteUndeleteFile();
             break;
 
           case "15":
-            PrintLiteralsForTrigram();
+            TestTrigramExtractor();
             break;
 
           case "16":
-            PrintFilesForTrigramIntersection();
+            IndexFiles();
             break;
 
           case "17":
-            PrintFilesForLiteralIntersection();
+            PrintFilesForTrigram();
             break;
 
           case "18":
-            AnalyzeRegex();
+            PrintLiteralsForTrigram();
             break;
 
           case "19":
+            PrintFilesForTrigramIntersection();
+            break;
+
+          case "20":
+            PrintFilesForLiteralIntersection();
+            break;
+
+          case "21":
+            AnalyzeRegex();
+            break;
+
+          case "22":
             FindFiles();
             break;
 

@@ -1,10 +1,11 @@
 namespace SpinachExplorer;
 
 using Spinach.Interfaces;
+using Spinach.Misc;
 
 internal static partial class Program
 {
-  private static void PrintIndexedDocuments()
+  private static void DeleteUndeleteFile()
   {
     Console.WriteLine();
     Console.WriteLine("Current Repositories");
@@ -26,21 +27,24 @@ internal static partial class Program
     uint userId = PromptForUInt32Value("Enter User Id Of Repository to Index");
     ushort repoType = PromptForUInt16Value("Enter Repo Type of Repository to Index");
     uint repoId = PromptForUInt32Value("Enter Repo Id of Repository to Index");
-
-    foreach (IDocument doc in TextSearchManager.GetDocuments(userType, userId, repoType, repoId))
+    string name = PromptForString("Enter the name of the file to delete/undelete");
+    ushort action = PromptForUInt16Value("Action: 1 for delete, 2 for undelete");
+    DocStatus docStatus = action switch
     {
-      Console.Write($"User Type: {doc.UserType} ");
-      Console.Write($"User Id: {doc.UserId} ");
-      Console.Write($"Repo Type: {doc.RepoType} ");
-      Console.Write($"Repo Id: {doc.RepoId} ");
-      Console.Write($"Doc Id: {doc.DocId} ");
-      Console.Write($"Status: {doc.Status} ");
-      Console.Write($"IsIndexed: {doc.IsIndexed}");
-      Console.Write($"Starting Offset: {doc.StartingOffset} ");
-      Console.Write($"Length: {doc.OriginalLength} ");
-      Console.WriteLine();
-      Console.WriteLine($"{doc.ExternalIdOrPath}");
-      Console.WriteLine();
+      1 => DocStatus.Deleted,
+      2 => DocStatus.Normal,
+      _ => DocStatus.Normal
+    };
+
+    bool success = TextSearchManager.SetDocStatus(userType, userId, repoType, repoId, name, docStatus, out _, out _, out _, out _);
+
+    if (success)
+    {
+      Console.WriteLine("Success");
+    }
+    else
+    {
+      Console.WriteLine("File not found");
     }
 
     Pause();
