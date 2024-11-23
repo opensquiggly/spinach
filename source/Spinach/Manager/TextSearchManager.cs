@@ -1,6 +1,7 @@
 namespace Spinach.Manager;
 
 using Misc;
+using System.Diagnostics;
 using TrackingObjects;
 
 public class TextSearchManager : ITextSearchManager, ITextSearchEnumeratorContext
@@ -585,6 +586,74 @@ public class TextSearchManager : ITextSearchManager, ITextSearchEnumeratorContex
 
       foreach (TrigramInfo trigramInfo in trigramExtractor)
       {
+        var trigramMatchCacheKey = new TrigramMatchCacheKey
+        {
+          TrigramKey = trigramInfo.Key,
+          UserType = cursor.CurrentKey.UserType,
+          UserId = cursor.CurrentKey.UserId,
+          RepoType = cursor.CurrentKey.RepoType,
+          RepoId = cursor.CurrentKey.RepoId
+        };
+
+        DiskSortedVarIntList postingsList = LoadOrAddTrigramPostingsList(trigramMatchCacheKey);
+
+        // TODO: As-is, this is very inefficient
+        postingsList.AppendData(new ulong[] { docInfoBlock.StartingOffset + (ulong)trigramInfo.Position });
+
+        count++;
+      }
+
+      Console.WriteLine($" {count} trigrams");
+
+      docInfoBlock.IsIndexed = true;
+      cursor.CurrentNode.ReplaceDataAtIndex(docInfoBlock, cursor.CurrentIndex);
+      DocCache.Clear(); // Not the best way to do this
+    }
+  }
+
+  public bool IndexFilesForSliceOfTime(CancellationToken cancellationToken, int milliseconds = 5000)
+  {
+    var watch = Stopwatch.StartNew();
+
+    // TODO: We need to store this cursor and pick up where we left off rather than
+    // starting back over at the beginning each time
+    var cursor = new DiskBTreeCursor<DocIdCompoundKeyBlock, DocInfoBlock>(DocTree);
+    cursor.Reset();
+
+    while (true)
+    {
+      if (!cursor.MoveNext()) return false;
+      if (cancellationToken.IsCancellationRequested) return true;
+      if (watch.ElapsedMilliseconds > milliseconds) return true;
+
+      DocInfoBlock docInfoBlock = cursor.CurrentData;
+
+      if (docInfoBlock.IsIndexed) continue;
+
+      DiskImmutableString nameString = DiskBlockManager.ImmutableStringFactory.LoadExisting(docInfoBlock.ExternalIdOrPathAddress);
+      string name = nameString.GetValue();
+      Console.Write($"Indexing: {name}");
+
+      var repoIdCompoundKey = new RepoIdCompoundKeyBlock()
+      {
+        UserType = cursor.CurrentKey.UserType,
+        UserId = cursor.CurrentKey.UserId,
+        RepoType = cursor.CurrentKey.RepoType,
+        RepoId = cursor.CurrentKey.RepoId
+      };
+      bool found = RepoCache.TryFind(repoIdCompoundKey, out RepoInfoBlock repoInfoBlock, out _, out _, out _);
+      if (!found) continue;
+      string rootFolderPath = LoadString(repoInfoBlock.RootFolderPathAddress);
+      string fullPath = Path.Combine(rootFolderPath, name);
+      string content = File.ReadAllText(fullPath);
+
+      var trigramExtractor = new TrigramExtractor(content);
+      int count = 0;
+
+      foreach (TrigramInfo trigramInfo in trigramExtractor)
+      {
+        // TODO: We need a way to pause/resume within each file in case the file
+        // is very big and taking to long
         var trigramMatchCacheKey = new TrigramMatchCacheKey
         {
           TrigramKey = trigramInfo.Key,
