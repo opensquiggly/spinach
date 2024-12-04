@@ -23,7 +23,7 @@ internal static partial class Program
     var enumerable2 = new FastTrigramEnumerable2(trigram2, TextSearchManager);
 
     // FastIntersectEnumerable<TrigramFileInfo, int> intersection = enumerable1.FastIntersect(enumerable2);
-    var intersection = enumerable1.FastIntersect(enumerable2);
+    FastIntersectEnumerable<Spinach.Keys.MatchWithRepoOffsetKey, Spinach.Misc.MatchData> intersection = enumerable1.FastIntersect(enumerable2);
 
     // FastTrigramEnumerable enumerable1 = TextSearchIndex.GetFastTrigramEnumerable(key1);
     // FastTrigramEnumerable enumerable2 = TextSearchIndex.GetFastTrigramEnumerable(key2);

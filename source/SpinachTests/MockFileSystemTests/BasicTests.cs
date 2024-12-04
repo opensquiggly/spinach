@@ -40,14 +40,14 @@ public class BasicTests
   [TestMethod]
   public void Should_ThrowDirectoryNotFoundException_When_PathIsInvalid()
   {
-    var action = () => new Basic("/nonexistent", MockFileSystem);
+    Func<Basic> action = () => new Basic("/nonexistent", MockFileSystem);
     action.Should().Throw<DirectoryNotFoundException>();
   }
 
   [TestMethod]
   public void Should_ThrowArgumentOutOfRangeException_When_StartIndexIsNegative()
   {
-    var action = () => new Basic("/root", MockFileSystem, -1);
+    Func<Basic> action = () => new Basic("/root", MockFileSystem, -1);
     action.Should().Throw<ArgumentOutOfRangeException>();
   }
 
@@ -167,7 +167,7 @@ public class BasicTests
   public void Should_ThrowInvalidOperationException_When_AccessingCurrentBeforeEnumeration()
   {
     var enumerator = new Basic("/root", MockFileSystem);
-    var action = () => _ = enumerator.Current;
+    Func<string> action = () => _ = enumerator.Current;
     action.Should().Throw<InvalidOperationException>();
   }
 
@@ -176,7 +176,7 @@ public class BasicTests
   {
     var enumerator = new Basic("/root", MockFileSystem);
     while (enumerator.MoveNext()) { }
-    var action = () => _ = enumerator.Current;
+    Func<string> action = () => _ = enumerator.Current;
     action.Should().Throw<InvalidOperationException>();
   }
 }

@@ -1,5 +1,5 @@
-using System.Collections;
 using Spinach.Interfaces;
+using System.Collections;
 
 namespace Spinach.Helpers;
 
@@ -113,7 +113,7 @@ public class Basic : IEnumerator<string>
       }
 
       // Get the next directory to process
-      var currentDir = _pendingDirectories.Dequeue();
+      string currentDir = _pendingDirectories.Dequeue();
 
       try
       {
@@ -128,7 +128,7 @@ public class Basic : IEnumerator<string>
           .ToList();
 
         // Add sorted subdirectories to the queue
-        foreach (var dir in subdirectories)
+        foreach (string dir in subdirectories)
         {
           try
           {
@@ -139,7 +139,7 @@ public class Basic : IEnumerator<string>
         }
 
         // Add sorted files to the current files list
-        foreach (var file in files)
+        foreach (string file in files)
         {
           try
           {

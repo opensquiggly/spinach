@@ -1,8 +1,8 @@
 namespace SpinachExplorer;
 
 using Spinach.Keys;
-using System.Diagnostics;
 using Spinach.Misc;
+using System.Diagnostics;
 
 internal static partial class Program
 {

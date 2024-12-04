@@ -1,7 +1,7 @@
-global using Spinach.Interfaces;
+global using FluentAssertions;
+global using Microsoft.VisualStudio.TestTools.UnitTesting;
 global using Spinach.Helpers;
 global using Spinach.Interfaces;
-global using FluentAssertions;
+global using Spinach.Interfaces;
 global using SpinachTests.Mocks;
-global using Microsoft.VisualStudio.TestTools.UnitTesting;
 
