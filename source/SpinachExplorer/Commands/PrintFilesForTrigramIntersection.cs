@@ -17,9 +17,13 @@ internal static partial class Program
     int key1 = TrigramHelper.GetTrigramKey(trigram1);
     int key2 = TrigramHelper.GetTrigramKey(trigram2);
 
-    FastTrigramFileEnumerable enumerable1 = TextSearchIndex.GetFastTrigramFileEnumerable(key1);
-    FastTrigramFileEnumerable enumerable2 = TextSearchIndex.GetFastTrigramFileEnumerable(key2);
-    FastIntersectEnumerable<TrigramFileInfo, int> intersection = enumerable1.FastIntersect(enumerable2);
+    // FastTrigramFileEnumerable enumerable1 = TextSearchIndex.GetFastTrigramFileEnumerable(key1);
+    // FastTrigramFileEnumerable enumerable2 = TextSearchIndex.GetFastTrigramFileEnumerable(key2);
+    var enumerable1 = new FastTrigramEnumerable2(trigram1, TextSearchManager);
+    var enumerable2 = new FastTrigramEnumerable2(trigram2, TextSearchManager);
+
+    // FastIntersectEnumerable<TrigramFileInfo, int> intersection = enumerable1.FastIntersect(enumerable2);
+    var intersection = enumerable1.FastIntersect(enumerable2);
 
     // FastTrigramEnumerable enumerable1 = TextSearchIndex.GetFastTrigramEnumerable(key1);
     // FastTrigramEnumerable enumerable2 = TextSearchIndex.GetFastTrigramEnumerable(key2);

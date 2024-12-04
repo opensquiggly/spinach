@@ -1,6 +1,8 @@
 namespace SpinachExplorer;
 
+using Spinach.Keys;
 using System.Diagnostics;
+using Spinach.Misc;
 
 internal static partial class Program
 {
@@ -14,11 +16,9 @@ internal static partial class Program
     Console.Write("Enter literal 2: ");
     string literal2 = Console.ReadLine();
 
-    FastLiteralFileEnumerable enumerable1 = TextSearchIndex.GetFastLiteralFileEnumerable(literal1);
-    FastLiteralFileEnumerable enumerable2 = TextSearchIndex.GetFastLiteralFileEnumerable(literal2);
-
-    FastIntersectEnumerable<TrigramFileInfo, int> intersection =
-      enumerable1.FastIntersect(enumerable2);
+    var enumerable1 = new FastLiteralEnumerable2(literal1, TextSearchManager);
+    var enumerable2 = new FastLiteralEnumerable2(literal2, TextSearchManager);
+    FastIntersectEnumerable<MatchWithRepoOffsetKey, MatchData> intersection = enumerable1.FastIntersect(enumerable2);
 
     var stopwatch = Stopwatch.StartNew();
     int count = intersection.Count();

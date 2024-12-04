@@ -19,7 +19,7 @@ internal static partial class Program
     // TextSearchIndex is a facade class for all of Spinach's internal functionality. By
     // placing all indexing and lookup functionality in the facace class, we can provide
     // a nicely abstracted API to any Spinach consumers.
-    TextSearchIndex = new TextSearchIndex();
+    // TextSearchIndex = new TextSearchIndex();
     TextSearchManager = new TextSearchManager();
   }
 
@@ -27,7 +27,7 @@ internal static partial class Program
   // Private Static Properties
   // /////////////////////////////////////////////////////////////////////////////////////////////
 
-  private static TextSearchIndex TextSearchIndex { get; }
+  // private static TextSearchIndex TextSearchIndex { get; }
 
   private static TextSearchManager TextSearchManager { get; }
 
