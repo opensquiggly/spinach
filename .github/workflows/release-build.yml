@@ -39,7 +39,7 @@ jobs:
       - name: Format check
         run: |
           dotnet tool restore
-          dotnet format --verify-no-changes Spinach.sln
+          dotnet format --verify-no-changes src/Spinach.sln
 
       - name: Build Spinach in release mode
         run: |
