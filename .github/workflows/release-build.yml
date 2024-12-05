@@ -43,12 +43,12 @@ jobs:
 
       - name: Build Spinach in release mode
         run: |
-          cd source/Spinach/
+          cd src/Spinach/
           dotnet build --configuration Release
 
       - name: Publish
         run: |
-          cd source/Spinach/bin/Packages
+          cd src/Spinach/bin/Packages
           dotnet nuget push Spinach.*.nupkg --skip-duplicate --source https://api.nuget.org/v3/index.json --api-key ${{secrets.PUBLISH_TO_NUGET_ORG}}
 
       - run: echo "🍏 This job's status is ${{ job.status }}."

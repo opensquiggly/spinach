@@ -1,10 +1,10 @@
 <Project>
   <ItemGroup>
     <PackageVersion Include="Eugene" Version="1.0.1-alpha.28" />
-    <PackageVersion Include="Fixie" Version="3.3.0" />
-    <PackageVersion Include="Fixie.TestAdapter" Version="3.3.0" />
     <PackageVersion Include="FluentAssertions" Version="6.8.0" />
     <PackageVersion Include="Microsoft.Extensions.DependencyInjection" Version="6.0.0" />
-    <PackageVersion Include="TimeWarp.Fixie" Version="1.0.2" />
+    <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="17.12.0" />
+    <PackageVersion Include="MSTest.TestAdapter" Version="3.6.4" />
+    <PackageVersion Include="MSTest.TestFramework" Version="3.6.4" />
   </ItemGroup>
 </Project>

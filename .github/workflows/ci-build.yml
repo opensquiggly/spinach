@@ -36,18 +36,18 @@ jobs:
       - name: Format check
         run: |
           dotnet tool restore
-          dotnet format --verify-no-changes ./Spinach.sln
+          dotnet format --verify-no-changes ./src/Spinach.sln
 
       - name: Build Spinach
         run: |
-          cd source/Spinach/
+          cd src/Spinach/
           dotnet build --configuration Debug
 
-      - name: run Spinach.Tests
+      - name: run SpinachTests
         run: |
-          cd tests/Spinach.Tests/
+          cd src/SpinachTests/
           dotnet tool restore
           dotnet restore
-          dotnet fixie --configuration Debug
+          dotnet test --configuration Debug
 
       - run: echo "🍏 This job's status is ${{ job.status }}."
