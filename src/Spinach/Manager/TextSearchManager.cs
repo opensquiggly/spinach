@@ -4,9 +4,11 @@ using Misc;
 using System.Diagnostics;
 using TrackingObjects;
 
-public class TextSearchManager : ITextSearchManager, ITextSearchEnumeratorContext
+public partial class TextSearchManager : ITextSearchManager, ITextSearchEnumeratorContext
 {
   private HeaderBlock _headerBlock;
+  private ResumableFileSystemEnumerator _currentEnumerator;
+  private int _lastProcessedIndex = -1;
 
   public TextSearchManager()
   {
@@ -510,6 +512,107 @@ public class TextSearchManager : ITextSearchManager, ITextSearchEnumeratorContex
     RepoCache.Clear();
   }
 
+  public bool IndexLocalFilesForSliceOfTime(ushort userType, uint userId, ushort repoType, uint repoId, CancellationToken cancellationToken, int milliseconds = 5000)
+  {
+    var watch = Stopwatch.StartNew();
+    var repoIdCompoundKey = new RepoIdCompoundKeyBlock()
+    {
+      UserType = userType,
+      UserId = userId,
+      RepoType = repoType,
+      RepoId = repoId
+    };
+
+    bool found = RepoTree.TryFind(repoIdCompoundKey, out RepoInfoBlock data, out DiskBTreeNode<RepoIdCompoundKeyBlock, RepoInfoBlock> node, out int nodeIndex);
+    if (!found) return false;
+
+    string rootFolderPath = LoadString(data.RootFolderPathAddress);
+    uint currentDocId = data.LastDocId;
+    ulong currentOffset = data.LastDocStartingOffset + (ulong)data.LastDocLength;
+
+    // Initialize or resume the file enumerator
+    if (_currentEnumerator == null || _currentEnumerator.CurrentIndex < _lastProcessedIndex)
+    {
+      _currentEnumerator?.Dispose();
+      _currentEnumerator = new ResumableFileSystemEnumerator(rootFolderPath, new NativeFileSystem(), _lastProcessedIndex + 1);
+    }
+
+    bool hasMoreFiles = false;
+    while (_currentEnumerator.MoveNext())
+    {
+      if (cancellationToken.IsCancellationRequested || watch.ElapsedMilliseconds > milliseconds)
+      {
+        hasMoreFiles = true;
+        break;
+      }
+
+      string filePath = _currentEnumerator.Current;
+      _lastProcessedIndex = _currentEnumerator.CurrentIndex;
+
+      if (!IncludeFileInIndex(filePath))
+      {
+        continue;
+      }
+
+      string relativePath = GetRelativePath(rootFolderPath, filePath);
+      long externalIdOrPathAddress = DiskBlockManager.ImmutableStringFactory.Append(relativePath).Address;
+
+      var docIdCompoundKey = new DocIdCompoundKeyBlock()
+      {
+        UserType = userType,
+        UserId = userId,
+        RepoType = repoType,
+        RepoId = repoId,
+        Id = ++currentDocId
+      };
+
+      var docOffsetCompoundKey = new DocOffsetCompoundKeyBlock()
+      {
+        UserType = userType,
+        UserId = userId,
+        RepoType = repoType,
+        RepoId = repoId,
+        StartingOffset = currentOffset
+      };
+
+      long length = GetFileLength(filePath);
+
+      var docInfoBlock = new DocInfoBlock()
+      {
+        NameAddress = 0,
+        ExternalIdOrPathAddress = externalIdOrPathAddress,
+        Status = DocStatus.Normal,
+        IsIndexed = false,
+        OriginalLength = length,
+        CurrentLength = length,
+        StartingOffset = currentOffset
+      };
+
+      DocTree.Insert(docIdCompoundKey, docInfoBlock);
+      DocTreeByOffset.Insert(docOffsetCompoundKey, docIdCompoundKey.Id);
+
+      data.LastDocId = currentDocId;
+      data.LastDocStartingOffset = currentOffset;
+      data.LastDocLength = length;
+      currentOffset += (ulong)length;
+
+      Console.WriteLine($"Added file to index: {relativePath}");
+    }
+
+    // Update repository info
+    node.ReplaceDataAtIndex(data, nodeIndex);
+    RepoCache.Clear();
+
+    // If we've processed all files, clean up the enumerator
+    if (!hasMoreFiles)
+    {
+      _currentEnumerator?.Dispose();
+      _currentEnumerator = null;
+      _lastProcessedIndex = -1;
+    }
+
+    return hasMoreFiles;
+  }
   public DiskSortedVarIntList LoadOrAddTrigramPostingsList(TrigramMatchCacheKey key)
   {
     if (PostingsListCache.TryGetValue(key, out DiskSortedVarIntList postingsList))
