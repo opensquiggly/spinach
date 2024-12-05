@@ -14,7 +14,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="../../source/Spinach/Spinach.csproj" />
+    <ProjectReference Include="../../src/Spinach/Spinach.csproj" />
   </ItemGroup>
 
 </Project>

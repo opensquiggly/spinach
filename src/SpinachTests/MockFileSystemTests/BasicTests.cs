@@ -40,21 +40,21 @@ public class BasicTests
   [TestMethod]
   public void Should_ThrowDirectoryNotFoundException_When_PathIsInvalid()
   {
-    Func<Basic> action = () => new Basic("/nonexistent", MockFileSystem);
+    Func<ResumableFileSystemEnumerator> action = () => new ResumableFileSystemEnumerator("/nonexistent", MockFileSystem);
     action.Should().Throw<DirectoryNotFoundException>();
   }
 
   [TestMethod]
   public void Should_ThrowArgumentOutOfRangeException_When_StartIndexIsNegative()
   {
-    Func<Basic> action = () => new Basic("/root", MockFileSystem, -1);
+    Func<ResumableFileSystemEnumerator> action = () => new ResumableFileSystemEnumerator("/root", MockFileSystem, -1);
     action.Should().Throw<ArgumentOutOfRangeException>();
   }
 
   [TestMethod]
   public void Should_EnumerateAllFiles_When_StartingFromBeginning()
   {
-    var enumerator = new Basic("/root", MockFileSystem);
+    var enumerator = new ResumableFileSystemEnumerator("/root", MockFileSystem);
     var files = new List<string>();
 
     while (enumerator.MoveNext())
@@ -76,7 +76,7 @@ public class BasicTests
   [TestMethod]
   public void Should_EnumerateRemainingFiles_When_StartingFromIndex()
   {
-    var enumerator = new Basic("/root", MockFileSystem, 2);
+    var enumerator = new ResumableFileSystemEnumerator("/root", MockFileSystem, 2);
     var files = new List<string>();
 
     while (enumerator.MoveNext())
@@ -96,7 +96,7 @@ public class BasicTests
   [TestMethod]
   public void Should_EnumerateFromCorrectPosition_When_ResetToSpecificIndex()
   {
-    var enumerator = new Basic("/root", MockFileSystem);
+    var enumerator = new ResumableFileSystemEnumerator("/root", MockFileSystem);
 
     // Move past some files
     enumerator.MoveNext();
@@ -124,7 +124,7 @@ public class BasicTests
   [TestMethod]
   public void Should_EnumerateAllFiles_When_ResetToBeginning()
   {
-    var enumerator = new Basic("/root", MockFileSystem);
+    var enumerator = new ResumableFileSystemEnumerator("/root", MockFileSystem);
 
     // Move past some files
     enumerator.MoveNext();
@@ -153,7 +153,7 @@ public class BasicTests
   [TestMethod]
   public void Should_TrackCurrentIndex_Correctly()
   {
-    var enumerator = new Basic("/root", MockFileSystem);
+    var enumerator = new ResumableFileSystemEnumerator("/root", MockFileSystem);
     enumerator.CurrentIndex.Should().Be(-1);
 
     enumerator.MoveNext();
@@ -166,7 +166,7 @@ public class BasicTests
   [TestMethod]
   public void Should_ThrowInvalidOperationException_When_AccessingCurrentBeforeEnumeration()
   {
-    var enumerator = new Basic("/root", MockFileSystem);
+    var enumerator = new ResumableFileSystemEnumerator("/root", MockFileSystem);
     Func<string> action = () => _ = enumerator.Current;
     action.Should().Throw<InvalidOperationException>();
   }
@@ -174,7 +174,7 @@ public class BasicTests
   [TestMethod]
   public void Should_ThrowInvalidOperationException_When_AccessingCurrentAfterEnumeration()
   {
-    var enumerator = new Basic("/root", MockFileSystem);
+    var enumerator = new ResumableFileSystemEnumerator("/root", MockFileSystem);
     while (enumerator.MoveNext()) { }
     Func<string> action = () => _ = enumerator.Current;
     action.Should().Throw<InvalidOperationException>();

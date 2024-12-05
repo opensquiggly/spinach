@@ -7,7 +7,7 @@ namespace Spinach.Helpers;
 /// Enumerates files in a repository directory with support for resuming from a specific index
 /// and safe file system operations.
 /// </summary>
-public class Basic : IEnumerator<string>
+public class ResumableFileSystemEnumerator : IEnumerator<string>
 {
   private readonly string _rootPath;
   private readonly Queue<string> _pendingDirectories;
@@ -30,7 +30,7 @@ public class Basic : IEnumerator<string>
   /// <param name="rootPath">The root directory path to enumerate files from.</param>
   /// <param name="fileSystem">The file system implementation to use.</param>
   /// <param name="startIndex">The index to start enumeration from. Default is 0.</param>
-  public Basic(string rootPath, IFileSystem fileSystem, int startIndex = 0)
+  public ResumableFileSystemEnumerator(string rootPath, IFileSystem fileSystem, int startIndex = 0)
   {
     if (string.IsNullOrEmpty(rootPath))
       throw new ArgumentNullException(nameof(rootPath));
@@ -92,7 +92,7 @@ public class Basic : IEnumerator<string>
   private bool MoveNextInternal()
   {
     if (_isDisposed)
-      throw new ObjectDisposedException(nameof(Basic));
+      throw new ObjectDisposedException(nameof(ResumableFileSystemEnumerator));
 
     while (true)
     {
@@ -174,7 +174,7 @@ public class Basic : IEnumerator<string>
   public void Reset(int index = -1)
   {
     if (_isDisposed)
-      throw new ObjectDisposedException(nameof(Basic));
+      throw new ObjectDisposedException(nameof(ResumableFileSystemEnumerator));
 
     if (index < -1)
       throw new ArgumentOutOfRangeException(nameof(index), "Index cannot be less than -1.");
