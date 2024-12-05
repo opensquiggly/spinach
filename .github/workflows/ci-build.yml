@@ -43,9 +43,9 @@ jobs:
           cd src/Spinach/
           dotnet build --configuration Debug
 
-      - name: run Spinach.Tests
+      - name: run SpinachTests
         run: |
-          cd tests/Spinach.Tests/
+          cd src/SpinachTests/
           dotnet tool restore
           dotnet restore
           dotnet fixie --configuration Debug
