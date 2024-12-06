@@ -512,9 +512,8 @@ public partial class TextSearchManager : ITextSearchManager, ITextSearchEnumerat
     RepoCache.Clear();
   }
 
-  public bool IndexLocalFilesForSliceOfTime(ushort userType, uint userId, ushort repoType, uint repoId, CancellationToken cancellationToken, int milliseconds = 5000)
+  public bool IndexLocalFilesForSliceOfTime(ushort userType, uint userId, ushort repoType, uint repoId, Stopwatch watch, CancellationToken cancellationToken, int milliseconds = 5000)
   {
-    var watch = Stopwatch.StartNew();
     var repoIdCompoundKey = new RepoIdCompoundKeyBlock()
     {
       UserType = userType,
@@ -714,10 +713,8 @@ public partial class TextSearchManager : ITextSearchManager, ITextSearchEnumerat
     }
   }
 
-  public bool IndexFilesForSliceOfTime(CancellationToken cancellationToken, int milliseconds = 5000)
+  public bool IndexFilesForSliceOfTime(Stopwatch watch, CancellationToken cancellationToken, int milliseconds = 5000)
   {
-    var watch = Stopwatch.StartNew();
-
     // TODO: We need to store this cursor and pick up where we left off rather than
     // starting back over at the beginning each time
     var cursor = new DiskBTreeCursor<DocIdCompoundKeyBlock, DocInfoBlock>(DocTree);
@@ -780,6 +777,15 @@ public partial class TextSearchManager : ITextSearchManager, ITextSearchEnumerat
       cursor.CurrentNode.ReplaceDataAtIndex(docInfoBlock, cursor.CurrentIndex);
       DocCache.Clear(); // Not the best way to do this
     }
+  }
+
+
+  public bool DoIndexingWorkForSliceOfTime(CancellationToken cancellationToken, int milliseconds = 5000)
+  {
+    var watch = Stopwatch.StartNew();
+
+    if (IndexLocalFilesForSliceOfTime(watch, cancellationToken, milliseconds)) return true;
+    return IndexFilesForSliceOfTime(watch, cancellationToken, milliseconds);
   }
 
   public void PrintLocalFiles(ushort userType, uint userId, ushort repoType, uint repoId)
