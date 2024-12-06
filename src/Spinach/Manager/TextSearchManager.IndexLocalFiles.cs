@@ -17,8 +17,8 @@ public partial class TextSearchManager
       if (cancellationToken.IsCancellationRequested)
         return true;
 
-      var repoInfo = cursor.CurrentData;
-      var repoKey = cursor.CurrentKey;
+      RepoInfoBlock repoInfo = cursor.CurrentData;
+      RepoIdCompoundKeyBlock repoKey = cursor.CurrentKey;
 
       // Skip if repo doesn't have files to index
       if (!repoInfo.HasFilesToIndex)
