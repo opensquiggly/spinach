@@ -36,7 +36,7 @@ internal static partial class Program
       _ => DocStatus.Normal
     };
 
-    bool success = TextSearchManager.SetDocStatus(userType, userId, repoType, repoId, name, docStatus, out _, out _, out _, out _);
+    bool success = TextSearchManager.SetDocStatus(userType, userId, repoType, repoId, name, docStatus);
 
     if (success)
     {

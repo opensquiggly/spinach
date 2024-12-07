@@ -870,21 +870,64 @@ public partial class TextSearchManager : ITextSearchManager, ITextSearchEnumerat
     ushort repoType,
     uint repoId,
     string name,
-    DocStatus status,
-    out ulong docId,
-    out DocInfoBlock docInfoBlock,
-    out DiskBTreeNode<DocIdCompoundKeyBlock, DocInfoBlock> node,
-    out int nodeIndex
+    DocStatus status
+    // out ulong docId,
+    // out DocInfoBlock docInfoBlock,
+    // out DiskBTreeNode<DocIdCompoundKeyBlock, DocInfoBlock> node,
+    // out int nodeIndex
   )
   {
-    bool found = TryFindDocument(userType, userId, repoType, repoId, name, out docId, out docInfoBlock, out node, out nodeIndex);
-    if (!found) return false;
+    // bool found = TryFindDocument(userType, userId, repoType, repoId, name, out docId, out docInfoBlock, out node, out nodeIndex);
+    // if (!found) return false;
+    //
+    // docInfoBlock.Status = status;
+    // node.ReplaceDataAtIndex(docInfoBlock, nodeIndex);
+    // DocCache.Clear();
+    //
+    // return true;
 
-    docInfoBlock.Status = status;
-    node.ReplaceDataAtIndex(docInfoBlock, nodeIndex);
-    DocCache.Clear();
+    ulong docId;
+    DocInfoBlock docInfoBlock;
+    DiskBTreeNode<DocIdCompoundKeyBlock, DocInfoBlock> node;
+    int nodeIndex;
 
-    return true;
+    var cursor = new DiskBTreeCursor<DocIdCompoundKeyBlock, DocInfoBlock>(DocTree);
+    bool foundMatches = false;
+
+    var firstKey = new DocIdCompoundKeyBlock()
+    {
+      UserType = userType,
+      UserId = userId,
+      RepoType = repoType,
+      RepoId = repoId,
+      Id = 0
+    };
+
+    bool hasData = cursor.MoveUntilGreaterThanOrEqual(firstKey);
+    while (hasData && cursor.CurrentKey.UserType == userType && cursor.CurrentKey.UserId == userId && cursor.CurrentKey.RepoType == repoType && cursor.CurrentKey.RepoId == repoId)
+    {
+      DiskImmutableString nameString = DiskBlockManager.ImmutableStringFactory.LoadExisting(cursor.CurrentData.ExternalIdOrPathAddress);
+      string currentName = nameString.GetValue();
+      if (currentName == name)
+      {
+        docId = cursor.CurrentKey.Id;
+        docInfoBlock = cursor.CurrentData;
+        node = cursor.CurrentNode;
+        nodeIndex = cursor.CurrentIndex;
+        docInfoBlock.Status = status;
+        node.ReplaceDataAtIndex(docInfoBlock, nodeIndex);
+        foundMatches = true;
+      }
+
+      hasData = cursor.MoveNext();
+    }
+
+    if (foundMatches)
+    {
+      DocCache.Clear();
+    }
+
+    return foundMatches;
   }
 
   public IEnumerable<UserInfoBlock> GetUserBlocks()
