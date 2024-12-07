@@ -871,10 +871,10 @@ public partial class TextSearchManager : ITextSearchManager, ITextSearchEnumerat
     uint repoId,
     string name,
     DocStatus status
-    // out ulong docId,
-    // out DocInfoBlock docInfoBlock,
-    // out DiskBTreeNode<DocIdCompoundKeyBlock, DocInfoBlock> node,
-    // out int nodeIndex
+  // out ulong docId,
+  // out DocInfoBlock docInfoBlock,
+  // out DiskBTreeNode<DocIdCompoundKeyBlock, DocInfoBlock> node,
+  // out int nodeIndex
   )
   {
     // bool found = TryFindDocument(userType, userId, repoType, repoId, name, out docId, out docInfoBlock, out node, out nodeIndex);
