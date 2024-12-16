@@ -197,8 +197,8 @@ public class FastLiteralEnumerator2 : IFastEnumerator<MatchWithRepoOffsetKey, Ma
         {
           // Console.WriteLine("Enumerator1.CurrentKey < Enumerator2.CurrentKey");
           // PrintEnumeratorInfo();
-          // hasValue1 = Enumerator1.MoveNext();
-          // if (!hasValue1) break;
+          hasValue1 = Enumerator1.MoveNext();
+          if (!hasValue1) break;
           Enumerator2.CurrentKey.WithAdjustedOffset(0, ref _tempKey);
           _tempKey.Offset += AdjustedOffset;
           hasValue1 = Enumerator1.MoveUntilGreaterThanOrEqual(_tempKey);
@@ -209,8 +209,8 @@ public class FastLiteralEnumerator2 : IFastEnumerator<MatchWithRepoOffsetKey, Ma
         {
           // Console.WriteLine("Enumerator1.CurrentKey > Enumerator2.CurrentKey");
           // PrintEnumeratorInfo();
-          // hasValue2 = Enumerator2.MoveNext();
-          // if (!hasValue2) break;
+          hasValue2 = Enumerator2.MoveNext();
+          if (!hasValue2) break;
           Enumerator1.CurrentKey.WithAdjustedOffset(AdjustedOffset, ref _tempKey);
           // _tempKey.AddOffset(-AdjustedOffset, ref _tempKey);
           hasValue2 = Enumerator2.MoveUntilGreaterThanOrEqual(_tempKey);
