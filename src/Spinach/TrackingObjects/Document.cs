@@ -50,7 +50,14 @@ public class Document : IDocument
       if (!IsValid) return "Invalid Document - Content not available";
       if (_content == null)
       {
-        _content = File.ReadAllText(FullPath);
+        try
+        {
+          _content = File.ReadAllText(FullPath);
+        }
+        catch (Exception e)
+        {
+          _content = "";
+        }
       }
 
       return _content;

@@ -23,7 +23,9 @@ internal static partial class Program
       Console.WriteLine($"{enumerator.CurrentData.Document.ExternalIdOrPath}");
       if (enumerator.CurrentData.Document.CurrentLength <= 10000)
       {
-        FileUtils.PrintFile(enumerator.CurrentData.Document.ExternalIdOrPath,
+        string fullPath = Path.Combine(enumerator.CurrentData.Repository.RootFolderPath,
+          enumerator.CurrentData.Document.ExternalIdOrPath);
+        FileUtils.PrintFile(fullPath,
           (int)enumerator.CurrentData.MatchPosition + 1, 3);
       }
     }

@@ -20,8 +20,8 @@ public class FastLiteralEnumerator2 : IFastEnumerator<MatchWithRepoOffsetKey, Ma
     AdjustedOffset = 3 - Literal.Length;
     Enumerable1 = new FastTrigramEnumerable2(Literal.Substring(0, 3), context);
     Enumerable2 = new FastTrigramEnumerable2(Literal.Substring(Literal.Length - 3, 3), context, AdjustedOffset);
-    Enumerator1 = Enumerable1.GetFastEnumerator();
-    Enumerator2 = Enumerable2.GetFastEnumerator();
+    Enumerator1 = (FastTrigramEnumerator2)Enumerable1.GetFastEnumerator();
+    Enumerator2 = (FastTrigramEnumerator2)Enumerable2.GetFastEnumerator();
     CurrentKey = new MatchWithRepoOffsetKey();
     _tempKey = new MatchWithRepoOffsetKey();
     Reset();
@@ -37,9 +37,9 @@ public class FastLiteralEnumerator2 : IFastEnumerator<MatchWithRepoOffsetKey, Ma
 
   private FastTrigramEnumerable2 Enumerable2 { get; }
 
-  private IFastEnumerator<MatchWithRepoOffsetKey, MatchData> Enumerator1 { get; }
+  private FastTrigramEnumerator2 Enumerator1 { get; }
 
-  private IFastEnumerator<MatchWithRepoOffsetKey, MatchData> Enumerator2 { get; }
+  private FastTrigramEnumerator2 Enumerator2 { get; }
 
   private string Literal { get; }
 
@@ -108,37 +108,83 @@ public class FastLiteralEnumerator2 : IFastEnumerator<MatchWithRepoOffsetKey, Ma
 
   private bool ConfirmLiteralMatch()
   {
-    // Method 1: Read the whole file and extract the substring
-    // By reading the whole file, we can store it in the LRU cache
-    // and reuse it in the future.
-    int startIndex = (int)Enumerator1.CurrentData.MatchPosition;
-    if (startIndex > Enumerator1.CurrentData.Document.Content.Length)
+    try
     {
-      Console.WriteLine("Offset is out of the range of the file content.");
-      Console.WriteLine($"startIndex = {startIndex}");
+      // Method 1: Read the whole file and extract the substring
+      // By reading the whole file, we can store it in the LRU cache
+      // and reuse it in the future.
+      int startIndex = (int)Enumerator1.CurrentData.MatchPosition;
+      if (startIndex > Enumerator1.CurrentData.Document.Content.Length)
+      {
+        Console.WriteLine("Offset is out of the range of the file content.");
+        Console.WriteLine($"startIndex = {startIndex}");
+        return false;
+      }
+
+      // Method 2: Read the specified substring directly from the file
+      // This method is theoretically faster but in practice I did not
+      // notice much of a difference between the two methods.
+      // string targetLiteral = ReadSubstringFromFile(
+      //   Enumerator1.CurrentData.Document.ExternalIdOrPath,
+      //   Enumerator1.CurrentData.MatchPosition,
+      //   Literal.Length
+      // );
+
+      string targetLiteral = Enumerator1.CurrentData.Document.Content.Substring(
+        startIndex,
+        Literal.Length
+      );
+
+      StringComparison stringComparer = Context.Options.MatchCase ?
+        StringComparison.CurrentCulture :
+        StringComparison.CurrentCultureIgnoreCase;
+
+      return string.Equals(targetLiteral, Literal, stringComparer);
+    }
+    catch
+    {
       return false;
     }
+  }
 
-    string targetLiteral = Enumerator1.CurrentData.Document.Content.Substring(
-      startIndex,
-      Literal.Length
-    );
+  private void PrinterNumeratorInfo(string name, FastTrigramEnumerator2 enumerator)
+  {
+    Console.Write($"{name}: ");
+    Console.WriteLine($"{enumerator.CurrentData.Document.ExternalIdOrPath}, ");
+    Console.Write($"             RepoId = {enumerator.CurrentKey.RepoId}, ");
+    Console.Write($"Offset = {enumerator.CurrentKey.Offset}, ");
+    Console.Write($"AdjustedOffset = {enumerator.CurrentKey.AdjustedOffset}, ");
+    Console.Write($"EffectiveOffset = {enumerator.CurrentKey.EffectiveOffset}, ");
+    Console.Write($"MatchPosition = {enumerator.CurrentData.MatchPosition}");
+    Console.WriteLine();
 
+    try
+    {
+      int startIndex = (int)enumerator.CurrentData.MatchPosition + enumerator.AdjustedOffset;
+      if (startIndex > enumerator.CurrentData.Document.Content.Length)
+      {
+        Console.WriteLine("Offset is out of the range of the file content.");
+        Console.WriteLine($"startIndex = {startIndex}");
+      }
 
-    // Method 2: Read the specified substring directly from the file
-    // This method is theoretically faster but in practice I did not
-    // notice much of a difference between the two methods.
-    // string targetLiteral = ReadSubstringFromFile(
-    //   Enumerator1.CurrentData.Document.ExternalIdOrPath,
-    //   Enumerator1.CurrentData.MatchPosition,
-    //   Literal.Length
-    // );
+      string targetTrigram = enumerator.CurrentData.Document.Content.Substring(
+        startIndex,
+        3
+      );
 
-    StringComparison stringComparer = Context.Options.MatchCase ?
-      StringComparison.CurrentCulture :
-      StringComparison.CurrentCultureIgnoreCase;
+      Console.WriteLine($"             '{targetTrigram}'");
+    }
+    catch
+    {
+      // ignored
+    }
+  }
 
-    return string.Equals(targetLiteral, Literal, stringComparer);
+  private void PrintEnumeratorInfo()
+  {
+    PrinterNumeratorInfo("Enumerator1", Enumerator1);
+    PrinterNumeratorInfo("Enumerator2", Enumerator2);
+    Console.WriteLine();
   }
 
   private bool Intersect(bool hasValue1, bool hasValue2)
@@ -149,38 +195,52 @@ public class FastLiteralEnumerator2 : IFastEnumerator<MatchWithRepoOffsetKey, Ma
       {
         if (Enumerator1.CurrentKey < Enumerator2.CurrentKey)
         {
-          hasValue1 = Enumerator1.MoveNext();
-          if (!hasValue1) break;
+          // Console.WriteLine("Enumerator1.CurrentKey < Enumerator2.CurrentKey");
+          // PrintEnumeratorInfo();
+          // hasValue1 = Enumerator1.MoveNext();
+          // if (!hasValue1) break;
           Enumerator2.CurrentKey.WithAdjustedOffset(0, ref _tempKey);
+          _tempKey.Offset += AdjustedOffset;
           hasValue1 = Enumerator1.MoveUntilGreaterThanOrEqual(_tempKey);
+          // Console.WriteLine("After Advancing Enumerator1");
+          // PrintEnumeratorInfo();
         }
         else if (Enumerator1.CurrentKey > Enumerator2.CurrentKey)
         {
-          hasValue2 = Enumerator2.MoveNext();
-          if (!hasValue2) break;
+          // Console.WriteLine("Enumerator1.CurrentKey > Enumerator2.CurrentKey");
+          // PrintEnumeratorInfo();
+          // hasValue2 = Enumerator2.MoveNext();
+          // if (!hasValue2) break;
           Enumerator1.CurrentKey.WithAdjustedOffset(AdjustedOffset, ref _tempKey);
-          _tempKey.AddOffset(-AdjustedOffset, ref _tempKey);
+          // _tempKey.AddOffset(-AdjustedOffset, ref _tempKey);
           hasValue2 = Enumerator2.MoveUntilGreaterThanOrEqual(_tempKey);
+          // Console.WriteLine("After Advancing Enumerator2");
+          // PrintEnumeratorInfo();
         }
         else if (!ConfirmLiteralMatch())
         {
+          // Console.WriteLine("Trigrams found but literal match failed.");
+          // PrintEnumeratorInfo();
           hasValue1 = Enumerator1.MoveNext();
           hasValue2 = Enumerator2.MoveNext();
         }
         else
         {
+          // Console.WriteLine("Trigrams found and literal match confirmed.");
+          // PrintEnumeratorInfo();
           CurrentKey = Enumerator1.CurrentKey;
           CurrentData = Enumerator1.CurrentData;
           return true;
         }
       }
-      catch (Exception e)
+      catch
       {
-        Console.WriteLine(e);
-        throw;
+        // Console.WriteLine("Exception occurred.");
+        // Ignored
       }
     }
 
+    // Console.WriteLine("No trigrams found.");
     return false;
   }
 

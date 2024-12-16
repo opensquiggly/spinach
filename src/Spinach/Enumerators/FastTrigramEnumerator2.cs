@@ -38,7 +38,7 @@ public class FastTrigramEnumerator2 : IFastEnumerator<MatchWithRepoOffsetKey, Ma
 
   private int TrigramKey { get; }
 
-  private int AdjustedOffset { get; }
+  public int AdjustedOffset { get; }
 
   ITextSearchEnumeratorContext Context { get; set; }
 
@@ -76,13 +76,20 @@ public class FastTrigramEnumerator2 : IFastEnumerator<MatchWithRepoOffsetKey, Ma
 
   private void SetCurrentUser()
   {
-    if (TrigramMatchesCursor == null) return;
-
-    if (MatchWithRepoOffsetKey.IsSameUser(CurrentKey, TrigramMatchesCursor.CurrentKey))
+    // Console.WriteLine("Entering SetCurrentUser()");
+    if (TrigramMatchesCursor == null)
     {
+      // Console.WriteLine("SetCurrentUser: TrigramMatchesCursor is null, returning");
       return;
     }
 
+    if (MatchWithRepoOffsetKey.IsSameUser(CurrentKey, TrigramMatchesCursor.CurrentKey))
+    {
+      // Console.WriteLine("SetCurrentUser: Same user as current, skipping update");
+      return;
+    }
+
+    // Console.WriteLine($"SetCurrentUser: Updating user - Type: {TrigramMatchesCursor.CurrentKey.UserType}, Id: {TrigramMatchesCursor.CurrentKey.UserId}");
     CurrentData.User.Type = TrigramMatchesCursor.CurrentKey.UserType;
     CurrentData.User.Id = TrigramMatchesCursor.CurrentKey.UserId;
 
@@ -98,13 +105,20 @@ public class FastTrigramEnumerator2 : IFastEnumerator<MatchWithRepoOffsetKey, Ma
 
   private void SetCurrentRepository()
   {
-    if (TrigramMatchesCursor == null) return;
-
-    if (MatchWithRepoOffsetKey.IsSameRepo(CurrentKey, TrigramMatchesCursor.CurrentKey))
+    // Console.WriteLine("Entering SetCurrentRepository()");
+    if (TrigramMatchesCursor == null)
     {
+      // Console.WriteLine("SetCurrentRepository: TrigramMatchesCursor is null, returning");
       return;
     }
 
+    if (MatchWithRepoOffsetKey.IsSameRepo(CurrentKey, TrigramMatchesCursor.CurrentKey))
+    {
+      // Console.WriteLine("SetCurrentRepository: Same repo as current, skipping update");
+      return;
+    }
+
+    // Console.WriteLine($"SetCurrentRepository: Updating repo - Type: {TrigramMatchesCursor.CurrentKey.RepoType}, Id: {TrigramMatchesCursor.CurrentKey.RepoId}");
     CurrentData.Repository.UserType = TrigramMatchesCursor.CurrentKey.UserType;
     CurrentData.Repository.UserId = TrigramMatchesCursor.CurrentKey.UserId;
     CurrentData.Repository.Type = TrigramMatchesCursor.CurrentKey.RepoType;
@@ -124,13 +138,15 @@ public class FastTrigramEnumerator2 : IFastEnumerator<MatchWithRepoOffsetKey, Ma
 
   private void SetCurrentDocument()
   {
+    // Console.WriteLine("Entering SetCurrentDocument()");
     if (MatchWithRepoOffsetKey.IsSameRepo(CurrentKey, TrigramMatchesCursor.CurrentKey) &&
         CurrentKey.Offset == (long)CurrentPostingsListCursor.CurrentKey)
     {
-      // Nothing changed since last time
+      // Console.WriteLine("SetCurrentDocument: Same document as current, skipping update");
       return;
     }
 
+    // Console.WriteLine($"SetCurrentDocument: Updating document - Offset: {CurrentPostingsListCursor.CurrentKey}");
     CurrentData.Document.UserType = TrigramMatchesCursor.CurrentKey.UserType;
     CurrentData.Document.UserId = TrigramMatchesCursor.CurrentKey.UserId;
     CurrentData.Document.RepoType = TrigramMatchesCursor.CurrentKey.RepoType;
@@ -148,11 +164,13 @@ public class FastTrigramEnumerator2 : IFastEnumerator<MatchWithRepoOffsetKey, Ma
     DocTreeByOffsetCursor.MoveUntilGreaterThanOrEqual(docOffsetKey);
     if (DocTreeByOffsetCursor.IsPastEnd)
     {
+      // Console.WriteLine("SetCurrentDocument: DocTreeByOffsetCursor is past end, resetting to end");
       DocTreeByOffsetCursor.ResetToEnd();
       DocTreeByOffsetCursor.MovePrevious();
     }
     else if (DocTreeByOffsetCursor.CurrentKey.CompareTo(docOffsetKey) > 0)
     {
+      // Console.WriteLine("SetCurrentDocument: Current key is greater than target, moving previous");
       DocTreeByOffsetCursor.MovePrevious();
     }
 
@@ -166,45 +184,70 @@ public class FastTrigramEnumerator2 : IFastEnumerator<MatchWithRepoOffsetKey, Ma
     };
 
     bool docFound = Context.DocCache.TryFind(docIdCompoundKey, out _, out _, out _, out IDocument doc);
+    // Console.WriteLine($"SetCurrentDocument: Document found: {docFound}");
     if (docFound)
     {
       CurrentData.Document = doc;
       CurrentData.MatchPosition = (long)CurrentPostingsListCursor.CurrentKey - (long)doc.StartingOffset - AdjustedOffset;
+      // Console.WriteLine($"SetCurrentDocument: Updated match position to {CurrentData.MatchPosition}");
     }
   }
 
   private void SetCurrentKey()
   {
+    // Console.WriteLine("Entering SetCurrentKey()");
     CurrentKey.UserType = TrigramMatchesCursor.CurrentKey.UserType;
     CurrentKey.UserId = TrigramMatchesCursor.CurrentKey.UserId;
     CurrentKey.RepoType = TrigramMatchesCursor.CurrentKey.RepoType;
     CurrentKey.RepoId = TrigramMatchesCursor.CurrentKey.RepoId;
     CurrentKey.Offset = (long)CurrentPostingsListCursor.CurrentKey;
+    // Console.WriteLine($"SetCurrentKey: Updated key - UserType: {CurrentKey.UserType}, UserId: {CurrentKey.UserId}, RepoType: {CurrentKey.RepoType}, RepoId: {CurrentKey.RepoId}, Offset: {CurrentKey.Offset}");
   }
 
   private bool SkipDocument()
   {
-    if (!CurrentData!.Document.IsValid) return true;
-    if (CurrentData.Document.CurrentLength > Context.Options.MaxDocSize) return true;
-    if (CurrentData.Document.Status != DocStatus.Normal) return true;
+    // Console.WriteLine("Entering SkipDocument()");
+    if (!CurrentData!.Document.IsValid)
+    {
+      // Console.WriteLine("SkipDocument: Document is not valid");
+      return true;
+    }
+    if (CurrentData.Document.CurrentLength > Context.Options.MaxDocSize)
+    {
+      // Console.WriteLine("SkipDocument: Document exceeds max size");
+      return true;
+    }
+    if (CurrentData.Document.Status != DocStatus.Normal)
+    {
+      // Console.WriteLine("SkipDocument: Document status is not normal");
+      return true;
+    }
 
+    // Console.WriteLine("SkipDocument: Document is valid and within limits");
     return false;
   }
 
   private bool MoveUntilGteInCurrentPostingsList(ulong targetOffset)
   {
+    // Console.WriteLine($"Entering MoveUntilGteInCurrentPostingsList with target offset: {targetOffset}");
     while (true)
     {
-      if (!CurrentPostingsListCursor.MoveUntilGreaterThanOrEqual(targetOffset)) return false;
+      if (!CurrentPostingsListCursor.MoveUntilGreaterThanOrEqual(targetOffset))
+      {
+        // Console.WriteLine("MoveUntilGteInCurrentPostingsList: No more offsets in postings list");
+        return false;
+      }
 
       SetCurrentDocument();
       SetCurrentKey();
 
       if (!SkipDocument()) break;
 
+      // Console.WriteLine("MoveUntilGteInCurrentPostingsList: Skipping document, updating target offset");
       targetOffset = CurrentData.Document.StartingOffset + (ulong)CurrentData.Document.CurrentLength;
     }
 
+    // Console.WriteLine("MoveUntilGteInCurrentPostingsList: Successfully moved to valid document");
     return true;
   }
 
@@ -233,12 +276,26 @@ public class FastTrigramEnumerator2 : IFastEnumerator<MatchWithRepoOffsetKey, Ma
 
   public bool MoveNext()
   {
-    if (TrigramMatchesTree == null) return false;
-    if (TrigramMatchesCursor == null) return false;
-    if (CurrentPostingsListCursor == null) return false;
+    // Console.WriteLine("Entering MoveNext()");
+    if (TrigramMatchesTree == null)
+    {
+      // Console.WriteLine("MoveNext: TrigramMatchesTree is null");
+      return false;
+    }
+    if (TrigramMatchesCursor == null)
+    {
+      // Console.WriteLine("MoveNext: TrigramMatchesCursor is null");
+      return false;
+    }
+    if (CurrentPostingsListCursor == null)
+    {
+      // Console.WriteLine("MoveNext: CurrentPostingsListCursor is null");
+      return false;
+    }
 
     if (CurrentPostingsListCursor.MoveNext())
     {
+      // Console.WriteLine("MoveNext: Successfully moved to next posting");
       SetCurrentDocument();
       SetCurrentKey();
 
@@ -247,22 +304,35 @@ public class FastTrigramEnumerator2 : IFastEnumerator<MatchWithRepoOffsetKey, Ma
 
     while (true)
     {
-      if (!TrigramMatchesCursor.MoveNext()) return false;
+      if (!TrigramMatchesCursor.MoveNext())
+      {
+        // Console.WriteLine("MoveNext: No more trigram matches");
+        return false;
+      }
 
       SetCurrentUser();
       SetCurrentRepository();
 
       CurrentPostingsList = Context.DiskBlockManager.SortedVarIntListFactory.LoadExisting(TrigramMatchesCursor.CurrentData);
-      if (CurrentPostingsList == null) continue;
+      if (CurrentPostingsList == null)
+      {
+        // Console.WriteLine("MoveNext: Failed to load postings list");
+        continue;
+      }
 
       CurrentPostingsListCursor = new DiskSortedVarIntListCursor(CurrentPostingsList);
-      if (!CurrentPostingsListCursor.MoveNext()) continue;
+      if (!CurrentPostingsListCursor.MoveNext())
+      {
+        // Console.WriteLine("MoveNext: Empty postings list");
+        continue;
+      }
 
       SetCurrentDocument();
       SetCurrentKey();
 
       if (SkipDocument())
       {
+        // Console.WriteLine("MoveNext: Skipping document, creating skip key");
         var skipToKey = new MatchWithRepoOffsetKey()
         {
           UserType = CurrentKey.UserType,
@@ -275,27 +345,35 @@ public class FastTrigramEnumerator2 : IFastEnumerator<MatchWithRepoOffsetKey, Ma
         return MoveUntilGreaterThanOrEqual(skipToKey);
       }
 
+      // Console.WriteLine("MoveNext: Found valid document");
       return true;
     }
   }
 
   public bool MoveUntilGreaterThanOrEqual(MatchWithRepoOffsetKey target)
   {
+    // Console.WriteLine($"Entering MoveUntilGreaterThanOrEqual with target - UserType: {target.UserType}, UserId: {target.UserId}, RepoType: {target.RepoType}, RepoId: {target.RepoId}, Offset: {target.Offset}");
     uint nextRepoId = target.RepoId;
 
     if (MatchWithRepoOffsetKey.IsSameRepo(CurrentKey, target))
     {
+      // Console.WriteLine("MoveUntilGreaterThanOrEqual: Same repo as current");
       if (MoveUntilGteInCurrentPostingsList((ulong)target.Offset)) return true;
 
       nextRepoId++;
     }
     else if (target.WithZeroOffsets() < CurrentKey.WithZeroOffsets())
     {
+      // Console.WriteLine("MoveUntilGreaterThanOrEqual: Target is less than current key");
       nextRepoId = CurrentKey.RepoId;
     }
 
     var nextMatchKey = new TrigramMatchKey(target.UserType, target.UserId, target.RepoType, nextRepoId);
-    if (!TrigramMatchesCursor.MoveUntilGreaterThanOrEqual(nextMatchKey)) return false;
+    if (!TrigramMatchesCursor.MoveUntilGreaterThanOrEqual(nextMatchKey))
+    {
+      // Console.WriteLine("MoveUntilGreaterThanOrEqual: No more matches");
+      return false;
+    }
 
     while (true)
     {
@@ -305,6 +383,7 @@ public class FastTrigramEnumerator2 : IFastEnumerator<MatchWithRepoOffsetKey, Ma
       CurrentPostingsList = Context.DiskBlockManager.SortedVarIntListFactory.LoadExisting(TrigramMatchesCursor.CurrentData);
       if (CurrentPostingsList == null)
       {
+        // Console.WriteLine("MoveUntilGreaterThanOrEqual: Failed to load postings list");
         if (!TrigramMatchesCursor.MoveNext()) return false;
         continue;
       }
@@ -312,6 +391,7 @@ public class FastTrigramEnumerator2 : IFastEnumerator<MatchWithRepoOffsetKey, Ma
       CurrentPostingsListCursor = new DiskSortedVarIntListCursor(CurrentPostingsList);
       if (!CurrentPostingsListCursor.MoveNext())
       {
+        // Console.WriteLine("MoveUntilGreaterThanOrEqual: Empty postings list");
         if (!TrigramMatchesCursor.MoveNext()) return false;
         continue;
       }
@@ -321,6 +401,7 @@ public class FastTrigramEnumerator2 : IFastEnumerator<MatchWithRepoOffsetKey, Ma
 
       if (SkipDocument())
       {
+        // Console.WriteLine("MoveUntilGreaterThanOrEqual: Skipping document, creating skip key");
         var skipToKey = new MatchWithRepoOffsetKey()
         {
           UserType = CurrentKey.UserType,
@@ -333,6 +414,7 @@ public class FastTrigramEnumerator2 : IFastEnumerator<MatchWithRepoOffsetKey, Ma
         return MoveUntilGreaterThanOrEqual(skipToKey);
       }
 
+      // Console.WriteLine("MoveUntilGreaterThanOrEqual: Found valid document");
       return true;
     }
   }
