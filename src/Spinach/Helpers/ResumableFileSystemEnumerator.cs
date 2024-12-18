@@ -132,6 +132,9 @@ public class ResumableFileSystemEnumerator : IEnumerator<string>
         {
           try
           {
+            var dirInfo = new DirectoryInfo(dir);
+            if ((dirInfo.Attributes & FileAttributes.ReparsePoint) == FileAttributes.ReparsePoint)
+              continue;
             _pendingDirectories.Enqueue(dir);
           }
           catch (UnauthorizedAccessException) { /* Skip inaccessible directories */ }
@@ -143,6 +146,9 @@ public class ResumableFileSystemEnumerator : IEnumerator<string>
         {
           try
           {
+            var fileInfo = new FileInfo(file);
+            if ((fileInfo.Attributes & FileAttributes.ReparsePoint) == FileAttributes.ReparsePoint)
+              continue;
             _currentDirectoryFiles.Add(file);
           }
           catch (UnauthorizedAccessException) { /* Skip inaccessible files */ }

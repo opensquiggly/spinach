@@ -19,4 +19,6 @@ public interface IFileSystem
   /// Enumerates all files in the specified directory.
   /// </summary>
   IEnumerable<string> EnumerateFiles(string path);
+
+  bool IsSymLink(string path);
 }

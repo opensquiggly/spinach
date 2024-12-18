@@ -301,37 +301,44 @@ public partial class TextSearchManager : ITextSearchManager, ITextSearchEnumerat
 
   public bool IncludeFileInIndex(string filename)
   {
-    if (filename.Contains("/.git/"))
+    try
+    {
+      if (filename.Contains("/.git/"))
+      {
+        return false;
+      }
+
+      if (filename.Contains("/obj/"))
+      {
+        return false;
+      }
+
+      if (filename.Contains("/bin/"))
+      {
+        return false;
+      }
+
+      if (filename.Contains("node_modules"))
+      {
+        return false;
+      }
+
+      if (filename.EndsWith(".jpg") || filename.EndsWith(".gif") || filename.EndsWith(".png") || filename.EndsWith(".dll"))
+      {
+        return false;
+      }
+
+      if (FileHelper.FileIsBinary(filename))
+      {
+        return false;
+      }
+
+      return true;
+    }
+    catch
     {
       return false;
     }
-
-    if (filename.Contains("/obj/"))
-    {
-      return false;
-    }
-
-    if (filename.Contains("/bin/"))
-    {
-      return false;
-    }
-
-    if (filename.Contains("node_modules"))
-    {
-      return false;
-    }
-
-    if (filename.EndsWith(".jpg") || filename.EndsWith(".gif") || filename.EndsWith(".png") || filename.EndsWith(".dll"))
-    {
-      return false;
-    }
-
-    if (FileHelper.FileIsBinary(filename))
-    {
-      return false;
-    }
-
-    return true;
   }
 
   private int GetFileLength(string path)
