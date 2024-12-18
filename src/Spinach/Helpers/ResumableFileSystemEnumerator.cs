@@ -132,8 +132,7 @@ public class ResumableFileSystemEnumerator : IEnumerator<string>
         {
           try
           {
-            var dirInfo = new DirectoryInfo(dir);
-            if ((dirInfo.Attributes & FileAttributes.ReparsePoint) == FileAttributes.ReparsePoint)
+            if (_fileSystem.IsSymLink(dir))
               continue;
             _pendingDirectories.Enqueue(dir);
           }
@@ -146,8 +145,7 @@ public class ResumableFileSystemEnumerator : IEnumerator<string>
         {
           try
           {
-            var fileInfo = new FileInfo(file);
-            if ((fileInfo.Attributes & FileAttributes.ReparsePoint) == FileAttributes.ReparsePoint)
+            if (_fileSystem.IsSymLink(file))
               continue;
             _currentDirectoryFiles.Add(file);
           }
