@@ -752,40 +752,47 @@ public partial class TextSearchManager : ITextSearchManager, ITextSearchEnumerat
       if (!found) continue;
       string rootFolderPath = LoadString(repoInfoBlock.RootFolderPathAddress);
       string fullPath = Path.Combine(rootFolderPath, name);
-      string content = File.ReadAllText(fullPath);
 
-      var trigramExtractor = new TrigramExtractor(content);
-      int count = 0;
-
-      foreach (TrigramInfo trigramInfo in trigramExtractor)
+      try
       {
-        // TODO: We need a way to pause/resume within each file in case the file
-        // is very big and taking to long
-        var trigramMatchCacheKey = new TrigramMatchCacheKey
+        string content = File.ReadAllText(fullPath);
+
+        var trigramExtractor = new TrigramExtractor(content);
+        int count = 0;
+
+        foreach (TrigramInfo trigramInfo in trigramExtractor)
         {
-          TrigramKey = trigramInfo.Key,
-          UserType = cursor.CurrentKey.UserType,
-          UserId = cursor.CurrentKey.UserId,
-          RepoType = cursor.CurrentKey.RepoType,
-          RepoId = cursor.CurrentKey.RepoId
-        };
+          // TODO: We need a way to pause/resume within each file in case the file
+          // is very big and taking to long
+          var trigramMatchCacheKey = new TrigramMatchCacheKey
+          {
+            TrigramKey = trigramInfo.Key,
+            UserType = cursor.CurrentKey.UserType,
+            UserId = cursor.CurrentKey.UserId,
+            RepoType = cursor.CurrentKey.RepoType,
+            RepoId = cursor.CurrentKey.RepoId
+          };
 
-        DiskSortedVarIntList postingsList = LoadOrAddTrigramPostingsList(trigramMatchCacheKey);
+          DiskSortedVarIntList postingsList = LoadOrAddTrigramPostingsList(trigramMatchCacheKey);
 
-        // TODO: As-is, this is very inefficient
-        postingsList.AppendData(new ulong[] { docInfoBlock.StartingOffset + (ulong)trigramInfo.Position });
+          // TODO: As-is, this is very inefficient
+          postingsList.AppendData(new ulong[] { docInfoBlock.StartingOffset + (ulong)trigramInfo.Position });
 
-        count++;
+          count++;
+        }
+
+        Console.WriteLine($" {count} trigrams");
       }
-
-      Console.WriteLine($" {count} trigrams");
+      catch (Exception ex)
+      {
+        Console.WriteLine($"Error indexing file: {ex.Message}");
+      }
 
       docInfoBlock.IsIndexed = true;
       cursor.CurrentNode.ReplaceDataAtIndex(docInfoBlock, cursor.CurrentIndex);
       DocCache.Clear(); // Not the best way to do this
     }
   }
-
 
   public bool DoIndexingWorkForSliceOfTime(CancellationToken cancellationToken, int milliseconds = 5000)
   {
