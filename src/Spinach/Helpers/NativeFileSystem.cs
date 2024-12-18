@@ -13,4 +13,10 @@ public class NativeFileSystem : IFileSystem
   public IEnumerable<string> EnumerateDirectories(string path) => Directory.EnumerateDirectories(path);
 
   public IEnumerable<string> EnumerateFiles(string path) => Directory.EnumerateFiles(path);
+
+  public bool IsSymLink(string path)
+  {
+    FileAttributes attributes = File.GetAttributes(path);
+    return (attributes & FileAttributes.ReparsePoint) == FileAttributes.ReparsePoint;
+  }
 }

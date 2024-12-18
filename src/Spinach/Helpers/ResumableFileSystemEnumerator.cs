@@ -132,6 +132,8 @@ public class ResumableFileSystemEnumerator : IEnumerator<string>
         {
           try
           {
+            if (_fileSystem.IsSymLink(dir))
+              continue;
             _pendingDirectories.Enqueue(dir);
           }
           catch (UnauthorizedAccessException) { /* Skip inaccessible directories */ }
@@ -143,6 +145,8 @@ public class ResumableFileSystemEnumerator : IEnumerator<string>
         {
           try
           {
+            if (_fileSystem.IsSymLink(file))
+              continue;
             _currentDirectoryFiles.Add(file);
           }
           catch (UnauthorizedAccessException) { /* Skip inaccessible files */ }

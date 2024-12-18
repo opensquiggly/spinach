@@ -20,4 +20,6 @@ public class MockFileSystem : IFileSystem
   public IEnumerable<string> EnumerateDirectories(string path) => _directories.TryGetValue(path, out List<string>? dirs) ? dirs : Enumerable.Empty<string>();
 
   public IEnumerable<string> EnumerateFiles(string path) => _files.TryGetValue(path, out List<string>? files) ? files : Enumerable.Empty<string>();
+
+  public bool IsSymLink(string path) => false;
 }
